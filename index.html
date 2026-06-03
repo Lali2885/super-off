@@ -1183,7 +1183,8 @@
                 draggable={draggable}
                 onDragStart={draggable ? () => setDraggingId(order.id) : undefined}
                 onDragEnd={draggable ? () => setDraggingId(null) : undefined}
-                className={`bg-white p-4 rounded-xl shadow-sm border flex flex-col transition-all hover:shadow-md ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200'} ${draggable ? 'cursor-grab active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
+                onClick={!dimmed ? () => openEditModal(order) : undefined}
+                className={`bg-white p-4 rounded-xl shadow-sm border flex flex-col transition-all ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200 cursor-pointer hover:shadow-md hover:border-purple-300 hover:bg-purple-50/20'} ${draggable ? 'active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
                 {/* כותרת כרטיס */}
                 <div className="flex justify-between items-start mb-2 border-b border-gray-100 pb-2">
                   <div className="flex-1 min-w-0">
@@ -1237,8 +1238,7 @@
 
                 {/* כפתורים */}
                 {!dimmed && (
-                  <div className="flex gap-2 flex-wrap">
-                    <Button variant="secondary" icon={Icons.Edit} className="text-xs px-2 py-1.5 flex-1" onClick={() => openEditModal(order)}>עריכה</Button>
+                  <div className="flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
                     <Button variant="secondary" icon={Icons.Printer} className="text-xs px-2 py-1.5 flex-1" onClick={() => setActivePrintOrder(order)}>בון</Button>
                     <Button variant="success" icon={Icons.CheckCircle} className="text-xs px-2 py-1.5 flex-1 bg-green-500" onClick={() => requestComplete(order.id)}>הושלם</Button>
                   </div>
@@ -2563,6 +2563,7 @@
       const [appLoading, setAppLoading] = useState(false);
       const dataLoadedRef = useRef(false);
       const skipSaveRef = useRef(false);
+      const initialLoadDoneRef = useRef(false);
 
       // 1. מלאי טרי — מפתח: 'מוצר|כשרות'
       const [stock, setStock] = useState({
@@ -2657,7 +2658,8 @@
 
       // --- Supabase: טעינת נתונים ---
       useEffect(() => {
-        if (!authUser) return;
+        if (!authUser || initialLoadDoneRef.current) return;
+        initialLoadDoneRef.current = true;
         const load = async () => {
           setAppLoading(true);
           try {
