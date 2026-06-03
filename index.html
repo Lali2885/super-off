@@ -569,6 +569,11 @@
         setFrozenStock(prev => ({ ...prev, [`${product}|${kashrut}`]: Math.max(0, num) }));
       };
 
+      const updateCartons = (product, kashrut, value) => {
+        const num = parseInt(value) || 0;
+        setFrozenStock(prev => ({ ...prev, [`${product}|${kashrut}`]: Math.max(0, num * TRAYS_PER_CARTON) }));
+      };
+
       const kashrutTrays = frozenProductsList.reduce((sum, p) => sum + (frozenStock[`${p.name}|${activeKashrut}`] || 0), 0);
       const kashrutCartons = Math.floor(kashrutTrays / TRAYS_PER_CARTON);
       const kashrutRemainder = kashrutTrays % TRAYS_PER_CARTON;
@@ -645,11 +650,18 @@
                             className="w-20 p-1.5 text-center text-sm font-bold border rounded-lg bg-white focus:ring-2 outline-none"
                           />
                         </td>
-                        <td className="p-2.5 text-center">
-                          <span className="font-black text-base" style={{ color: trays > 0 ? activeColor : '#d1d5db' }}>
-                            {trays > 0 ? cartons : '—'}
-                          </span>
-                          {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder} מגשים</div>}
+                        <td className="p-1.5 text-center">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <input
+                              type="number" min="0" step="1"
+                              value={cartons || ''}
+                              placeholder="0"
+                              onChange={e => updateCartons(product, activeKashrut, e.target.value)}
+                              style={{ borderColor: activeColor + '60', color: activeColor }}
+                              className="w-20 p-1.5 text-center text-sm font-black border rounded-lg bg-white focus:ring-2 outline-none"
+                            />
+                            {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder} מגשים</div>}
+                          </div>
                         </td>
                       </tr>
                     );
