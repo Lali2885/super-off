@@ -2685,14 +2685,7 @@
             }
             if (logRes.data?.length) setInventoryLog(logRes.data.map(r => r.data));
 
-            // Real-time לעדכון הזמנות
-            db.channel('orders-rt')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
-                skipSaveRef.current = true;
-                const { data } = await db.from('orders').select('data').order('created_at', { ascending: false });
-                if (data) setOrders(data.map(r => r.data));
-                setTimeout(() => { skipSaveRef.current = false; }, 200);
-              }).subscribe();
+            // אין real-time — רענון ידני בלבד
 
           } finally {
             skipSaveRef.current = false;
