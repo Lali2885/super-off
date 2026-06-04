@@ -878,7 +878,7 @@
     };
 
     // --- Orders View ---
-    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData }) => {
+    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList }) => {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
@@ -1422,6 +1422,28 @@
                       איסוף בחנות
                     </label>
                   </div>
+
+                  {/* בחירת לקוח מרשימה */}
+                  {contactsList.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                      <label className="block text-xs font-bold text-blue-700 mb-1.5">👥 בחר לקוח קיים (אופציונלי)</label>
+                      <select onChange={e => {
+                        const c = contactsList.find(x => x.id === e.target.value);
+                        if (!c) return;
+                        setCustomerName(c.name);
+                        setCustomerPhone(c.phone || '');
+                        setCustomerMobile(c.mobile || '');
+                        setStreet(c.address || '');
+                        setNeighborhood(c.neighborhood || '');
+                      }} defaultValue=""
+                        className="w-full p-2.5 border border-blue-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="">-- חיפוש לקוח --</option>
+                        {contactsList.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}{c.phone ? ` | ${c.phone}` : ''}{c.neighborhood ? ` | ${c.neighborhood}` : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* פרטי לקוח */}
                   <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-3 shadow-sm">
@@ -2109,6 +2131,235 @@
       );
     };
 
+    // --- Contacts View ---
+    const ContactsView = ({ contactsList, setContactsList }) => {
+      const [importStep, setImportStep] = useState('idle'); // idle | mapping | preview | done
+      const [excelRows, setExcelRows] = useState([]);
+      const [excelHeaders, setExcelHeaders] = useState([]);
+      const [mapping, setMapping] = useState({ name: '', phone: '', mobile: '', address: '', neighborhood: '', notes: '' });
+      const [previewContacts, setPreviewContacts] = useState([]);
+      const [search, setSearch] = useState('');
+
+      const FIELDS = [
+        { key: 'name', label: 'שם לקוח *', required: true },
+        { key: 'phone', label: 'טלפון', required: false },
+        { key: 'mobile', label: 'נייד', required: false },
+        { key: 'address', label: 'כתובת / רחוב', required: false },
+        { key: 'neighborhood', label: 'שכונה / עיר', required: false },
+        { key: 'notes', label: 'הערות', required: false },
+      ];
+
+      const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const wb = window.XLSX.read(evt.target.result, { type: 'binary' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = window.XLSX.utils.sheet_to_json(ws, { header: 1 });
+          if (rows.length < 2) return;
+          const headers = rows[0].map(h => String(h || ''));
+          setExcelHeaders(headers);
+          setExcelRows(rows.slice(1));
+
+          // ניסיון זיהוי אוטומטי של עמודות
+          const autoMap = { name: '', phone: '', mobile: '', address: '', neighborhood: '', notes: '' };
+          headers.forEach(h => {
+            const lower = h.toLowerCase();
+            if (!autoMap.name && (lower.includes('שם') || lower.includes('name'))) autoMap.name = h;
+            if (!autoMap.phone && (lower.includes('טלפון') || lower.includes('phone') || lower.includes('נייד'))) autoMap.phone = h;
+            if (!autoMap.mobile && (lower.includes('נייד') || lower.includes('mobile') || lower.includes('סלולר'))) autoMap.mobile = h;
+            if (!autoMap.address && (lower.includes('רחוב') || lower.includes('כתובת') || lower.includes('address'))) autoMap.address = h;
+            if (!autoMap.neighborhood && (lower.includes('עיר') || lower.includes('שכונה') || lower.includes('city'))) autoMap.neighborhood = h;
+            if (!autoMap.notes && (lower.includes('הערה') || lower.includes('note'))) autoMap.notes = h;
+          });
+          setMapping(autoMap);
+          setImportStep('mapping');
+        };
+        reader.readAsBinaryString(file);
+      };
+
+      const buildPreview = () => {
+        if (!mapping.name) return;
+        const colIdx = (col) => col ? excelHeaders.indexOf(col) : -1;
+        const preview = excelRows
+          .map(row => ({
+            id: Date.now().toString() + Math.random(),
+            name: String(row[colIdx(mapping.name)] || '').trim(),
+            phone: String(row[colIdx(mapping.phone)] || '').trim(),
+            mobile: String(row[colIdx(mapping.mobile)] || '').trim(),
+            address: String(row[colIdx(mapping.address)] || '').trim(),
+            neighborhood: String(row[colIdx(mapping.neighborhood)] || '').trim(),
+            notes: String(row[colIdx(mapping.notes)] || '').trim(),
+          }))
+          .filter(c => c.name);
+
+        // סינון כפולים לפי שם + טלפון
+        const existingKeys = new Set(contactsList.map(c => `${c.name}|${c.phone}`));
+        const newContacts = preview.filter(c => !existingKeys.has(`${c.name}|${c.phone}`));
+        setPreviewContacts(newContacts);
+        setImportStep('preview');
+      };
+
+      const confirmImport = () => {
+        setContactsList(prev => [...prev, ...previewContacts.map(c => ({ ...c, id: Date.now().toString() + Math.random() }))]);
+        setImportStep('done');
+        setExcelRows([]); setExcelHeaders([]);
+      };
+
+      const filteredContacts = contactsList.filter(c =>
+        !search || c.name.includes(search) || c.phone.includes(search) || c.mobile.includes(search)
+      );
+
+      return (
+        <div className="animate-in fade-in duration-300 space-y-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">אנשי קשר</h1>
+              <p className="text-gray-500 mt-1">ייבוא מאקסל ובחירה מהירה בפתיחת הזמנה</p>
+            </div>
+            <label className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl cursor-pointer shadow-sm transition-colors">
+              📥 ייבוא מאקסל
+              <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} onClick={e => e.target.value = ''} />
+            </label>
+          </div>
+
+          {/* שלב מיפוי עמודות */}
+          {importStep === 'mapping' && (
+            <div className="bg-white rounded-2xl border-2 border-blue-200 shadow-sm overflow-hidden">
+              <div className="p-4 bg-blue-50 border-b border-blue-100">
+                <h3 className="font-bold text-blue-900">שלב 1 — מפה עמודות</h3>
+                <p className="text-xs text-blue-700 mt-0.5">בחר איזו עמודה באקסל מתאימה לכל שדה. זוהו {excelHeaders.length} עמודות.</p>
+              </div>
+              <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {FIELDS.map(f => (
+                  <div key={f.key}>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">{f.label}</label>
+                    <select value={mapping[f.key]} onChange={e => setMapping(m => ({ ...m, [f.key]: e.target.value }))}
+                      className="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-blue-400">
+                      <option value="">-- לא לייבא --</option>
+                      {excelHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4 border-t border-gray-100 flex gap-3 justify-end">
+                <button onClick={() => setImportStep('idle')} className="px-4 py-2 rounded-xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                <button onClick={buildPreview} disabled={!mapping.name}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-40">
+                  המשך לתצוגה מקדימה ←
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* שלב תצוגה מקדימה */}
+          {importStep === 'preview' && (
+            <div className="bg-white rounded-2xl border-2 border-green-200 shadow-sm overflow-hidden">
+              <div className="p-4 bg-green-50 border-b border-green-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-green-900">שלב 2 — תצוגה מקדימה</h3>
+                  <p className="text-xs text-green-700 mt-0.5">
+                    {previewContacts.length > 0
+                      ? `נמצאו ${previewContacts.length} אנשי קשר חדשים לייבוא`
+                      : 'לא נמצאו אנשי קשר חדשים — כולם כבר קיימים במערכת'}
+                  </p>
+                </div>
+                <button onClick={() => setImportStep('mapping')} className="text-xs text-green-700 underline">חזור למיפוי</button>
+              </div>
+              {previewContacts.length > 0 && (
+                <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-right text-xs">
+                    <thead className="bg-gray-50 text-gray-500 border-b sticky top-0">
+                      <tr>
+                        <th className="p-2 font-bold">שם</th>
+                        <th className="p-2 font-bold">טלפון</th>
+                        <th className="p-2 font-bold">כתובת</th>
+                        <th className="p-2 font-bold">שכונה</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {previewContacts.map((c, i) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="p-2 font-bold text-gray-900">{c.name}</td>
+                          <td className="p-2 text-gray-600">{c.phone || c.mobile}</td>
+                          <td className="p-2 text-gray-600">{c.address}</td>
+                          <td className="p-2 text-gray-600">{c.neighborhood}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="p-4 border-t border-gray-100 flex gap-3 justify-end">
+                <button onClick={() => setImportStep('idle')} className="px-4 py-2 rounded-xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                {previewContacts.length > 0 && (
+                  <button onClick={confirmImport}
+                    className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm">
+                    ✅ ייבא {previewContacts.length} אנשי קשר
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {importStep === 'done' && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-800 font-bold text-center">
+              ✅ הייבוא הושלם! — {contactsList.length} אנשי קשר במערכת
+              <button onClick={() => setImportStep('idle')} className="mr-3 text-xs underline font-normal">סגור</button>
+            </div>
+          )}
+
+          {/* חיפוש ורשימה */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="p-3 border-b border-gray-100 flex items-center gap-3">
+              <input type="text" placeholder="🔍 חיפוש לפי שם או טלפון..."
+                value={search} onChange={e => setSearch(e.target.value)}
+                className="flex-1 p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
+              <span className="text-xs text-gray-400 font-bold shrink-0">{filteredContacts.length} איש קשר</span>
+            </div>
+            {filteredContacts.length === 0 ? (
+              <div className="p-10 text-center text-gray-400">
+                <div className="text-3xl mb-2">👥</div>
+                <div className="font-bold text-gray-500">אין אנשי קשר עדיין</div>
+                <div className="text-sm mt-1">ייבא מאקסל כדי להתחיל</div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-96 custom-scrollbar">
+                <table className="w-full text-right text-sm">
+                  <thead className="bg-gray-50 text-gray-500 text-xs border-b sticky top-0">
+                    <tr>
+                      <th className="p-3 font-bold">שם</th>
+                      <th className="p-3 font-bold">טלפון</th>
+                      <th className="p-3 font-bold">כתובת</th>
+                      <th className="p-3 font-bold">שכונה</th>
+                      <th className="p-3 w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredContacts.map(c => (
+                      <tr key={c.id} className="hover:bg-gray-50">
+                        <td className="p-3 font-bold text-gray-900">{c.name}</td>
+                        <td className="p-3 text-gray-600">{c.phone}{c.mobile && c.mobile !== c.phone ? ` / ${c.mobile}` : ''}</td>
+                        <td className="p-3 text-gray-600">{c.address}</td>
+                        <td className="p-3 text-gray-600">{c.neighborhood}</td>
+                        <td className="p-3">
+                          <button onClick={() => setContactsList(prev => prev.filter(x => x.id !== c.id))}
+                            className="text-gray-300 hover:text-red-500 transition-colors">
+                            <Icons.Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
     const NeighborhoodEditor = ({ neighborhoodData, setNeighborhoodData }) => {
       const [selectedId, setSelectedId]   = useState('');
       const [newNeighborhood, setNewNeighborhood] = useState('');
@@ -2712,6 +2963,7 @@
       ]);
 
       const [neighborhoodData, setNeighborhoodData] = useState(INITIAL_NEIGHBORHOODS);
+      const [contactsList, setContactsList] = useState([]);
 
       const [butchersList, setButchersList] = useState([
         { id: '1', name: 'משה' },
@@ -2793,6 +3045,7 @@
                 if (row.id === 'couriersList') setCouriersList(row.data);
                 if (row.id === 'frozenProductsList') setFrozenProductsList(row.data);
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
+                if (row.id === 'contactsList') setContactsList(row.data);
               });
             }
             if (logRes.data?.length) setInventoryLog(logRes.data.map(r => r.data));
@@ -2852,6 +3105,10 @@
       }, [neighborhoodData]);
       useEffect(() => {
         if (!dataLoadedRef.current || skipSaveRef.current) return;
+        db.from('settings').upsert({ id: 'contactsList', data: contactsList }).then();
+      }, [contactsList]);
+      useEffect(() => {
+        if (!dataLoadedRef.current || skipSaveRef.current) return;
         inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
       }, [inventoryLog]);
 
@@ -2861,6 +3118,7 @@
         { id: 'inventory', label: 'מלאי וסחורה', icon: Icons.Package },
         { id: 'orders', label: 'ניהול הזמנות', icon: Icons.ShoppingCart, badge: orders.filter(o => o.status === 'new').length.toString(), badgeColor: 'bg-red-500' },
         { id: 'deliveries', label: 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
+        { id: 'contacts', label: 'אנשי קשר', icon: Icons.User, badge: contactsList.length > 0 ? contactsList.length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'lists', label: 'ניהול רשימות', icon: Icons.List },
         { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'completed' || o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'completed' || o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
         { id: 'stats', label: 'דוחות ובקרה', icon: Icons.ClipboardList },
@@ -2874,11 +3132,13 @@
           case 'inventory':
             return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />;
           case 'orders':
-            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} />;
+            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} />;
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
             return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} />;
+          case 'contacts':
+            return <ContactsView contactsList={contactsList} setContactsList={setContactsList} />;
           case 'lists':
             return <ListsManagementView productsList={[]} setProductsList={()=>{}} couriersList={couriersList} setCouriersList={setCouriersList} kashrutList={kashrutList} setKashrutList={setKashrutList} butchersList={butchersList} setButchersList={setButchersList} frozenProductsList={frozenProductsList} setFrozenProductsList={setFrozenProductsList} neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />;
           case 'archive':
