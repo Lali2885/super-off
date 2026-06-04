@@ -2133,6 +2133,7 @@
 
     // --- Contacts View ---
     const ContactsView = ({ contactsList, setContactsList }) => {
+      const [editingContact, setEditingContact] = useState(null); // contact object being edited
       const [importStep, setImportStep] = useState('idle'); // idle | mapping | preview | done
       const [excelRows, setExcelRows] = useState([]);
       const [excelHeaders, setExcelHeaders] = useState([]);
@@ -2310,6 +2311,17 @@
             </div>
           )}
 
+          {editingContact && (
+            <EditContactModal
+              contact={editingContact}
+              onSave={(updated) => {
+                setContactsList(prev => prev.map(c => c.id === updated.id ? updated : c));
+                setEditingContact(null);
+              }}
+              onClose={() => setEditingContact(null)}
+            />
+          )}
+
           {/* חיפוש ורשימה */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="p-3 border-b border-gray-100 flex items-center gap-3">
@@ -2333,7 +2345,7 @@
                       <th className="p-3 font-bold">טלפון</th>
                       <th className="p-3 font-bold">כתובת</th>
                       <th className="p-3 font-bold">שכונה</th>
-                      <th className="p-3 w-12"></th>
+                      <th className="p-3 w-20"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -2344,10 +2356,16 @@
                         <td className="p-3 text-gray-600">{c.address}</td>
                         <td className="p-3 text-gray-600">{c.neighborhood}</td>
                         <td className="p-3">
-                          <button onClick={() => setContactsList(prev => prev.filter(x => x.id !== c.id))}
-                            className="text-gray-300 hover:text-red-500 transition-colors">
-                            <Icons.Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button onClick={() => setEditingContact({ ...c })}
+                              className="text-gray-400 hover:text-blue-500 transition-colors">
+                              <Icons.Edit className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setContactsList(prev => prev.filter(x => x.id !== c.id))}
+                              className="text-gray-300 hover:text-red-500 transition-colors">
+                              <Icons.Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -2355,6 +2373,43 @@
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      );
+    };
+
+    // --- Edit Contact Modal ---
+    const EditContactModal = ({ contact, onSave, onClose }) => {
+      const [form, setForm] = useState({ ...contact });
+      const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="p-4 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+              <h3 className="font-bold text-blue-900 flex items-center gap-2"><Icons.Edit className="w-5 h-5" /> עריכת איש קשר</h3>
+              <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              {[
+                { key: 'name',         label: 'שם לקוח *', type: 'text' },
+                { key: 'phone',        label: 'טלפון',      type: 'tel' },
+                { key: 'mobile',       label: 'נייד',       type: 'tel' },
+                { key: 'address',      label: 'כתובת / רחוב', type: 'text' },
+                { key: 'neighborhood', label: 'שכונה / עיר',  type: 'text' },
+                { key: 'notes',        label: 'הערות',      type: 'text' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">{f.label}</label>
+                  <input type={f.type} value={form[f.key] || ''} onChange={e => set(f.key, e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-gray-100 flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={onClose}>ביטול</Button>
+              <Button variant="primary" icon={Icons.Save} className="flex-1" onClick={() => onSave(form)}>שמור שינויים</Button>
+            </div>
           </div>
         </div>
       );
