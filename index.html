@@ -336,7 +336,7 @@
     // --- Constants ---
     const ORDER_FORM_TEMPLATE = [
       { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'] },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', multiSelect: true, options: ['להוריד עור', 'לחלק כרעיים', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'] },
       { id: 'c3', category: 'עוף', name: 'עוף מפורק לפרגית', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
       { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', options: ['לחלק', 'שלם', 'בלי עור', 'למילוי'] },
       { id: 'c6', category: 'עוף', name: 'שניצל', storageType: 'fresh', options: ['רגיל', 'דק', 'עבה'] },
@@ -1182,19 +1182,37 @@
                           className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
                         />
                         
-                        {item.options.length > 0 && (
-                          <select 
+                        {item.options.length > 0 && !item.multiSelect && (
+                          <select
                             value={currentState.option ?? ''}
                             onChange={(e) => updateItemState(item.id, 'option', e.target.value)}
                             className="flex-1 min-w-[80px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
                           >
                             <option value="" disabled>בחר...</option>
                             {item.options.map(opt => (
-                              <option key={opt} value={opt}>
-                                {opt === '' ? 'ריק' : opt}
-                              </option>
+                              <option key={opt} value={opt}>{opt}</option>
                             ))}
                           </select>
+                        )}
+                        {item.options.length > 0 && item.multiSelect && (
+                          <div className="flex flex-wrap gap-1.5 flex-1">
+                            {item.options.map(opt => {
+                              const selected = (currentState.option || '').split(',').map(s => s.trim()).filter(Boolean);
+                              const isChecked = selected.includes(opt);
+                              return (
+                                <label key={opt} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all ${isChecked ? 'bg-purple-100 border-purple-400 text-purple-800 font-bold' : 'bg-white border-gray-300 text-gray-600'}`}>
+                                  <input type="checkbox" className="hidden" checked={isChecked}
+                                    onChange={() => {
+                                      const newSelected = isChecked
+                                        ? selected.filter(s => s !== opt)
+                                        : [...selected, opt];
+                                      updateItemState(item.id, 'option', newSelected.join(', '));
+                                    }} />
+                                  {opt}
+                                </label>
+                              );
+                            })}
+                          </div>
                         )}
                         
                         {/* כשרות ספציפית לשורה */}
