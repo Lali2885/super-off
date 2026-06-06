@@ -177,16 +177,23 @@
     );
 
     // --- Address Autocomplete (data.gov.il) ---
-    const CITY_API = (q) => {
-      const sql = `SELECT DISTINCT "שם_ישוב" FROM "5c78e9fa-c2e2-4771-93ff-7f400a12f7ba" WHERE "שם_ישוב" LIKE '${q}%' LIMIT 10`;
-      return `https://data.gov.il/api/3/action/datastore_search_sql?sql=${encodeURIComponent(sql)}`;
-    };
-    const STREET_API = (city, q) => {
-      const sql = `SELECT DISTINCT "שם_רחוב" FROM "a7296d1a-f8c9-4b70-96c2-6ebb4352f8e3" WHERE "שם_ישוב" = '${city}' AND "שם_רחוב" LIKE '${q}%' LIMIT 10`;
-      return `https://data.gov.il/api/3/action/datastore_search_sql?sql=${encodeURIComponent(sql)}`;
+    // רשימת ערים נטענת פעם אחת
+    let _cityListCache = null;
+    const loadCityList = async () => {
+      if (_cityListCache) return _cityListCache;
+      const res = await fetch('https://data.gov.il/api/3/action/datastore_search?resource_id=5c78e9fa-c2e2-4771-93ff-7f400a12f7ba&limit=3000&fields=%D7%A9%D7%9D_%D7%99%D7%A9%D7%95%D7%91');
+      const data = await res.json();
+      _cityListCache = [...new Set((data.result?.records || []).map(r => r['שם_ישוב']).filter(Boolean))].sort();
+      return _cityListCache;
     };
 
-    const AddressAutocomplete = ({ value, onChange, placeholder, fetchUrl, resultField, className = '', disabled = false }) => {
+    const loadStreetList = async (city) => {
+      const res = await fetch(`https://data.gov.il/api/3/action/datastore_search?resource_id=a7296d1a-f8c9-4b70-96c2-6ebb4352f8e3&filters=${encodeURIComponent(JSON.stringify({"שם_ישוב": city}))}&limit=1000&fields=%D7%A9%D7%9D_%D7%A8%D7%97%D7%95%D7%91`);
+      const data = await res.json();
+      return [...new Set((data.result?.records || []).map(r => r['שם_רחוב']).filter(Boolean))].sort();
+    };
+
+    const AddressAutocomplete = ({ value, onChange, placeholder, getSuggestions, className = '', disabled = false }) => {
       const [suggestions, setSuggestions] = useState([]);
       const [isOpen, setIsOpen] = useState(false);
       const [loading, setLoading] = useState(false);
@@ -199,25 +206,22 @@
         timerRef.current = setTimeout(async () => {
           setLoading(true);
           try {
-            const res = await fetch(fetchUrl(val));
-            const data = await res.json();
-            const results = [...new Set((data.result?.records || []).map(r => r[resultField]).filter(Boolean))];
+            const results = await getSuggestions(val);
             setSuggestions(results);
             setIsOpen(results.length > 0);
           } catch { } finally { setLoading(false); }
-        }, 300);
+        }, 200);
       };
 
       return (
         <div className="relative">
-          <input
-            type="text" value={value} disabled={disabled}
+          <input type="text" value={value} disabled={disabled}
             onChange={e => handleInput(e.target.value)}
             onBlur={() => setTimeout(() => setIsOpen(false), 200)}
             placeholder={placeholder}
             className={`${className} ${disabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
           />
-          {loading && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs animate-pulse">מחפש...</span>}
+          {loading && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs animate-pulse">טוען...</span>}
           {isOpen && (
             <div className="absolute z-[100] w-full bg-white border border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto mt-1 custom-scrollbar">
               {suggestions.map(s => (
@@ -1519,16 +1523,20 @@
                             value={neighborhood}
                             onChange={(val) => { setNeighborhood(val); setStreet(''); }}
                             placeholder="עיר / שכונה *"
-                            fetchUrl={CITY_API}
-                            resultField="שם_ישוב"
+                            getSuggestions={async (q) => {
+                              const list = await loadCityList();
+                              return list.filter(c => c.startsWith(q)).slice(0, 10);
+                            }}
                             className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
                           />
                           <AddressAutocomplete
                             value={street}
                             onChange={setStreet}
                             placeholder={neighborhood ? 'רחוב...' : 'בחר עיר קודם'}
-                            fetchUrl={(q) => STREET_API(neighborhood, q)}
-                            resultField="שם_רחוב"
+                            getSuggestions={async (q) => {
+                              const list = await loadStreetList(neighborhood);
+                              return list.filter(s => s.startsWith(q)).slice(0, 10);
+                            }}
                             disabled={!neighborhood}
                             className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
                           />
