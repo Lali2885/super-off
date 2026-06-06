@@ -190,10 +190,15 @@
     let _streetCache = {};
     const loadStreetList = async (city) => {
       if (_streetCache[city]) return _streetCache[city];
-      // שימוש ב-q במקום filters כי שמות הערים מגיעים עם רווחים מיותרים
-      const res = await fetch(`https://data.gov.il/api/3/action/datastore_search?resource_id=a7296d1a-f8c9-4b70-96c2-6ebb4352f8e3&q=${encodeURIComponent(city)}&limit=2000&fields=%D7%A9%D7%9D_%D7%A8%D7%97%D7%95%D7%91`);
+      const res = await fetch(`https://data.gov.il/api/3/action/datastore_search?resource_id=a7296d1a-f8c9-4b70-96c2-6ebb4352f8e3&q=${encodeURIComponent(city)}&limit=5000`);
       const data = await res.json();
-      const streets = [...new Set((data.result?.records || []).map(r => r['שם_רחוב']?.trim()).filter(Boolean))].sort();
+      // מסנן לפי שם ישוב מדויק (עם trim לרווחים מיותרים) ומחלץ רחובות
+      const streets = [...new Set(
+        (data.result?.records || [])
+          .filter(r => r['שם_ישוב']?.trim() === city)
+          .map(r => r['שם_רחוב']?.trim())
+          .filter(Boolean)
+      )].sort();
       _streetCache[city] = streets;
       return streets;
     };
@@ -1526,43 +1531,8 @@
                     {orderType === 'delivery' ? (
                       <div className="space-y-2 pt-2 border-t border-gray-100">
                         <div className="flex gap-2">
-                          <AddressAutocomplete
-                            value={neighborhood}
-                            onChange={(val) => { setNeighborhood(val); setSubNeighborhood(''); setStreet(''); }}
-                            placeholder="עיר *"
-                            getSuggestions={async (q) => {
-                              const list = await loadCityList();
-                              return list.filter(c => c.startsWith(q)).slice(0, 10);
-                            }}
-                            className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
-                          />
-                          <AddressAutocomplete
-                            value={subNeighborhood}
-                            onChange={setSubNeighborhood}
-                            placeholder={neighborhood ? 'שכונה...' : 'בחר עיר קודם'}
-                            getSuggestions={async (q) => {
-                              const lowerQ = q.toLowerCase();
-                              return neighborhoodData
-                                .map(n => n.name)
-                                .filter(n => n.includes(q))
-                                .slice(0, 10);
-                            }}
-                            disabled={!neighborhood}
-                            className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <AddressAutocomplete
-                            value={street}
-                            onChange={setStreet}
-                            placeholder={neighborhood ? 'רחוב...' : 'בחר עיר קודם'}
-                            getSuggestions={async (q) => {
-                              const list = await loadStreetList(neighborhood);
-                              return list.filter(s => s.startsWith(q)).slice(0, 10);
-                            }}
-                            disabled={!neighborhood}
-                            className="flex-1 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
-                          />
+                          <input type="text" required={orderType === 'delivery'} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="עיר / שכונה *" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+                          <input type="text" value={street} onChange={e => setStreet(e.target.value)} placeholder="רחוב" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
                         </div>
                         <div className="flex gap-2">
                           <input type="text" value={entrance} onChange={e => setEntrance(e.target.value)} placeholder="כניסה" className="w-1/3 p-2.5 border border-gray-300 rounded-md text-sm text-center" />
