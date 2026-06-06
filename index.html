@@ -986,14 +986,33 @@
         setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
       };
 
+      const addSplit = (id) => {
+        setFormItemsState(prev => {
+          const existing = prev[id] || { qty: '', option: '', notes: '', kashrut: '', splits: [] };
+          return { ...prev, [id]: { ...existing, splits: [...(existing.splits || []), { qty: '', option: '' }] } };
+        });
+      };
+
+      const removeSplit = (id, splitIdx) => {
+        setFormItemsState(prev => {
+          const existing = prev[id];
+          const newSplits = existing.splits.filter((_, i) => i !== splitIdx);
+          return { ...prev, [id]: { ...existing, splits: newSplits } };
+        });
+      };
+
+      const updateSplit = (id, splitIdx, field, value) => {
+        setFormItemsState(prev => {
+          const existing = prev[id];
+          const newSplits = existing.splits.map((s, i) => i === splitIdx ? { ...s, [field]: value } : s);
+          return { ...prev, [id]: { ...existing, splits: newSplits } };
+        });
+      };
+
       const updateItemState = (id, field, value) => {
         setFormItemsState(prev => {
-          const template = ORDER_FORM_TEMPLATE.find(t => t.id === id);
-          const existing = prev[id] || { qty: '', option: '', notes: '', kashrut: '' };
-          return {
-            ...prev,
-            [id]: { ...existing, [field]: value }
-          };
+          const existing = prev[id] || { qty: '', option: '', notes: '', kashrut: '', splits: [] };
+          return { ...prev, [id]: { ...existing, [field]: value } };
         });
       };
 
