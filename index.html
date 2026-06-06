@@ -187,10 +187,15 @@
       return _cityListCache;
     };
 
+    let _streetCache = {};
     const loadStreetList = async (city) => {
-      const res = await fetch(`https://data.gov.il/api/3/action/datastore_search?resource_id=a7296d1a-f8c9-4b70-96c2-6ebb4352f8e3&filters=${encodeURIComponent(JSON.stringify({"שם_ישוב": city}))}&limit=1000&fields=%D7%A9%D7%9D_%D7%A8%D7%97%D7%95%D7%91`);
+      if (_streetCache[city]) return _streetCache[city];
+      // שימוש ב-q במקום filters כי שמות הערים מגיעים עם רווחים מיותרים
+      const res = await fetch(`https://data.gov.il/api/3/action/datastore_search?resource_id=a7296d1a-f8c9-4b70-96c2-6ebb4352f8e3&q=${encodeURIComponent(city)}&limit=2000&fields=%D7%A9%D7%9D_%D7%A8%D7%97%D7%95%D7%91`);
       const data = await res.json();
-      return [...new Set((data.result?.records || []).map(r => r['שם_רחוב']).filter(Boolean))].sort();
+      const streets = [...new Set((data.result?.records || []).map(r => r['שם_רחוב']?.trim()).filter(Boolean))].sort();
+      _streetCache[city] = streets;
+      return streets;
     };
 
     const AddressAutocomplete = ({ value, onChange, placeholder, getSuggestions, className = '', disabled = false }) => {
@@ -953,6 +958,7 @@
       const [customerPhone, setCustomerPhone] = useState('');
       const [customerMobile, setCustomerMobile] = useState('');
       const [neighborhood, setNeighborhood] = useState('');
+      const [subNeighborhood, setSubNeighborhood] = useState('');
       const [street, setStreet] = useState('');
       const [entrance, setEntrance] = useState('');
       const [floor, setFloor] = useState('');
@@ -1035,7 +1041,7 @@
         setIsModalOpen(false);
         setEditingOrder(null);
         setCustomerName(''); setCustomerPhone(''); setCustomerMobile('');
-        setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
+        setNeighborhood(''); setSubNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
         setDeliveryDate(''); setPickupTime(''); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
@@ -1085,6 +1091,7 @@
           fullAddress: orderType === 'delivery' ? `${street} ${entrance ? 'כניסה '+entrance : ''} ${floor ? 'קומה '+floor : ''} ${apt ? 'דירה '+apt : ''}`.trim() : '',
           street, entrance, floor, apt,
           neighborhood: orderType === 'delivery' ? neighborhood : '',
+          subNeighborhood: orderType === 'delivery' ? subNeighborhood : '',
           timeString: orderType === 'delivery' ? deliveryDate : pickupTime,
           kashrut,
           assignedButcher,
@@ -1521,14 +1528,30 @@
                         <div className="flex gap-2">
                           <AddressAutocomplete
                             value={neighborhood}
-                            onChange={(val) => { setNeighborhood(val); setStreet(''); }}
-                            placeholder="עיר / שכונה *"
+                            onChange={(val) => { setNeighborhood(val); setSubNeighborhood(''); setStreet(''); }}
+                            placeholder="עיר *"
                             getSuggestions={async (q) => {
                               const list = await loadCityList();
                               return list.filter(c => c.startsWith(q)).slice(0, 10);
                             }}
                             className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
                           />
+                          <AddressAutocomplete
+                            value={subNeighborhood}
+                            onChange={setSubNeighborhood}
+                            placeholder={neighborhood ? 'שכונה...' : 'בחר עיר קודם'}
+                            getSuggestions={async (q) => {
+                              const lowerQ = q.toLowerCase();
+                              return neighborhoodData
+                                .map(n => n.name)
+                                .filter(n => n.includes(q))
+                                .slice(0, 10);
+                            }}
+                            disabled={!neighborhood}
+                            className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                          />
+                        </div>
+                        <div className="flex gap-2">
                           <AddressAutocomplete
                             value={street}
                             onChange={setStreet}
@@ -1538,7 +1561,7 @@
                               return list.filter(s => s.startsWith(q)).slice(0, 10);
                             }}
                             disabled={!neighborhood}
-                            className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                            className="flex-1 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400"
                           />
                         </div>
                         <div className="flex gap-2">
