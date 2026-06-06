@@ -1545,9 +1545,20 @@
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                        <span className="text-sm text-gray-500 font-bold">שעת איסוף בחנות:</span>
-                        <input type="time" value={pickupTime} onChange={e => setPickupTime(e.target.value)} className="w-40 p-2.5 border border-gray-300 rounded-md text-sm" />
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+                        <span className="text-sm text-gray-500 font-bold whitespace-nowrap">מועד איסוף:</span>
+                        <input type="date" value={pickupTime?.split('T')[0] || ''} onChange={e => setPickupTime(e.target.value + (pickupTime?.includes('T') ? 'T' + pickupTime.split('T')[1] : 'T00:00'))}
+                          className="p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+                        <select value={pickupTime?.includes('T') ? pickupTime.split('T')[1] : ''}
+                          onChange={e => setPickupTime((pickupTime?.split('T')[0] || new Date().toISOString().split('T')[0]) + 'T' + e.target.value)}
+                          className="p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
+                          <option value="">-- שעה --</option>
+                          {Array.from({ length: 48 }, (_, i) => {
+                            const h = String(Math.floor(i / 2)).padStart(2, '0');
+                            const m = i % 2 === 0 ? '00' : '30';
+                            return <option key={i} value={`${h}:${m}`}>{`${h}:${m}`}</option>;
+                          })}
+                        </select>
                       </div>
                     )}
                   </div>
