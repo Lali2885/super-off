@@ -1010,6 +1010,18 @@
         });
       };
 
+      const toggleMultiSelectOption = (id, opt) => {
+        setFormItemsState(prev => {
+          const rows = prev[id] || [];
+          const exists = rows.some(r => r.option === opt);
+          if (exists) {
+            return { ...prev, [id]: rows.filter(r => r.option !== opt) };
+          } else {
+            return { ...prev, [id]: [...rows, { qty: '', option: opt, notes: '', kashrut: '' }] };
+          }
+        });
+      };
+
       const openEditModal = (order) => {
         setEditingOrder(order);
         setOrderType(order.type);
@@ -1189,8 +1201,61 @@
             {isExpanded && (
               <div className="divide-y divide-gray-100 animate-in slide-in-from-top-2 duration-200">
                 {itemsInCategory.map(item => {
+                  if (item.multiSelect) {
+                    // עוף מפורק וכדומה — בחירת אופציות + שורת כמות לכל אחת
+                    const rows = formItemsState[item.id] || [];
+                    const selectedOptions = rows.map(r => r.option);
+                    return (
+                      <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
+                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
+                        <div className="flex-1 flex flex-col gap-2">
+                          {/* רשימת אופציות לסימון */}
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.options.map(opt => {
+                              const isChecked = selectedOptions.includes(opt);
+                              return (
+                                <label key={opt} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all select-none ${isChecked ? 'bg-purple-100 border-purple-400 text-purple-800 font-bold' : 'bg-white border-gray-300 text-gray-500 hover:border-purple-300'}`}>
+                                  <input type="checkbox" className="hidden" checked={isChecked}
+                                    onChange={() => toggleMultiSelectOption(item.id, opt)} />
+                                  {isChecked ? '✓ ' : ''}{opt}
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {/* שורת כמות לכל אופציה שנבחרה */}
+                          {rows.map((rowData, rowIndex) => (
+                            <div key={rowData.option} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-purple-50/40 rounded-lg px-2 py-1.5 border border-purple-100">
+                              <span className="text-xs font-bold text-purple-700 shrink-0 min-w-[70px] max-w-[120px] truncate">{rowData.option}</span>
+                              <input
+                                type="number" min="0" step="0.5" placeholder="כמות..."
+                                value={rowData.qty ?? ''}
+                                onChange={e => updateItemState(item.id, 'qty', e.target.value, rowIndex)}
+                                className="w-16 p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center bg-white"
+                              />
+                              <select
+                                value={rowData.kashrut || kashrut || ''}
+                                onChange={e => updateItemState(item.id, 'kashrut', e.target.value, rowIndex)}
+                                className="flex-1 min-w-[90px] p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none bg-white"
+                              >
+                                <option value="" disabled>כשרות...</option>
+                                {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                              </select>
+                              <input
+                                type="text" placeholder="הערה"
+                                value={rowData.notes ?? ''}
+                                onChange={e => updateItemState(item.id, 'notes', e.target.value, rowIndex)}
+                                className="flex-1 min-w-[90px] p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none bg-white"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // מוצרים רגילים — שורה אחת עם אפשרות פיצול
                   const rows = formItemsState[item.id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
-                  const canSplit = item.options.length > 0 && !item.multiSelect;
+                  const canSplit = item.options.length > 0;
                   return (
                     <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                       <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
@@ -1200,16 +1265,12 @@
                         {rows.map((rowData, rowIndex) => (
                           <div key={rowIndex} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
                             <input
-                              type="number"
-                              min="0"
-                              step="0.5"
-                              placeholder="כמות..."
+                              type="number" min="0" step="0.5" placeholder="כמות..."
                               value={rowData.qty ?? ''}
                               onChange={(e) => updateItemState(item.id, 'qty', e.target.value, rowIndex)}
                               className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
                             />
-
-                            {item.options.length > 0 && !item.multiSelect && (
+                            {item.options.length > 0 && (
                               <select
                                 value={rowData.option ?? ''}
                                 onChange={(e) => updateItemState(item.id, 'option', e.target.value, rowIndex)}
@@ -1221,27 +1282,6 @@
                                 ))}
                               </select>
                             )}
-                            {item.options.length > 0 && item.multiSelect && rowIndex === 0 && (
-                              <div className="flex flex-wrap gap-1.5 flex-1">
-                                {item.options.map(opt => {
-                                  const selected = (rowData.option || '').split(',').map(s => s.trim()).filter(Boolean);
-                                  const isChecked = selected.includes(opt);
-                                  return (
-                                    <label key={opt} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all ${isChecked ? 'bg-purple-100 border-purple-400 text-purple-800 font-bold' : 'bg-white border-gray-300 text-gray-600'}`}>
-                                      <input type="checkbox" className="hidden" checked={isChecked}
-                                        onChange={() => {
-                                          const newSelected = isChecked
-                                            ? selected.filter(s => s !== opt)
-                                            : [...selected, opt];
-                                          updateItemState(item.id, 'option', newSelected.join(', '), 0);
-                                        }} />
-                                      {opt}
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            )}
-
                             <select
                               value={rowData.kashrut || kashrut || ''}
                               onChange={(e) => updateItemState(item.id, 'kashrut', e.target.value, rowIndex)}
@@ -1250,15 +1290,12 @@
                               <option value="" disabled>כשרות...</option>
                               {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
                             </select>
-
                             <input
-                              type="text"
-                              placeholder="הערה"
+                              type="text" placeholder="הערה"
                               value={rowData.notes ?? ''}
                               onChange={(e) => updateItemState(item.id, 'notes', e.target.value, rowIndex)}
                               className="flex-1 min-w-[100px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
                             />
-
                             {rows.length > 1 && (
                               <button
                                 type="button"
@@ -1269,7 +1306,6 @@
                             )}
                           </div>
                         ))}
-
                         {canSplit && (
                           <button
                             type="button"
