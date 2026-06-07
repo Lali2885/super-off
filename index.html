@@ -982,6 +982,8 @@
         'דגים': false
       });
 
+      const [openDropdown, setOpenDropdown] = useState(null);
+
       const toggleCategory = (category) => {
         setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
       };
@@ -1202,30 +1204,45 @@
               <div className="divide-y divide-gray-100 animate-in slide-in-from-top-2 duration-200">
                 {itemsInCategory.map(item => {
                   if (item.multiSelect) {
-                    // עוף מפורק וכדומה — בחירת אופציות + שורת כמות לכל אחת
                     const rows = formItemsState[item.id] || [];
                     const selectedOptions = rows.map(r => r.option);
+                    const isOpen = openDropdown === item.id;
                     return (
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                         <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
                         <div className="flex-1 flex flex-col gap-2">
-                          {/* רשימת אופציות לסימון */}
-                          <div className="flex flex-wrap gap-1.5">
-                            {item.options.map(opt => {
-                              const isChecked = selectedOptions.includes(opt);
-                              return (
-                                <label key={opt} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all select-none ${isChecked ? 'bg-purple-100 border-purple-400 text-purple-800 font-bold' : 'bg-white border-gray-300 text-gray-500 hover:border-purple-300'}`}>
-                                  <input type="checkbox" className="hidden" checked={isChecked}
-                                    onChange={() => toggleMultiSelectOption(item.id, opt)} />
-                                  {isChecked ? '✓ ' : ''}{opt}
-                                </label>
-                              );
-                            })}
+                          {/* Dropdown trigger */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setOpenDropdown(isOpen ? null : item.id)}
+                              className="w-full flex items-center justify-between p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 bg-white hover:border-purple-300 transition-colors"
+                            >
+                              <span className={selectedOptions.length === 0 ? 'text-gray-400' : 'text-purple-800 font-bold'}>
+                                {selectedOptions.length === 0 ? 'בחר...' : selectedOptions.join(', ')}
+                              </span>
+                              <Icons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 mr-1 ${isOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            {isOpen && (
+                              <div className="absolute z-30 w-full mt-1 bg-white border border-purple-200 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
+                                {item.options.map(opt => {
+                                  const isChecked = selectedOptions.includes(opt);
+                                  return (
+                                    <label key={opt} className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-gray-50 last:border-0 transition-colors ${isChecked ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-gray-50'}`}>
+                                      <input type="checkbox" checked={isChecked}
+                                        onChange={() => toggleMultiSelectOption(item.id, opt)}
+                                        className="accent-purple-600 w-4 h-4 shrink-0" />
+                                      <span className={`text-sm ${isChecked ? 'font-bold text-purple-800' : 'text-gray-700'}`}>{opt}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                           {/* שורת כמות לכל אופציה שנבחרה */}
                           {rows.map((rowData, rowIndex) => (
                             <div key={rowData.option} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-purple-50/40 rounded-lg px-2 py-1.5 border border-purple-100">
-                              <span className="text-xs font-bold text-purple-700 shrink-0 min-w-[70px] max-w-[120px] truncate">{rowData.option}</span>
+                              <span className="text-xs font-bold text-purple-700 shrink-0 min-w-[70px] max-w-[130px] truncate">{rowData.option}</span>
                               <input
                                 type="number" min="0" step="0.5" placeholder="כמות..."
                                 value={rowData.qty ?? ''}
