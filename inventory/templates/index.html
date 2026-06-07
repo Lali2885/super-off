@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניהול מלאי ביתי</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; direction: rtl; }
+
+  header {
+    background: linear-gradient(135deg, #2b6cb0, #2c5282);
+    color: white; padding: 18px 28px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.5rem; }
+  header .subtitle { font-size: 0.85rem; opacity: 0.8; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Stats bar */
+  .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat-card {
+    background: white; border-radius: 10px; padding: 16px 22px;
+    flex: 1; min-width: 140px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-right: 4px solid #4299e1;
+  }
+  .stat-card.warn { border-right-color: #e53e3e; }
+  .stat-card .num { font-size: 2rem; font-weight: 700; color: #2b6cb0; }
+  .stat-card.warn .num { color: #e53e3e; }
+  .stat-card .label { font-size: 0.8rem; color: #718096; margin-top: 2px; }
+
+  /* Alerts */
+  .alert-box {
+    background: #fff5f5; border: 1px solid #feb2b2; border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 20px; display: none;
+  }
+  .alert-box.show { display: block; }
+  .alert-box h3 { color: #c53030; margin-bottom: 8px; font-size: 0.95rem; }
+  .alert-list { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+  .alert-list li {
+    background: #fed7d7; color: #742a2a; border-radius: 6px;
+    padding: 4px 10px; font-size: 0.82rem;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+  }
+  .toolbar input, .toolbar select {
+    padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 8px;
+    font-size: 0.9rem; background: white;
+  }
+  .toolbar input { flex: 1; min-width: 180px; }
+  .btn {
+    padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: filter 0.15s;
+  }
+  .btn:hover { filter: brightness(0.92); }
+  .btn-primary { background: #4299e1; color: white; }
+  .btn-success { background: #48bb78; color: white; }
+  .btn-danger  { background: #fc8181; color: white; }
+  .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+
+  /* Table */
+  .table-wrap { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #ebf8ff; }
+  th { padding: 12px 14px; text-align: right; font-size: 0.82rem; color: #4a5568; font-weight: 600; white-space: nowrap; }
+  td { padding: 10px 14px; border-top: 1px solid #e2e8f0; font-size: 0.88rem; vertical-align: middle; }
+  tr:hover td { background: #f7fafc; }
+
+  .qty-cell { display: flex; align-items: center; gap: 6px; }
+  .qty-btn { width: 26px; height: 26px; border: 1px solid #cbd5e0; border-radius: 6px; background: white; cursor: pointer; font-size: 1rem; line-height: 1; }
+  .qty-btn:hover { background: #ebf8ff; }
+  .qty-val { min-width: 36px; text-align: center; font-weight: 600; }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .badge-ok   { background: #c6f6d5; color: #22543d; }
+  .badge-low  { background: #fed7d7; color: #742a2a; }
+  .badge-zero { background: #e2e8f0; color: #4a5568; }
+
+  .cat-badge {
+    background: #e9d8fd; color: #553c9a; border-radius: 8px;
+    padding: 2px 8px; font-size: 0.78rem;
+  }
+
+  /* Modal */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: white; border-radius: 14px; padding: 28px;
+    width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 20px; font-size: 1.15rem; color: #2b6cb0; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 8px;
+    font-size: 0.88rem; font-family: inherit;
+  }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+  .empty { text-align: center; padding: 40px; color: #a0aec0; font-size: 0.95rem; }
+
+  @media(max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="font-size:2rem">🏠</div>
+  <div>
+    <h1>ניהול מלאי ביתי</h1>
+    <div class="subtitle">מזון · כלי בית · ציוד</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="num" id="total-count">0</div>
+      <div class="label">סה"כ פריטים</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="cat-count">0</div>
+      <div class="label">קטגוריות</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="num" id="low-count">0</div>
+      <div class="label">מלאי נמוך / אזל</div>
+    </div>
+  </div>
+
+  <!-- Low-stock alerts -->
+  <div class="alert-box" id="alert-box">
+    <h3>⚠️ פריטים שמלאיים נמוך או אזלו</h3>
+    <ul class="alert-list" id="alert-list"></ul>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="🔍 חיפוש פריט...">
+    <select id="filter-cat">
+      <option value="">כל הקטגוריות</option>
+    </select>
+    <button class="btn btn-primary" onclick="openModal()">+ הוסף פריט</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>שם</th>
+          <th>קטגוריה</th>
+          <th>כמות</th>
+          <th>יחידה</th>
+          <th>מינימום</th>
+          <th>מיקום</th>
+          <th>תפוגה</th>
+          <th>סטטוס</th>
+          <th>פעולות</th>
+        </tr>
+      </thead>
+      <tbody id="items-body">
+        <tr><td colspan="9" class="empty">טוען...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modal-title">הוספת פריט חדש</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>שם הפריט *</label>
+        <input id="f-name" type="text" placeholder='למשל: שמן זית'>
+      </div>
+      <div class="form-group">
+        <label>קטגוריה *</label>
+        <input id="f-category" type="text" list="cat-list" placeholder="מזון / ניקיון / ...">
+        <datalist id="cat-list"></datalist>
+      </div>
+      <div class="form-group">
+        <label>יחידת מידה</label>
+        <select id="f-unit">
+          <option>יחידות</option>
+          <option>ק"ג</option>
+          <option>גרם</option>
+          <option>ליטר</option>
+          <option>מ"ל</option>
+          <option>קופסאות</option>
+          <option>שקיות</option>
+          <option>בקבוקים</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>כמות נוכחית</label>
+        <input id="f-quantity" type="number" min="0" step="0.1" value="0">
+      </div>
+      <div class="form-group">
+        <label>כמות מינימום</label>
+        <input id="f-min" type="number" min="0" step="0.1" value="1">
+      </div>
+      <div class="form-group">
+        <label>מיקום במחסן</label>
+        <input id="f-location" type="text" placeholder='למשל: מדף 2'>
+      </div>
+      <div class="form-group">
+        <label>תאריך תפוגה</label>
+        <input id="f-expiry" type="date">
+      </div>
+      <div class="form-group full">
+        <label>הערות</label>
+        <textarea id="f-notes" placeholder="הערות נוספות..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" style="background:#e2e8f0;color:#4a5568" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-success" onclick="saveItem()">שמור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allItems = [];
+let editingId = null;
+
+async function loadItems() {
+  const res = await fetch('/api/items');
+  allItems = await res.json();
+  renderTable(allItems);
+  updateStats(allItems);
+  updateCategoryFilter(allItems);
+}
+
+function updateStats(items) {
+  document.getElementById('total-count').textContent = items.length;
+  const cats = new Set(items.map(i => i.category));
+  document.getElementById('cat-count').textContent = cats.size;
+  const low = items.filter(i => i.quantity <= i.min_quantity);
+  document.getElementById('low-count').textContent = low.length;
+
+  const alertBox = document.getElementById('alert-box');
+  const alertList = document.getElementById('alert-list');
+  if (low.length > 0) {
+    alertList.innerHTML = low.map(i =>
+      `<li>${i.name} (${i.quantity} ${i.unit})</li>`
+    ).join('');
+    alertBox.classList.add('show');
+  } else {
+    alertBox.classList.remove('show');
+  }
+}
+
+function updateCategoryFilter(items) {
+  const cats = [...new Set(items.map(i => i.category))].sort();
+  const sel = document.getElementById('filter-cat');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">כל הקטגוריות</option>' +
+    cats.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+
+  const dl = document.getElementById('cat-list');
+  dl.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+}
+
+function statusBadge(item) {
+  if (item.quantity === 0) return '<span class="badge badge-zero">אזל</span>';
+  if (item.quantity <= item.min_quantity) return '<span class="badge badge-low">נמוך</span>';
+  return '<span class="badge badge-ok">תקין</span>';
+}
+
+function expiryDisplay(d) {
+  if (!d) return '—';
+  const diff = (new Date(d) - new Date()) / 86400000;
+  const color = diff < 0 ? 'color:#e53e3e;font-weight:700' : diff < 30 ? 'color:#dd6b20;font-weight:600' : '';
+  return `<span style="${color}">${d}</span>`;
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('items-body');
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">אין פריטים להצגה</td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map(item => `
+    <tr>
+      <td><strong>${item.name}</strong>${item.notes ? `<br><small style="color:#718096">${item.notes}</small>` : ''}</td>
+      <td><span class="cat-badge">${item.category}</span></td>
+      <td>
+        <div class="qty-cell">
+          <button class="qty-btn" onclick="adjust(${item.id}, -1)">−</button>
+          <span class="qty-val">${item.quantity}</span>
+          <button class="qty-btn" onclick="adjust(${item.id}, 1)">+</button>
+        </div>
+      </td>
+      <td>${item.unit}</td>
+      <td>${item.min_quantity}</td>
+      <td>${item.location || '—'}</td>
+      <td>${expiryDisplay(item.expiry_date)}</td>
+      <td>${statusBadge(item)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-primary btn-sm" onclick="openModal(${item.id})">עריכה</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem(${item.id}, '${item.name.replace(/'/g,"\\'")}')">מחק</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterItems() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const filtered = allItems.filter(i =>
+    (!cat || i.category === cat) &&
+    (!q || i.name.toLowerCase().includes(q) || (i.notes||'').toLowerCase().includes(q))
+  );
+  renderTable(filtered);
+}
+
+document.getElementById('search').addEventListener('input', filterItems);
+document.getElementById('filter-cat').addEventListener('change', filterItems);
+
+function openModal(id = null) {
+  editingId = id;
+  const modal = document.getElementById('modal-title');
+  if (id) {
+    const item = allItems.find(i => i.id === id);
+    modal.textContent = 'עריכת פריט';
+    document.getElementById('f-name').value = item.name;
+    document.getElementById('f-category').value = item.category;
+    document.getElementById('f-quantity').value = item.quantity;
+    document.getElementById('f-unit').value = item.unit;
+    document.getElementById('f-min').value = item.min_quantity;
+    document.getElementById('f-location').value = item.location || '';
+    document.getElementById('f-expiry').value = item.expiry_date || '';
+    document.getElementById('f-notes').value = item.notes || '';
+  } else {
+    modal.textContent = 'הוספת פריט חדש';
+    ['f-name','f-category','f-location','f-expiry','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-quantity').value = 0;
+    document.getElementById('f-min').value = 1;
+    document.getElementById('f-unit').value = 'יחידות';
+  }
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('f-name').focus();
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay')) closeModal();
+});
+
+async function saveItem() {
+  const name = document.getElementById('f-name').value.trim();
+  const category = document.getElementById('f-category').value.trim();
+  if (!name || !category) { alert('שם וקטגוריה הם שדות חובה'); return; }
+
+  const data = {
+    name, category,
+    quantity: document.getElementById('f-quantity').value,
+    unit: document.getElementById('f-unit').value,
+    min_quantity: document.getElementById('f-min').value,
+    location: document.getElementById('f-location').value,
+    expiry_date: document.getElementById('f-expiry').value,
+    notes: document.getElementById('f-notes').value,
+  };
+
+  if (editingId) {
+    await fetch(`/api/items/${editingId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  } else {
+    await fetch('/api/items', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  }
+  closeModal();
+  loadItems();
+}
+
+async function deleteItem(id, name) {
+  if (!confirm(`למחוק את "${name}"?`)) return;
+  await fetch(`/api/items/${id}`, { method: 'DELETE' });
+  loadItems();
+}
+
+async function adjust(id, delta) {
+  const res = await fetch(`/api/items/${id}/adjust`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ delta })
+  });
+  const updated = await res.json();
+  const item = allItems.find(i => i.id === id);
+  if (item) { item.quantity = updated.quantity; }
+  filterItems();
+  updateStats(allItems);
+}
+
+loadItems();
+</script>
+</body>
+</html>
