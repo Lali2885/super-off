@@ -1275,22 +1275,13 @@
                             </div>
                           )}
 
-                          {/* שורה 3: כשרות + הערה משותפות */}
-                          <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                            <select
-                              value={s.kashrut || kashrut || ''}
-                              onChange={e => updateOptState(item.id, { kashrut: e.target.value })}
-                              className="flex-1 min-w-[100px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none">
-                              <option value="" disabled>כשרות...</option>
-                              {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                            </select>
-                            <input
-                              type="text" placeholder="הערה"
-                              value={s.notes}
-                              onChange={e => updateOptState(item.id, { notes: e.target.value })}
-                              className="flex-1 min-w-[100px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                            />
-                          </div>
+                          {/* שורה 3: הערה בלבד */}
+                          <input
+                            type="text" placeholder="הערה"
+                            value={s.notes}
+                            onChange={e => updateOptState(item.id, { notes: e.target.value })}
+                            className="p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none w-full"
+                          />
                         </div>
                       </div>
                     );
@@ -1310,18 +1301,11 @@
                           onChange={e => updateItemState(item.id, 'qty', e.target.value, 0)}
                           className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
                         />
-                        <select
-                          value={rows[0]?.kashrut || kashrut || ''}
-                          onChange={e => updateItemState(item.id, 'kashrut', e.target.value, 0)}
-                          className="flex-1 min-w-[90px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none">
-                          <option value="" disabled>כשרות...</option>
-                          {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                        </select>
                         <input
                           type="text" placeholder="הערה"
                           value={rows[0]?.notes ?? ''}
                           onChange={e => updateItemState(item.id, 'notes', e.target.value, 0)}
-                          className="flex-1 min-w-[100px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                          className="flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
                         />
                       </div>
                     </div>
