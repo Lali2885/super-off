@@ -1920,16 +1920,55 @@
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-black font-bold">
-                        {activePrintOrder.items.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-gray-100">
-                            <td className="p-2 border border-black text-center text-sm font-extrabold bg-gray-100">{item.qty}</td>
-                            <td className="p-2 border border-black">
-                              <span className="block font-bold">{item.name}</span>
-                              {item.notes && <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {item.notes}</span>}
-                            </td>
-                            <td className="p-2 border border-black text-center text-[10px] text-gray-600 bg-gray-50/50">{item.kashrut}</td>
-                          </tr>
-                        ))}
+                        {(() => {
+                          const regularItems = activePrintOrder.items.filter(i => i.qty !== '-');
+                          const packingItem = activePrintOrder.items.find(i => i.qty === '-');
+                          const seen = new Set();
+                          const groups = [];
+                          regularItems.forEach(item => {
+                            const key = item.cleanName || item.name;
+                            if (!seen.has(key)) {
+                              seen.add(key);
+                              const grp = regularItems.filter(i => (i.cleanName || i.name) === key);
+                              groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0), kashrut: grp[0].kashrut });
+                            }
+                          });
+                          return <>
+                            {groups.map((group, gIdx) => (
+                              <tr key={gIdx} className={gIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                <td className="p-2 border border-black text-center text-sm font-extrabold bg-gray-100">
+                                  {group.items.length > 1 ? group.total : group.items[0].qty}
+                                </td>
+                                <td className="p-2 border border-black">
+                                  <span className="block font-bold">{group.key}</span>
+                                  {group.items.length > 1 && (
+                                    <div className="mt-1 mr-1 space-y-0.5 border-r-2 border-gray-400 pr-1.5">
+                                      {group.items.map((item, iIdx) => {
+                                        const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
+                                        return (
+                                          <div key={iIdx} className="flex gap-1.5 text-[10px] text-gray-600 font-bold">
+                                            <span className="min-w-[18px] text-center font-extrabold">{item.qty}</span>
+                                            <span>{opt}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                  {group.items.length === 1 && group.items[0].notes && (
+                                    <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
+                                  )}
+                                </td>
+                                <td className="p-2 border border-black text-center text-[10px] text-gray-600 bg-gray-50/50">{group.kashrut}</td>
+                              </tr>
+                            ))}
+                            {packingItem && (
+                              <tr className="bg-gray-50">
+                                <td className="p-2 border border-black text-center text-sm bg-gray-100">📦</td>
+                                <td className="p-2 border border-black font-bold text-gray-700" colSpan="2">{packingItem.notes}</td>
+                              </tr>
+                            )}
+                          </>;
+                        })()}
                       </tbody>
                     </table>
 
