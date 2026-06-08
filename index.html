@@ -336,8 +336,7 @@
     // --- Constants ---
     const ORDER_FORM_TEMPLATE = [
       { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'] },
-      { id: 'c3', category: 'עוף', name: 'עוף מפורק לפרגית', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות', 'שניצל'] },
       { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', options: ['לחלק', 'שלם', 'בלי עור', 'למילוי'] },
       { id: 'c6', category: 'עוף', name: 'שניצל', storageType: 'fresh', options: ['רגיל', 'דק', 'עבה'] },
       { id: 'c7', category: 'עוף', name: 'חזה', storageType: 'fresh', options: ['עם עצם', 'בלי עצם', 'רצועות', 'קוביות'] },
@@ -1317,7 +1316,7 @@
                   <div className="p-3 bg-purple-50/50 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-t border-purple-100">
                     <div className="w-full sm:w-40 font-bold text-purple-800 shrink-0 text-sm">הוראות אריזה (עופות):</div>
                     <div className="flex flex-wrap gap-3">
-                      {['כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים'].map(opt => (
+                      {['כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'].map(opt => (
                         <label key={opt} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
                           <input type="radio" name="packing" value={opt} checked={packingOption === opt}
                             onChange={e => setPackingOption(e.target.value)} className="accent-purple-600" /> {opt}
