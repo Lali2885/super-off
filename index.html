@@ -336,7 +336,7 @@
     // --- Constants ---
     const ORDER_FORM_TEMPLATE = [
       { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, options: ['להוריד עור', 'לחלק כרעיים', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות', 'שניצל'] },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, options: ['להוריד עור', 'לחלק כרעיים', 'שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'] },
       { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', options: ['לחלק', 'שלם', 'בלי עור', 'למילוי'] },
       { id: 'c6', category: 'עוף', name: 'שניצל', storageType: 'fresh', options: ['רגיל', 'דק', 'עבה'] },
       { id: 'c7', category: 'עוף', name: 'חזה', storageType: 'fresh', options: ['עם עצם', 'בלי עצם', 'רצועות', 'קוביות'] },
@@ -1659,7 +1659,16 @@
                   <button onClick={closeModal} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
                 </div>
                 
-                <form onSubmit={handleAddOrder} className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
+                <form onSubmit={handleAddOrder}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+                      e.preventDefault();
+                      const focusable = Array.from(e.currentTarget.querySelectorAll('input:not([type=hidden]), select, textarea')).filter(el => !el.disabled);
+                      const idx = focusable.indexOf(e.target);
+                      if (idx !== -1 && idx < focusable.length - 1) focusable[idx + 1].focus();
+                    }
+                  }}
+                  className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
                   
                   {formErrorMessage && (
                     <div className="bg-red-50 border-r-4 border-red-500 p-3.5 rounded-lg text-red-800 text-sm font-bold flex justify-between items-center animate-bounce">
