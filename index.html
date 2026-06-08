@@ -1895,19 +1895,12 @@
 
                     <div className="border border-black p-2 rounded mb-3 text-xs bg-purple-50/30">
                       <div className="font-bold text-[10px] text-gray-500 mb-1 text-center">כשרות כללית של ההזמנה</div>
-                      <div className="flex gap-4 font-bold justify-center">
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'לנדא' ? '☑' : '☐'}</span> לנדא
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'בד"ץ' ? '☑' : '☐'}</span> בד"ץ
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'קהילות' ? '☑' : '☐'}</span> קהילות
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'רובין' ? '☑' : '☐'}</span> רובין
-                        </span>
+                      <div className="flex gap-4 font-bold justify-center flex-wrap">
+                        {kashrutList.map(k => (
+                          <span key={k.id} className="flex items-center gap-1">
+                            <span>{activePrintOrder.kashrut === k.name ? '☑' : '☐'}</span> {k.name}
+                          </span>
+                        ))}
                       </div>
                     </div>
 
