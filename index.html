@@ -1433,17 +1433,56 @@
                 </div>
 
                 {/* פריטים */}
-                <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3 flex-1">
-                  {order.items.map((item, idx) => (
-                    <li key={idx} className="px-2 py-1.5 flex items-start gap-2 text-xs">
-                      <span className={`font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 ${item.qty === '-' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-purple-100 text-purple-800 border-purple-200'}`}>{item.qty}</span>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-bold text-gray-800">{item.name}</span>
-                        {item.notes && <div className="text-red-500 font-medium">✂️ {item.notes}</div>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                {(() => {
+                  const regularItems = order.items.filter(i => i.qty !== '-');
+                  const packingItem = order.items.find(i => i.qty === '-');
+                  const seen = new Set();
+                  const groups = [];
+                  regularItems.forEach(item => {
+                    const key = item.cleanName || item.name;
+                    if (!seen.has(key)) {
+                      seen.add(key);
+                      const grp = regularItems.filter(i => (i.cleanName || i.name) === key);
+                      groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
+                    }
+                  });
+                  return (
+                    <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3 flex-1">
+                      {groups.map((group, gIdx) => (
+                        <li key={gIdx} className="px-2 py-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 bg-purple-100 text-purple-800 border-purple-200">
+                              {group.items.length > 1 ? group.total : group.items[0].qty}
+                            </span>
+                            <span className="font-bold text-gray-800">{group.key}</span>
+                          </div>
+                          {group.items.length > 1 && (
+                            <div className="mr-6 mt-1.5 space-y-1 border-r-2 border-purple-200 pr-2">
+                              {group.items.map((item, iIdx) => {
+                                const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
+                                return (
+                                  <div key={iIdx} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                                    <span className="font-extrabold text-purple-600 min-w-[20px] text-center">{item.qty}</span>
+                                    <span>{opt}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {group.items.length === 1 && group.items[0].notes && (
+                            <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {group.items[0].notes}</div>
+                          )}
+                        </li>
+                      ))}
+                      {packingItem && (
+                        <li className="px-2 py-1.5 flex items-center gap-2 text-xs">
+                          <span className="font-black px-1.5 py-0.5 rounded border bg-gray-100 text-gray-500 border-gray-200 text-center shrink-0">📦</span>
+                          <span className="text-gray-600 font-medium">{packingItem.notes}</span>
+                        </li>
+                      )}
+                    </ul>
+                  );
+                })()}
 
                 {/* תצוגת אריזה להזמנות שהסתיימו */}
                 {dimmed && order.packaging && (order.packaging.cartons || order.packaging.bags || order.packaging.fishBags) && (
