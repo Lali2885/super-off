@@ -980,6 +980,8 @@
       const [chargeStatus, setChargeStatus] = useState('');
       const [assignedButcher, setAssignedButcher] = useState('');
 
+      const [openDropdown, setOpenDropdown] = useState(null);
+
       const [expandedCategories, setExpandedCategories] = useState({
         'עוף': true,
         'הודו': false,
@@ -991,33 +993,39 @@
         setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
       };
 
-      const addSplit = (id) => {
+      const updateItemState = (id, field, value, rowIndex = 0) => {
         setFormItemsState(prev => {
-          const existing = prev[id] || { qty: '', option: '', notes: '', kashrut: '', splits: [] };
-          return { ...prev, [id]: { ...existing, splits: [...(existing.splits || []), { qty: '', option: '' }] } };
+          const rows = prev[id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
+          return {
+            ...prev,
+            [id]: rows.map((row, i) => i === rowIndex ? { ...row, [field]: value } : row)
+          };
         });
       };
 
-      const removeSplit = (id, splitIdx) => {
+      const addSplitRow = (id) => {
         setFormItemsState(prev => {
-          const existing = prev[id];
-          const newSplits = existing.splits.filter((_, i) => i !== splitIdx);
-          return { ...prev, [id]: { ...existing, splits: newSplits } };
+          const rows = prev[id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
+          return { ...prev, [id]: [...rows, { qty: '', option: '', notes: '', kashrut: '' }] };
         });
       };
 
-      const updateSplit = (id, splitIdx, field, value) => {
+      const removeSplitRow = (id, rowIndex) => {
         setFormItemsState(prev => {
-          const existing = prev[id];
-          const newSplits = existing.splits.map((s, i) => i === splitIdx ? { ...s, [field]: value } : s);
-          return { ...prev, [id]: { ...existing, splits: newSplits } };
+          const rows = (prev[id] || []).filter((_, i) => i !== rowIndex);
+          return { ...prev, [id]: rows.length > 0 ? rows : [{ qty: '', option: '', notes: '', kashrut: '' }] };
         });
       };
 
-      const updateItemState = (id, field, value) => {
+      const toggleMultiSelectOption = (id, opt) => {
         setFormItemsState(prev => {
-          const existing = prev[id] || { qty: '', option: '', notes: '', kashrut: '', splits: [] };
-          return { ...prev, [id]: { ...existing, [field]: value } };
+          const rows = prev[id] || [];
+          const exists = rows.some(r => r.option === opt);
+          if (exists) {
+            return { ...prev, [id]: rows.filter(r => r.option !== opt) };
+          } else {
+            return { ...prev, [id]: [...rows, { qty: '', option: opt, notes: '', kashrut: '' }] };
+          }
         });
       };
 
@@ -1058,7 +1066,12 @@
               const match = item.name.match(/\((.+)\)$/);
               if (match) option = match[1];
             }
-            rebuilt[template.id] = { qty: item.qty.toString(), option, notes: item.notes || '', kashrut: item.kashrut || '' };
+            const newRow = { qty: item.qty.toString(), option, notes: item.notes || '', kashrut: item.kashrut || '' };
+            if (!rebuilt[template.id]) {
+              rebuilt[template.id] = [newRow];
+            } else {
+              rebuilt[template.id].push(newRow);
+            }
           }
         });
         setFormItemsState(rebuilt);
@@ -1089,18 +1102,25 @@
         }
 
         const populatedItems = ORDER_FORM_TEMPLATE
-          .filter(template => formItemsState[template.id] && formItemsState[template.id].qty > 0)
-          .map(template => {
-            const state = formItemsState[template.id];
-            let finalName = template.name;
-            if (state.option) finalName += ` (${state.option})`;
-            return {
-              name: finalName,
-              cleanName: template.name, // To match against stock
-              qty: parseFloat(state.qty),
-              notes: state.notes,
-              kashrut: state.kashrut || kashrut
-            };
+          .filter(template => {
+            const rows = formItemsState[template.id];
+            return rows && rows.some(r => parseFloat(r.qty) > 0);
+          })
+          .flatMap(template => {
+            const rows = formItemsState[template.id] || [];
+            return rows
+              .filter(r => parseFloat(r.qty) > 0)
+              .map(r => {
+                let finalName = template.name;
+                if (r.option) finalName += ` (${r.option})`;
+                return {
+                  name: finalName,
+                  cleanName: template.name,
+                  qty: parseFloat(r.qty),
+                  notes: r.notes,
+                  kashrut: r.kashrut || kashrut
+                };
+              });
           });
 
         if (populatedItems.length === 0) {
@@ -1188,74 +1208,133 @@
             {isExpanded && (
               <div className="divide-y divide-gray-100 animate-in slide-in-from-top-2 duration-200">
                 {itemsInCategory.map(item => {
-                  const currentState = formItemsState[item.id] || { qty: '', option: '', notes: '', kashrut: '' };
+                  if (item.multiSelect) {
+                    const rows = formItemsState[item.id] || [];
+                    const selectedOptions = rows.map(r => r.option);
+                    const isOpen = openDropdown === item.id;
+                    return (
+                      <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
+                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
+                        <div className="flex-1 flex flex-col gap-2">
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setOpenDropdown(isOpen ? null : item.id)}
+                              className="w-full flex items-center justify-between p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 bg-white hover:border-purple-300 transition-colors"
+                            >
+                              <span className={selectedOptions.length === 0 ? 'text-gray-400' : 'text-purple-800 font-bold'}>
+                                {selectedOptions.length === 0 ? 'בחר...' : selectedOptions.join(', ')}
+                              </span>
+                              <Icons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 mr-1 ${isOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            {isOpen && (
+                              <div className="absolute z-30 w-full mt-1 bg-white border border-purple-200 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
+                                {item.options.map(opt => {
+                                  const isChecked = selectedOptions.includes(opt);
+                                  return (
+                                    <label key={opt} className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-gray-50 last:border-0 transition-colors ${isChecked ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-gray-50'}`}>
+                                      <input type="checkbox" checked={isChecked}
+                                        onChange={() => toggleMultiSelectOption(item.id, opt)}
+                                        className="accent-purple-600 w-4 h-4 shrink-0" />
+                                      <span className={`text-sm ${isChecked ? 'font-bold text-purple-800' : 'text-gray-700'}`}>{opt}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          {rows.map((rowData, rowIndex) => (
+                            <div key={rowData.option} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-purple-50/40 rounded-lg px-2 py-1.5 border border-purple-100">
+                              <span className="text-xs font-bold text-purple-700 shrink-0 min-w-[70px] max-w-[130px] truncate">{rowData.option}</span>
+                              <input
+                                type="number" min="0" step="0.5" placeholder="כמות..."
+                                value={rowData.qty ?? ''}
+                                onChange={e => updateItemState(item.id, 'qty', e.target.value, rowIndex)}
+                                className="w-16 p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center bg-white"
+                              />
+                              <select
+                                value={rowData.kashrut || kashrut || ''}
+                                onChange={e => updateItemState(item.id, 'kashrut', e.target.value, rowIndex)}
+                                className="flex-1 min-w-[90px] p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none bg-white"
+                              >
+                                <option value="" disabled>כשרות...</option>
+                                {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                              </select>
+                              <input
+                                type="text" placeholder="הערה"
+                                value={rowData.notes ?? ''}
+                                onChange={e => updateItemState(item.id, 'notes', e.target.value, rowIndex)}
+                                className="flex-1 min-w-[90px] p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none bg-white"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // מוצרים רגילים — שורה אחת עם אפשרות פיצול
+                  const rows = formItemsState[item.id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
+                  const canSplit = item.options.length > 0;
                   return (
-                    <div key={item.id} className="p-3 flex flex-col md:flex-row items-start md:items-center gap-3 hover:bg-gray-50">
-                      <div className="w-full md:w-36 font-bold text-gray-800 shrink-0">
+                    <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
+                      <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
                         {item.name}
                       </div>
-                      
-                      <div className="flex flex-1 gap-2 w-full flex-wrap sm:flex-nowrap">
-                        <input 
-                          type="number" 
-                          min="0"
-                          step="0.5"
-                          placeholder="כמות..."
-                          value={currentState.qty ?? ''} 
-                          onChange={(e) => updateItemState(item.id, 'qty', e.target.value)}
-                          className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
-                        />
-                        
-                        {item.options.length > 0 && !item.multiSelect && (
-                          <select
-                            value={currentState.option ?? ''}
-                            onChange={(e) => updateItemState(item.id, 'option', e.target.value)}
-                            className="flex-1 min-w-[80px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                          >
-                            <option value="" disabled>בחר...</option>
-                            {item.options.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        )}
-                        {item.options.length > 0 && item.multiSelect && (
-                          <div className="flex flex-wrap gap-1.5 flex-1">
-                            {item.options.map(opt => {
-                              const selected = (currentState.option || '').split(',').map(s => s.trim()).filter(Boolean);
-                              const isChecked = selected.includes(opt);
-                              return (
-                                <label key={opt} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all ${isChecked ? 'bg-purple-100 border-purple-400 text-purple-800 font-bold' : 'bg-white border-gray-300 text-gray-600'}`}>
-                                  <input type="checkbox" className="hidden" checked={isChecked}
-                                    onChange={() => {
-                                      const newSelected = isChecked
-                                        ? selected.filter(s => s !== opt)
-                                        : [...selected, opt];
-                                      updateItemState(item.id, 'option', newSelected.join(', '));
-                                    }} />
-                                  {opt}
-                                </label>
-                              );
-                            })}
+                      <div className="flex-1 flex flex-col gap-2">
+                        {rows.map((rowData, rowIndex) => (
+                          <div key={rowIndex} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                            <input
+                              type="number" min="0" step="0.5" placeholder="כמות..."
+                              value={rowData.qty ?? ''}
+                              onChange={(e) => updateItemState(item.id, 'qty', e.target.value, rowIndex)}
+                              className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
+                            />
+                            {item.options.length > 0 && (
+                              <select
+                                value={rowData.option ?? ''}
+                                onChange={(e) => updateItemState(item.id, 'option', e.target.value, rowIndex)}
+                                className="flex-1 min-w-[80px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                              >
+                                <option value="" disabled>בחר...</option>
+                                {item.options.map(opt => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            )}
+                            <select
+                              value={rowData.kashrut || kashrut || ''}
+                              onChange={(e) => updateItemState(item.id, 'kashrut', e.target.value, rowIndex)}
+                              className="flex-1 min-w-[90px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                            >
+                              <option value="" disabled>כשרות...</option>
+                              {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                            </select>
+                            <input
+                              type="text" placeholder="הערה"
+                              value={rowData.notes ?? ''}
+                              onChange={(e) => updateItemState(item.id, 'notes', e.target.value, rowIndex)}
+                              className="flex-1 min-w-[100px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                            />
+                            {rows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeSplitRow(item.id, rowIndex)}
+                                className="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors shrink-0 font-bold text-base"
+                                title="הסר שורה"
+                              >×</button>
+                            )}
                           </div>
+                        ))}
+                        {canSplit && (
+                          <button
+                            type="button"
+                            onClick={() => addSplitRow(item.id)}
+                            className="self-start text-xs text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-1 rounded-lg border border-purple-200 transition-colors font-bold flex items-center gap-1 mt-0.5"
+                          >
+                            <span className="text-sm leading-none">+</span> פיצול
+                          </button>
                         )}
-                        
-                        {/* כשרות ספציפית לשורה */}
-                        <select
-                          value={currentState.kashrut || kashrut || ''}
-                          onChange={(e) => updateItemState(item.id, 'kashrut', e.target.value)}
-                          className="flex-1 min-w-[90px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                        >
-                          <option value="" disabled>כשרות...</option>
-                          {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                        </select>
-                        
-                        <input 
-                          type="text" 
-                          placeholder="הערה"
-                          value={currentState.notes ?? ''} 
-                          onChange={(e) => updateItemState(item.id, 'notes', e.target.value)}
-                          className="flex-1 min-w-[120px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                        />
                       </div>
                     </div>
                   );
