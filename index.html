@@ -1157,8 +1157,8 @@
         closeModal();
       };
 
-      const triggerPhysicalPrint = () => {
-        const printContent = document.getElementById('physical-print-slip-area').innerHTML;
+      const triggerPhysicalPrint = (areaId = 'physical-print-slip-area-general') => {
+        const printContent = document.getElementById(areaId).innerHTML;
         const printWindow = window.open('', '_blank', 'width=800,height=900');
         printWindow.document.write(`
           <html dir="rtl">
@@ -1819,110 +1819,142 @@
                   <button onClick={() => setActivePrintOrder(null)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
                 </div>
 
-                {/* תצוגת נייר A5 ריאליסטית */}
-                <div className="overflow-y-auto p-6 flex-1 bg-gray-300/50 flex justify-center items-center custom-scrollbar">
-                  <div 
-                    id="physical-print-slip-area" 
-                    className="bg-white p-8 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full min-h-[210mm] shadow-2xl text-black relative animate-in zoom-in-95 duration-200"
-                    style={{ fontFamily: 'Assistant, sans-serif' }}
-                  >
-                    <div className="text-center text-xs font-bold tracking-widest mb-1">בס"ד</div>
-                    
-                    <PoultryLogo className="h-20 object-contain mx-auto mb-2" />
+                {/* תצוגת שני בונים */}
+                <div className="overflow-y-auto p-4 flex-1 bg-gray-300/50 flex flex-col gap-6 items-center custom-scrollbar">
+                  {(() => {
+                    const allRegular = activePrintOrder.items.filter(i => i.qty !== '-');
+                    const packingItem = activePrintOrder.items.find(i => i.qty === '-');
+                    const buildGroups = (items) => {
+                      const seen = new Set(); const groups = [];
+                      items.forEach(item => {
+                        const key = item.cleanName || item.name;
+                        if (!seen.has(key)) {
+                          seen.add(key);
+                          const grp = items.filter(i => (i.cleanName || i.name) === key);
+                          groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0), kashrut: grp[0].kashrut });
+                        }
+                      });
+                      return groups;
+                    };
+                    const isFish = item => ORDER_FORM_TEMPLATE.find(t => t.name === (item.cleanName || item.name))?.category === 'דגים';
+                    const fishItems = allRegular.filter(isFish);
+                    const generalItems = allRegular.filter(i => !isFish(i));
+                    const fishGroups = buildGroups(fishItems);
+                    const generalGroups = buildGroups(generalItems);
 
-                    <div className="grid grid-cols-3 gap-2 text-xs font-bold border-b border-black pb-2 mb-3">
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{activePrintOrder.flags?.chargeStatus === 'noCharge' ? '☑' : '☐'}</span>
-                        <span>לא לחייב</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{activePrintOrder.flags?.mustCoordinate ? '☑' : '☐'}</span>
-                        <span>לתאם חובה</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{activePrintOrder.flags?.notifyReady ? '☑' : '☐'}</span>
-                        <span>להודיע שמוכן</span>
-                      </div>
-                    </div>
+                    const renderSlipTable = (groups, extraRow) => (
+                      <table className="w-full text-right text-xs border-collapse border border-black">
+                        <thead>
+                          <tr className="bg-black text-white font-bold">
+                            <th className="p-1.5 border border-black w-14 text-center">כמות</th>
+                            <th className="p-1.5 border border-black">פריט</th>
+                            <th className="p-1.5 border border-black text-center">כשרות</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-black font-bold">
+                          {groups.map((group, gIdx) => (
+                            <tr key={gIdx} className={gIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="p-2 border border-black text-center text-sm font-extrabold bg-gray-100">
+                                {group.items.length > 1 ? group.total : group.items[0].qty}
+                              </td>
+                              <td className="p-2 border border-black">
+                                <span className="block font-bold">{group.key}</span>
+                                {group.items.length > 1 && (
+                                  <div className="mt-1 mr-1 space-y-0.5 border-r-2 border-gray-400 pr-1.5">
+                                    {group.items.map((item, iIdx) => {
+                                      const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
+                                      return (
+                                        <div key={iIdx} className="flex gap-1.5 text-[10px] text-gray-600 font-bold">
+                                          <span className="min-w-[18px] text-center font-extrabold">{item.qty}</span>
+                                          <span>{opt}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                {group.items.length === 1 && group.items[0].notes && (
+                                  <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
+                                )}
+                              </td>
+                              <td className="p-2 border border-black text-center text-[10px] text-gray-600 bg-gray-50/50">{group.kashrut}</td>
+                            </tr>
+                          ))}
+                          {extraRow}
+                        </tbody>
+                      </table>
+                    );
 
-                    <div className="border border-black p-2 rounded mb-3 text-xs space-y-1.5 bg-gray-50/50">
-                      <div className="flex justify-between font-extrabold border-b border-gray-200 pb-1 mb-1">
-                        <span>סוג: {activePrintOrder.type === 'delivery' ? '🚚 משלוח היום' : '🏪 איסוף בחנות'}</span>
-                        <span>מספר הזמנה: #{activePrintOrder.id}</span>
-                      </div>
-                      {activePrintOrder.timeString && (
-                        <div className="font-bold">מועד מבוקש: {activePrintOrder.timeString}</div>
-                      )}
-                    </div>
-
-                    <div className="border-b border-black pb-2 mb-3 text-xs space-y-1.5 bg-white">
-                      <div><strong className="text-gray-600">שם הלקוח:</strong> <span className="font-extrabold text-base">{activePrintOrder.customer}</span></div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div><strong className="text-gray-600">טלפון:</strong> <span className="font-bold">{activePrintOrder.phone}</span></div>
-                        {activePrintOrder.mobile && <div><strong className="text-gray-600">נייד:</strong> <span className="font-bold">{activePrintOrder.mobile}</span></div>}
-                      </div>
-                      {activePrintOrder.type === 'delivery' && (
-                        <>
-                          <div><strong className="text-gray-600">שכונה/אזור:</strong> <span className="font-bold">{activePrintOrder.neighborhood}</span></div>
-                          <div><strong className="text-gray-600">כתובת:</strong> <span className="font-medium">{activePrintOrder.street || 'לא הוזן רחוב'}</span></div>
-                          <div className="grid grid-cols-3 gap-1 text-[11px] bg-gray-100 p-1.5 rounded mt-1 text-center font-bold">
-                            <div>כניסה: {activePrintOrder.entrance || '-'}</div>
-                            <div>קומה: {activePrintOrder.floor || '-'}</div>
-                            <div>דירה: {activePrintOrder.apt || '-'}</div>
+                    const slipHeader = (
+                      <>
+                        <div className="border-b border-black pb-2 mb-3 text-xs space-y-1.5 bg-white">
+                          <div><strong className="text-gray-600">שם הלקוח:</strong> <span className="font-extrabold text-base">{activePrintOrder.customer}</span></div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div><strong className="text-gray-600">טלפון:</strong> <span className="font-bold">{activePrintOrder.phone}</span></div>
+                            {activePrintOrder.mobile && <div><strong className="text-gray-600">נייד:</strong> <span className="font-bold">{activePrintOrder.mobile}</span></div>}
                           </div>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                        <div className="border border-black p-2 rounded mb-3 text-xs space-y-1 bg-gray-50/50">
+                          <div className="flex justify-between font-extrabold">
+                            <span>סוג: {activePrintOrder.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}</span>
+                            <span>הזמנה: #{activePrintOrder.id}</span>
+                          </div>
+                          {activePrintOrder.timeString && <div className="font-bold">מועד: {activePrintOrder.timeString}</div>}
+                        </div>
+                      </>
+                    );
 
-                    <div className="border border-black p-2 rounded mb-3 text-xs bg-purple-50/30">
-                      <div className="font-bold text-[10px] text-gray-500 mb-1 text-center">כשרות כללית של ההזמנה</div>
-                      <div className="flex gap-4 font-bold justify-center">
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'לנדא' ? '☑' : '☐'}</span> לנדא
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'בד"ץ' ? '☑' : '☐'}</span> בד"ץ
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'קהילות' ? '☑' : '☐'}</span> קהילות
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span>{activePrintOrder.kashrut === 'רובין' ? '☑' : '☐'}</span> רובין
-                        </span>
-                      </div>
-                    </div>
-
-                    <table className="w-full text-right text-xs border-collapse border border-black">
-                      <thead>
-                        <tr className="bg-black text-white font-bold">
-                          <th className="p-1.5 border border-black w-14 text-center">כמות</th>
-                          <th className="p-1.5 border border-black">פריט</th>
-                          <th className="p-1.5 border border-black text-center">כשרות</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-black font-bold">
-                        {activePrintOrder.items.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-gray-100">
-                            <td className="p-2 border border-black text-center text-sm font-extrabold bg-gray-100">{item.qty}</td>
-                            <td className="p-2 border border-black">
-                              <span className="block font-bold">{item.name}</span>
-                              {item.notes && <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {item.notes}</span>}
-                            </td>
-                            <td className="p-2 border border-black text-center text-[10px] text-gray-600 bg-gray-50/50">{item.kashrut}</td>
+                    return <>
+                      {/* בון כללי */}
+                      <div id="physical-print-slip-area-general"
+                        className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
+                        style={{ fontFamily: 'Assistant, sans-serif' }}>
+                        <div className="text-center text-xs font-bold tracking-widest mb-1">בס"ד</div>
+                        <PoultryLogo className="h-16 object-contain mx-auto mb-2" />
+                        <div className="text-center font-extrabold text-sm mb-2 border-b border-black pb-1">בון הזמנה כללי</div>
+                        <div className="grid grid-cols-3 gap-2 text-xs font-bold border-b border-black pb-2 mb-3">
+                          <div className="flex items-center gap-1"><span className="text-lg leading-none">{activePrintOrder.flags?.chargeStatus === 'noCharge' ? '☑' : '☐'}</span><span>לא לחייב</span></div>
+                          <div className="flex items-center gap-1"><span className="text-lg leading-none">{activePrintOrder.flags?.mustCoordinate ? '☑' : '☐'}</span><span>לתאם חובה</span></div>
+                          <div className="flex items-center gap-1"><span className="text-lg leading-none">{activePrintOrder.flags?.notifyReady ? '☑' : '☐'}</span><span>להודיע שמוכן</span></div>
+                        </div>
+                        {slipHeader}
+                        <div className="border border-black p-2 rounded mb-3 text-xs bg-purple-50/30">
+                          <div className="font-bold text-[10px] text-gray-500 mb-1 text-center">כשרות</div>
+                          <div className="flex gap-4 font-bold justify-center flex-wrap">
+                            {kashrutList.map(k => (<span key={k.id} className="flex items-center gap-1"><span>{activePrintOrder.kashrut === k.name ? '☑' : '☐'}</span> {k.name}</span>))}
+                          </div>
+                        </div>
+                        {renderSlipTable(generalGroups, packingItem && (
+                          <tr className="bg-gray-50">
+                            <td className="p-2 border border-black text-center text-sm bg-gray-100">📦</td>
+                            <td className="p-2 border border-black font-bold text-gray-700" colSpan="2">{packingItem.notes}</td>
                           </tr>
                         ))}
-                      </tbody>
-                    </table>
+                        <div className="text-center text-[10px] font-bold text-gray-500 mt-4 pt-2 border-t border-dashed border-gray-300">נארז ונחתך באהבה | סופרעוף</div>
+                      </div>
 
-                    <div className="text-center text-[10px] font-bold text-gray-500 mt-6 pt-2 border-t border-dashed border-gray-300">
-                      <p>נארז ונחתך באהבה | סופרעוף</p>
-                    </div>
-                  </div>
+                      {/* בון דייג */}
+                      {fishGroups.length > 0 && (
+                        <div id="physical-print-slip-area-fish"
+                          className="bg-white p-6 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
+                          style={{ fontFamily: 'Assistant, sans-serif' }}>
+                          <div className="text-center text-xs font-bold tracking-widest mb-1">בס"ד</div>
+                          <PoultryLogo className="h-16 object-contain mx-auto mb-2" />
+                          <div className="text-center font-extrabold text-sm mb-2 border-b-2 border-blue-600 pb-1 text-blue-800">🐟 בון דייג</div>
+                          {slipHeader}
+                          {renderSlipTable(fishGroups, null)}
+                          <div className="text-center text-[10px] font-bold text-gray-500 mt-4 pt-2 border-t border-dashed border-gray-300">נארז ונחתך באהבה | סופרעוף</div>
+                        </div>
+                      )}
+                    </>;
+                  })()}
                 </div>
 
-                <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-3 shrink-0">
-                  <Button variant="outline" className="flex-1" onClick={() => setActivePrintOrder(null)}>סגור תצוגה</Button>
-                  <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2.5 shadow-md" onClick={triggerPhysicalPrint}>הדפס בון פיזי (A5 / PDF)</Button>
+                <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-2 shrink-0 flex-wrap">
+                  <Button variant="outline" className="flex-1" onClick={() => setActivePrintOrder(null)}>סגור</Button>
+                  <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2" onClick={() => triggerPhysicalPrint('physical-print-slip-area-general')}>הדפס בון כללי</Button>
+                  {activePrintOrder?.items.some(i => i.qty !== '-' && ORDER_FORM_TEMPLATE.find(t => t.name === (i.cleanName || i.name))?.category === 'דגים') && (
+                    <Button variant="secondary" icon={Icons.Printer} className="flex-1 font-bold py-2" onClick={() => triggerPhysicalPrint('physical-print-slip-area-fish')}>הדפס בון דייג 🐟</Button>
+                  )}
                 </div>
               </div>
             </div>
