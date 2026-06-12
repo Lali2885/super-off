@@ -339,43 +339,67 @@
 
     // --- Constants ---
     const ORDER_FORM_TEMPLATE = [
-      { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'] },
-      { id: 'c3', category: 'עוף', name: 'עוף מפורק לפרגית', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
-      { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', options: ['לחלק', 'שלם', 'בלי עור', 'למילוי'] },
-      { id: 'c6', category: 'עוף', name: 'שניצל', storageType: 'fresh', options: ['רגיל', 'דק', 'עבה'] },
-      { id: 'c7', category: 'עוף', name: 'חזה', storageType: 'fresh', options: ['עם עצם', 'בלי עצם', 'רצועות', 'קוביות'] },
-      { id: 'c8', category: 'עוף', name: 'פרגיות', storageType: 'fresh', options: ['עם עור', 'בלי עור', 'קוביות'] },
-      { id: 'c5a', category: 'עוף', name: 'שוקיים', storageType: 'fresh', options: [] },
-      { id: 'c5b', category: 'עוף', name: 'ירכיים', storageType: 'fresh', options: [] },
-      { id: 'c9', category: 'עוף', name: 'כנפיים', storageType: 'fresh', options: [] },
+      { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', inline: true, options: [], checkboxOptions: ['להוריד עור', 'לחלק כרעיים'] },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'] },
+      { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', inline: true, options: ['כרעיים עוף', 'כרעיים עוף בלי עור פרמיום'] },
+      { id: 'c7', category: 'עוף', name: 'חזה/שניצל', storageType: 'fresh', inline: true, options: ['שניצל עוף', 'חזה עוף טחון טהור', 'חזה עוף קוביות', 'חזה עוף רצועות', 'חזה עוף חצוי ונקי'] },
+      { id: 'c8', category: 'עוף', name: 'פרגיות', storageType: 'fresh', inline: true, options: ['פרגית עוף עם עור', 'פרגית בלי עור', 'קוביות פרגית', 'פרגית טחונה', 'סטייק פרגית', 'סטייק פרגית שטוח'] },
+      { id: 'c5a', category: 'עוף', name: 'שוקיים עוף', storageType: 'fresh', options: [] },
+      { id: 'c5b', category: 'עוף', name: 'ירכיים עוף', storageType: 'fresh', options: [] },
+      { id: 'c9', category: 'עוף', name: 'כנפיים עוף', storageType: 'fresh', options: [] },
+      { id: 'c10', category: 'עוף', name: 'גרונות ועצמות עוף', storageType: 'fresh', options: [] },
+      { id: 'c11', category: 'עוף', name: 'סט למרק', storageType: 'fresh', options: [] },
 
-      { id: 'm1', category: 'בשר ואחרים', name: 'עוף טחון', storageType: 'fresh', options: [] },
-      { id: 'm2', category: 'בשר ואחרים', name: 'הודו אדום טחון', storageType: 'fresh', options: [] },
-      { id: 'm3', category: 'בשר ואחרים', name: 'חזה הודו טחון', storageType: 'fresh', options: [] },
-      { id: 'm4', category: 'בשר ואחרים', name: 'בשר טחון', storageType: 'fresh', options: [] },
-      { id: 'm6', category: 'בשר ואחרים', name: 'קשתית / מיקס מס\' 2', storageType: 'fresh', options: [] },
+      { id: 'b1',  category: 'בשר', name: 'אצבעות אנטריקוט',           storageType: 'fresh', options: [] },
+      { id: 'b2',  category: 'בשר', name: 'בשר ראש',                   storageType: 'fresh', options: [] },
+      { id: 'b3',  category: 'בשר', name: 'גידי בקר',                  storageType: 'fresh', options: [] },
+      { id: 'b4',  category: 'בשר', name: 'לשון בקר',                  storageType: 'fresh', options: [] },
+      { id: 'b5',  category: 'בשר', name: 'נתח אסאדו עם עצם',          storageType: 'fresh', options: [] },
+      { id: 'b6',  category: 'בשר', name: 'פילה מדומה מס 6',           storageType: 'fresh', options: [] },
+      { id: 'b7',  category: 'בשר', name: 'צלי כתף מס 5',              storageType: 'fresh', options: [] },
+      { id: 'b8',  category: 'בשר', name: 'צלעות אונטריפ ברשת',        storageType: 'fresh', options: [] },
+      { id: 'b9',  category: 'בשר', name: 'שריר הזרוע מס\' 8',         storageType: 'fresh', options: [] },
+      { id: 'b10', category: 'בשר', name: 'אוסובוקו עגל',              storageType: 'fresh', options: [] },
+      { id: 'b11', category: 'בשר', name: 'אסאדו עגל עם עצם פרוס',    storageType: 'fresh', options: [] },
+      { id: 'b12', category: 'בשר', name: 'בקר טחון טהור',             storageType: 'fresh', options: [] },
+      { id: 'b13', category: 'בשר', name: 'בשר ראש קוביות',            storageType: 'fresh', options: [] },
+      { id: 'b14', category: 'בשר', name: 'טשולנט מיקס',               storageType: 'fresh', options: [] },
+      { id: 'b15', category: 'בשר', name: 'מיני אסאדו פרוס',           storageType: 'fresh', options: [] },
+      { id: 'b16', category: 'בשר', name: 'מיני אסאדו שלם',            storageType: 'fresh', options: [] },
+      { id: 'b17', category: 'בשר', name: 'סטייק אנגוס פידלוט',        storageType: 'fresh', options: [] },
+      { id: 'b18', category: 'בשר', name: 'סטייק אנטריקוט',            storageType: 'fresh', options: [] },
+      { id: 'b19', category: 'בשר', name: 'סטייק מיושן URU פרמיום',    storageType: 'fresh', options: [] },
+      { id: 'b20', category: 'בשר', name: 'עצמות ברך',                 storageType: 'fresh', options: [] },
+      { id: 'b21', category: 'בשר', name: 'עצמות מח',                  storageType: 'fresh', options: [] },
+      { id: 'b22', category: 'בשר', name: 'פלאנקען',                   storageType: 'fresh', options: [] },
+      { id: 'b23', category: 'בשר', name: 'קוביות בשר מס 8',           storageType: 'fresh', options: [] },
 
-      { id: 't1a', category: 'הודו', name: 'כרעיים הודו', storageType: 'fresh', options: [] },
       { id: 't1b', category: 'הודו', name: 'שוקיים הודו', storageType: 'fresh', options: [] },
       { id: 't1c', category: 'הודו', name: 'כנפיים הודו', storageType: 'fresh', options: [] },
-      { id: 't2', category: 'הודו', name: 'חזה הודו', storageType: 'fresh', options: ['שלם', 'קוביות', 'רצועות'] },
-      { id: 't3', category: 'הודו', name: 'שווארמה', storageType: 'fresh', options: ['שלם', 'קוביות', 'רצועות'] },
-      { id: 't4', category: 'הודו', name: 'גרונות', storageType: 'fresh', options: [] },
-      { id: 't5', category: 'הודו', name: 'סטייק פרוס', storageType: 'fresh', options: [] },
-      { id: 't6', category: 'הודו', name: 'קורקבן הודו', storageType: 'fresh', options: [] },
-      { id: 't7', category: 'הודו', name: 'כבד צלוי', storageType: 'fresh', options: [] },
+      { id: 't3', category: 'הודו', name: 'שווארמה', storageType: 'fresh', inline: true, options: ['קוביות שווארמה', 'רצועות שווארמה'] },
+      { id: 't4', category: 'הודו', name: 'גרון הודו', storageType: 'fresh', options: [] },
+      { id: 't5', category: 'הודו', name: 'חזה/שניצל הודו', storageType: 'fresh', inline: true, options: ['נתח חזה הודו', 'שניצל הודו פרוס'] },
+      { id: 't8', category: 'הודו', name: 'הודו אדום טחון', storageType: 'fresh', options: [] },
 
-      { id: 'd1', category: 'דגים', name: 'קרפיון', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd2', category: 'דגים', name: 'סלמון', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd3', category: 'דגים', name: 'פורל', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd4', category: 'דגים', name: 'אמנון', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd5', category: 'דגים', name: 'בורי', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd6', category: 'דגים', name: 'דניס', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd7', category: 'דגים', name: 'לברק', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd8', category: 'דגים', name: 'ברמונדי', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd9', category: 'דגים', name: 'מוסר', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] }
+      { id: 'd1', category: 'דגים', name: 'קרפיון', storageType: 'frozen', inline: true, options: ['קרפיון פרוס', 'קרפיון טחון', 'פרוסות קרפיון', 'ראש ועצמות'] },
+      { id: 'd2', category: 'דגים', name: 'סלמון', storageType: 'frozen', inline: true, options: ['מנות', 'בייבי'], checkboxOptions: ['6 במגש', '8 במגש'] },
+      { id: 'd3', category: 'דגים', name: 'פורל', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd4', category: 'דגים', name: 'אמנון', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd5', category: 'דגים', name: 'בורי', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd6', category: 'דגים', name: 'דניס', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd7', category: 'דגים', name: 'לברק', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd8', category: 'דגים', name: 'ברמונדי', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd9', category: 'דגים', name: 'דג נילוס', storageType: 'frozen', inline: true, options: ['טחון', 'מנות'] }
     ];
+
+    const CATEGORY_COLORS = {
+      'עוף':        { outer: 'border-yellow-200', headerBg: 'bg-yellow-50',  headerHover: 'hover:bg-yellow-100', headerText: 'text-yellow-900', headerBorder: 'border-yellow-200', divider: 'divide-yellow-100', qtyBg: 'bg-yellow-100', qtyText: 'text-yellow-900', qtyBorder: 'border-yellow-300', subBorder: 'border-yellow-300', subQty: 'text-yellow-700', cardActive: 'bg-yellow-100 border-yellow-500 shadow-sm', cardHover: 'hover:border-yellow-300 hover:bg-yellow-50', cardActiveText: 'text-yellow-900', inputActive: 'border-yellow-400 text-yellow-900', ring: 'focus:ring-yellow-400' },
+      'הודו':       { outer: 'border-green-200',  headerBg: 'bg-green-50',   headerHover: 'hover:bg-green-100',  headerText: 'text-green-900',  headerBorder: 'border-green-200',  divider: 'divide-green-100',  qtyBg: 'bg-green-100',  qtyText: 'text-green-900',  qtyBorder: 'border-green-300',  subBorder: 'border-green-300',  subQty: 'text-green-700',  cardActive: 'bg-green-100 border-green-500 shadow-sm',  cardHover: 'hover:border-green-300 hover:bg-green-50',  cardActiveText: 'text-green-900',  inputActive: 'border-green-400 text-green-900',  ring: 'focus:ring-green-400' },
+      'בשר': { outer: 'border-red-200',    headerBg: 'bg-red-50',     headerHover: 'hover:bg-red-100',    headerText: 'text-red-900',    headerBorder: 'border-red-200',    divider: 'divide-red-100',    qtyBg: 'bg-red-100',    qtyText: 'text-red-900',    qtyBorder: 'border-red-300',    subBorder: 'border-red-300',    subQty: 'text-red-700',    cardActive: 'bg-red-100 border-red-500 shadow-sm',    cardHover: 'hover:border-red-300 hover:bg-red-50',    cardActiveText: 'text-red-900',    inputActive: 'border-red-400 text-red-900',    ring: 'focus:ring-red-400' },
+      'דגים':       { outer: 'border-blue-200',   headerBg: 'bg-blue-50',    headerHover: 'hover:bg-blue-100',   headerText: 'text-blue-900',   headerBorder: 'border-blue-200',   divider: 'divide-blue-100',   qtyBg: 'bg-blue-100',   qtyText: 'text-blue-900',   qtyBorder: 'border-blue-300',   subBorder: 'border-blue-300',   subQty: 'text-blue-700',   cardActive: 'bg-blue-100 border-blue-500 shadow-sm',   cardHover: 'hover:border-blue-300 hover:bg-blue-50',   cardActiveText: 'text-blue-900',   inputActive: 'border-blue-400 text-blue-900',   ring: 'focus:ring-blue-400' },
+    };
+    const DEFAULT_CAT_COLORS = { outer: 'border-gray-200', headerBg: 'bg-gray-50', headerHover: 'hover:bg-gray-100', headerText: 'text-gray-900', headerBorder: 'border-gray-200', divider: 'divide-gray-100', qtyBg: 'bg-purple-100', qtyText: 'text-purple-800', qtyBorder: 'border-purple-200', subBorder: 'border-purple-200', subQty: 'text-purple-600', cardActive: 'bg-purple-100 border-purple-500 shadow-sm', cardHover: 'hover:border-purple-300 hover:bg-purple-50', cardActiveText: 'text-purple-900', inputActive: 'border-purple-400 text-purple-900', ring: 'focus:ring-purple-400' };
+    const getCatColors = (cat) => CATEGORY_COLORS[cat] || DEFAULT_CAT_COLORS;
 
     // --- Dashboard View ---
     const DashboardView = ({ orders, stock, shortages, setActiveTab }) => {
@@ -958,11 +982,13 @@
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
+      const [deleteConfirmOrder, setDeleteConfirmOrder] = useState(null);
       const [printMode, setPrintMode] = useState('general'); // 'general' | 'fish'
       const openPrint = (order, mode) => { setPrintMode(mode); setActivePrintOrder(order); };
       const [orderType, setOrderType] = useState('delivery');
       const [formItemsState, setFormItemsState] = useState({});
       const [packingOption, setPackingOption] = useState('');
+      const [categorySearch, setCategorySearch] = useState({});
       const [formErrorMessage, setFormErrorMessage] = useState('');
 
       // Client state fields
@@ -982,55 +1008,47 @@
       const [chargeStatus, setChargeStatus] = useState('');
       const [assignedButcher, setAssignedButcher] = useState('');
 
+      const [expandedCategories, setExpandedCategories] = useState({
+        'עוף': false,
+        'הודו': false,
+        'בשר': false,
+        'דגים': false
+      });
+
       const [openDropdown, setOpenDropdown] = useState(null);
       const [expandedOrders, setExpandedOrders] = useState(new Set());
       const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-      const [expandedCategories, setExpandedCategories] = useState({
-        'עוף': true,
-        'הודו': false,
-        'בשר ואחרים': false,
-        'דגים': false
-      });
+      const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
 
       const toggleCategory = (category) => {
         setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
       };
 
+      // פריטים ללא אופציות — עדכון שורה רגילה
       const updateItemState = (id, field, value, rowIndex = 0) => {
         setFormItemsState(prev => {
-          const rows = prev[id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
-          return {
-            ...prev,
-            [id]: rows.map((row, i) => i === rowIndex ? { ...row, [field]: value } : row)
-          };
+          const rows = Array.isArray(prev[id]) ? prev[id] : [{ qty: '', notes: '', kashrut: '' }];
+          return { ...prev, [id]: rows.map((row, i) => i === rowIndex ? { ...row, [field]: value } : row) };
         });
       };
 
-      const addSplitRow = (id) => {
+      // פריטים עם אופציות — קריאה ועדכון state
+      const getOptState = (id) => {
+        const s = formItemsState[id];
+        return (s && !Array.isArray(s)) ? s : { totalQty: '', rows: [], checks: [], kashrut: '', notes: '' };
+      };
+
+      const updateOptState = (id, update) => {
         setFormItemsState(prev => {
-          const rows = prev[id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
-          return { ...prev, [id]: [...rows, { qty: '', option: '', notes: '', kashrut: '' }] };
+          const s = (prev[id] && !Array.isArray(prev[id])) ? prev[id] : { totalQty: '', rows: [], checks: [], kashrut: '', notes: '' };
+          return { ...prev, [id]: { ...s, ...update } };
         });
       };
 
-      const removeSplitRow = (id, rowIndex) => {
-        setFormItemsState(prev => {
-          const rows = (prev[id] || []).filter((_, i) => i !== rowIndex);
-          return { ...prev, [id]: rows.length > 0 ? rows : [{ qty: '', option: '', notes: '', kashrut: '' }] };
-        });
-      };
-
-      const toggleMultiSelectOption = (id, opt) => {
-        setFormItemsState(prev => {
-          const rows = prev[id] || [];
-          const exists = rows.some(r => r.option === opt);
-          if (exists) {
-            return { ...prev, [id]: rows.filter(r => r.option !== opt) };
-          } else {
-            return { ...prev, [id]: [...rows, { qty: '', option: opt, notes: '', kashrut: '' }] };
-          }
-        });
+      const deleteOrder = (order) => setDeleteConfirmOrder(order);
+      const confirmDelete = () => {
+        setOrders(prev => prev.filter(o => o.id !== deleteConfirmOrder.id));
+        setDeleteConfirmOrder(null);
       };
 
       const openEditModal = (order) => {
@@ -1078,6 +1096,14 @@
             }
           }
         });
+        // המרת פריטים עם אופציות לפורמט החדש
+        ORDER_FORM_TEMPLATE.filter(t => t.options.length > 0).forEach(template => {
+          const arr = rebuilt[template.id];
+          if (!arr) return;
+          const rows = arr.map(r => ({ option: r.option, qty: r.qty })).filter(r => r.option);
+          const totalQty = arr.reduce((sum, r) => sum + (parseFloat(r.qty) || 0), 0).toString();
+          rebuilt[template.id] = { totalQty, rows, checks: arr[0]?.checks || [], kashrut: arr[0]?.kashrut || '', notes: arr[0]?.notes || '' };
+        });
         setFormItemsState(rebuilt);
         setPackingOption(rebuildPacking);
         setIsModalOpen(true);
@@ -1106,25 +1132,43 @@
         }
 
         const populatedItems = ORDER_FORM_TEMPLATE
-          .filter(template => {
-            const rows = formItemsState[template.id];
-            return rows && rows.some(r => parseFloat(r.qty) > 0);
-          })
           .flatMap(template => {
-            const rows = formItemsState[template.id] || [];
-            return rows
-              .filter(r => parseFloat(r.qty) > 0)
-              .map(r => {
-                let finalName = template.name;
-                if (r.option) finalName += ` (${r.option})`;
-                return {
-                  name: finalName,
-                  cleanName: template.name,
-                  qty: parseFloat(r.qty),
-                  notes: r.notes,
-                  kashrut: r.kashrut || kashrut
-                };
-              });
+            if (template.options.length > 0) {
+              // פריטים עם אופציות — פורמט חדש
+              const s = formItemsState[template.id];
+              if (!s || Array.isArray(s)) return [];
+              const rows = s.rows || [];
+              if (template.inline) {
+                // inline: כל אופציה עם כמות עצמאית; fallback לכמות כללית
+                const checks = s.checks || [];
+                const withQty = rows.filter(r => parseFloat(r.qty) > 0)
+                  .map(r => ({ name: `${template.name} (${r.option})`, cleanName: template.name, qty: parseFloat(r.qty), notes: s.notes || '', checks, kashrut: kashrut }));
+                if (withQty.length > 0) return withQty;
+                const totalQty = parseFloat(s.totalQty) || 0;
+                if (totalQty > 0) return [{ name: template.name, cleanName: template.name, qty: totalQty, notes: s.notes || '', checks, kashrut: kashrut }];
+                if (checks.length > 0) return [{ name: template.name, cleanName: template.name, qty: 0, notes: s.notes || '', checks, kashrut: kashrut }];
+                return [];
+              }
+              const totalQty = parseFloat(s.totalQty) || 0;
+              if (totalQty <= 0) return [];
+              if (rows.length === 0) {
+                return [{ name: template.name, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
+              } else if (rows.length === 1) {
+                return [{ name: `${template.name} (${rows[0].option})`, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
+              } else {
+                const withQty = rows.filter(r => parseFloat(r.qty) > 0)
+                  .map(r => ({ name: `${template.name} (${r.option})`, cleanName: template.name, qty: parseFloat(r.qty), notes: s.notes || '', kashrut: s.kashrut || kashrut }));
+                return withQty.length > 0 ? withQty
+                  : [{ name: `${template.name} (${rows.map(r => r.option).join(', ')})`, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
+              }
+            } else {
+              // פריטים ללא אופציות — פורמט מערך רגיל
+              const rows = formItemsState[template.id];
+              if (!rows || !Array.isArray(rows)) return [];
+              return rows.filter(r => parseFloat(r.qty) > 0).map(r => ({
+                name: template.name, cleanName: template.name, qty: parseFloat(r.qty), notes: r.notes, kashrut: r.kashrut || kashrut
+              }));
+            }
           });
 
         if (populatedItems.length === 0) {
@@ -1132,9 +1176,6 @@
           return;
         }
 
-        if (packingOption) {
-          populatedItems.push({ name: 'אריזת עופות', qty: '-', notes: packingOption, kashrut: '-' });
-        }
 
         const newOrder = {
           id: Math.floor(1000 + Math.random() * 9000),
@@ -1198,174 +1239,313 @@
         if (itemsInCategory.length === 0) return null;
         const isExpanded = expandedCategories[categoryName];
 
+        const cc = getCatColors(categoryName);
+        const simpleItems = itemsInCategory.filter(i => i.options.length === 0);
+        const isSearchable = simpleItems.length > 8;
+        const query = (categorySearch[categoryName] || '').trim();
         return (
-          <div className="mb-4 bg-white rounded-lg border border-purple-100 overflow-hidden shadow-sm transition-all duration-200">
-            <button 
-              type="button" 
+          <div className={`mb-4 bg-white rounded-lg border overflow-hidden shadow-sm transition-all duration-200 ${cc.outer}`}>
+            <button
+              type="button"
               onClick={() => toggleCategory(categoryName)}
-              className="w-full bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold px-4 py-3 border-b border-purple-100 flex justify-between items-center transition-colors"
+              className={`w-full font-bold px-4 py-3 border-b flex justify-between items-center transition-colors ${cc.headerBg} ${cc.headerHover} ${cc.headerText} ${cc.headerBorder}`}
             >
               <span>{categoryName}</span>
               <Icons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
-            
+
             {isExpanded && (
-              <div className="divide-y divide-gray-100 animate-in slide-in-from-top-2 duration-200">
-                {itemsInCategory.map(item => {
-                  if (item.multiSelect) {
-                    const rows = formItemsState[item.id] || [];
-                    const selectedOptions = rows.map(r => r.option);
-                    const isOpen = openDropdown === item.id;
+              <div className={`divide-y animate-in slide-in-from-top-2 duration-200 ${cc.divider}`}>
+                {itemsInCategory.filter(i => !isSearchable || i.options.length > 0).map(item => {
+                  if (item.inline && (item.options.length > 0 || item.checkboxOptions?.length > 0)) {
+                    // אופציות inline — כמות כללית + רשת קוביות, 2 בשורה
+                    const s = getOptState(item.id);
                     return (
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
+                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-1 text-sm">{item.name}</div>
                         <div className="flex-1 flex flex-col gap-2">
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setOpenDropdown(isOpen ? null : item.id)}
-                              className="w-full flex items-center justify-between p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 bg-white hover:border-purple-300 transition-colors"
-                            >
-                              <span className={selectedOptions.length === 0 ? 'text-gray-400' : 'text-purple-800 font-bold'}>
-                                {selectedOptions.length === 0 ? 'בחר...' : selectedOptions.join(', ')}
-                              </span>
-                              <Icons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 mr-1 ${isOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            {isOpen && (
-                              <div className="absolute z-30 w-full mt-1 bg-white border border-purple-200 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
-                                {item.options.map(opt => {
-                                  const isChecked = selectedOptions.includes(opt);
-                                  return (
-                                    <label key={opt} className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-gray-50 last:border-0 transition-colors ${isChecked ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-gray-50'}`}>
-                                      <input type="checkbox" checked={isChecked}
-                                        onChange={() => toggleMultiSelectOption(item.id, opt)}
-                                        className="accent-purple-600 w-4 h-4 shrink-0" />
-                                      <span className={`text-sm ${isChecked ? 'font-bold text-purple-800' : 'text-gray-700'}`}>{opt}</span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                          {rows.map((rowData, rowIndex) => (
-                            <div key={rowData.option} className="flex gap-2 items-center flex-wrap sm:flex-nowrap bg-purple-50/40 rounded-lg px-2 py-1.5 border border-purple-100">
-                              <span className="text-xs font-bold text-purple-700 shrink-0 min-w-[70px] max-w-[130px] truncate">{rowData.option}</span>
-                              <input
-                                type="number" min="0" step="0.5" placeholder="כמות..."
-                                value={rowData.qty ?? ''}
-                                onChange={e => updateItemState(item.id, 'qty', e.target.value, rowIndex)}
-                                className="w-16 p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center bg-white"
-                              />
-                              <select
-                                value={rowData.kashrut || kashrut || ''}
-                                onChange={e => updateItemState(item.id, 'kashrut', e.target.value, rowIndex)}
-                                className="flex-1 min-w-[90px] p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none bg-white"
-                              >
-                                <option value="" disabled>כשרות...</option>
-                                {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                              </select>
-                              <input
-                                type="text" placeholder="הערה"
-                                value={rowData.notes ?? ''}
-                                onChange={e => updateItemState(item.id, 'notes', e.target.value, rowIndex)}
-                                className="flex-1 min-w-[90px] p-1.5 text-sm border border-purple-200 rounded focus:ring-2 focus:ring-purple-400 outline-none bg-white"
+                          {/* כמות — כשאין אופציות, או כשיש showTotalQty */}
+                          {(item.options.length === 0 || item.showTotalQty) && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500 shrink-0">כמות:</span>
+                              <input type="number" min="0" step="0.5" placeholder="0"
+                                value={s.totalQty}
+                                onChange={e => updateOptState(item.id, { totalQty: e.target.value })}
+                                className={`w-20 p-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold`}
                               />
                             </div>
-                          ))}
+                          )}
+                          {/* רשת קוביות אופציות */}
+                          {item.options.length > 0 && (
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {item.options.map(opt => {
+                              const row = s.rows.find(r => r.option === opt);
+                              const qty = row?.qty || '';
+                              const isActive = parseFloat(qty) > 0;
+                              return (
+                                <div key={opt}
+                                  onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
+                                  className={`flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl border-2 cursor-pointer transition-all
+                                    ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                  <span className={`text-xs font-bold leading-tight flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                  <input type="number" min="0" step="0.5" placeholder="כמות"
+                                    value={qty}
+                                    onChange={e => {
+                                      const newVal = e.target.value;
+                                      const cur = getOptState(item.id);
+                                      const exists = cur.rows.some(r => r.option === opt);
+                                      if (exists) {
+                                        updateOptState(item.id, { rows: cur.rows.map(r => r.option === opt ? { ...r, qty: newVal } : r) });
+                                      } else if (newVal !== '') {
+                                        updateOptState(item.id, { rows: [...cur.rows, { option: opt, qty: newVal }] });
+                                      }
+                                    }}
+                                    className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} transition-colors
+                                      ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50 text-gray-700'}`}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                          )}
+                          {/* checkbox options — ללא כמות, שורה אחת */}
+                          {item.checkboxOptions && item.checkboxOptions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 border-t border-dashed border-gray-200 pt-1.5">
+                              {item.checkboxOptions.map(opt => {
+                                const isChecked = (s.checks || []).includes(opt);
+                                return (
+                                  <div key={opt}
+                                    onClick={() => {
+                                      const cur = getOptState(item.id);
+                                      const checks = cur.checks || [];
+                                      updateOptState(item.id, { checks: isChecked ? checks.filter(c => c !== opt) : [...checks, opt] });
+                                    }}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer transition-all select-none
+                                      ${isChecked ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                    <span className={`text-[11px] font-black shrink-0 ${isChecked ? cc.cardActiveText : 'text-gray-300'}`}>{isChecked ? '✓' : '○'}</span>
+                                    <span className={`text-[11px] font-bold ${isChecked ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <input type="text" placeholder="הערה"
+                            value={s.notes}
+                            onChange={e => updateOptState(item.id, { notes: e.target.value })}
+                            className={`p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none w-full`}
+                          />
                         </div>
                       </div>
                     );
                   }
 
-                  // מוצרים רגילים — שורה אחת עם אפשרות פיצול
-                  const rows = formItemsState[item.id] || [{ qty: '', option: '', notes: '', kashrut: '' }];
-                  const canSplit = item.options.length > 0;
-                  return (
-                    <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                      <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
-                        {item.name}
-                      </div>
-                      <div className="flex-1 flex flex-col gap-2">
-                        {rows.map((rowData, rowIndex) => (
-                          <div key={rowIndex} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                  if (item.options.length > 0) {
+                    // פריטים עם אופציות — multi-select dropdown + כמות לכל אופציה
+                    const s = getOptState(item.id);
+                    const selectedOptions = s.rows.map(r => r.option);
+                    const isDropOpen = openDropdown === item.id;
+                    return (
+                      <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
+                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
+                        <div className="flex-1 flex flex-col gap-2">
+                          {/* שורה 1: כמות כוללת + dropdown אופציות */}
+                          <div className="flex gap-2 items-center flex-wrap">
                             <input
                               type="number" min="0" step="0.5" placeholder="כמות..."
-                              value={rowData.qty ?? ''}
-                              onChange={(e) => updateItemState(item.id, 'qty', e.target.value, rowIndex)}
+                              value={s.totalQty}
+                              onChange={e => updateOptState(item.id, { totalQty: e.target.value })}
                               className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
                             />
-                            {item.options.length > 0 && (
-                              <select
-                                value={rowData.option ?? ''}
-                                onChange={(e) => updateItemState(item.id, 'option', e.target.value, rowIndex)}
-                                className="flex-1 min-w-[80px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                              >
-                                <option value="" disabled>בחר...</option>
-                                {item.options.map(opt => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                            )}
-                            <select
-                              value={rowData.kashrut || kashrut || ''}
-                              onChange={(e) => updateItemState(item.id, 'kashrut', e.target.value, rowIndex)}
-                              className="flex-1 min-w-[90px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                            >
-                              <option value="" disabled>כשרות...</option>
-                              {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                            </select>
-                            <input
-                              type="text" placeholder="הערה"
-                              value={rowData.notes ?? ''}
-                              onChange={(e) => updateItemState(item.id, 'notes', e.target.value, rowIndex)}
-                              className="flex-1 min-w-[100px] p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                            />
-                            {rows.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeSplitRow(item.id, rowIndex)}
-                                className="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors shrink-0 font-bold text-base"
-                                title="הסר שורה"
-                              >×</button>
-                            )}
+                            <div className="relative flex-1 min-w-[160px]">
+                              <button type="button"
+                                onClick={() => setOpenDropdown(isDropOpen ? null : item.id)}
+                                className="w-full flex items-center justify-between p-2 text-sm border border-gray-300 rounded bg-white hover:border-purple-300 transition-colors focus:ring-2 focus:ring-purple-400 outline-none">
+                                <span className={selectedOptions.length === 0 ? 'text-gray-400' : 'text-purple-800 font-bold'}>
+                                  {selectedOptions.length === 0 ? 'בחר הוראות...' : selectedOptions.length === 1 ? selectedOptions[0] : `✓ ${selectedOptions.length} הוראות נבחרו`}
+                                </span>
+                                <Icons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 mr-1 ${isDropOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              {isDropOpen && (
+                                <div className="absolute z-30 w-full mt-1 bg-white border border-purple-200 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
+                                  {item.options.map(opt => {
+                                    const isChecked = selectedOptions.includes(opt);
+                                    return (
+                                      <label key={opt} className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-gray-50 last:border-0 transition-colors ${isChecked ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-gray-50'}`}>
+                                        <input type="checkbox" checked={isChecked}
+                                          onChange={() => {
+                                            const cur = getOptState(item.id);
+                                            const exists = cur.rows.some(r => r.option === opt);
+                                            updateOptState(item.id, {
+                                              rows: exists
+                                                ? cur.rows.filter(r => r.option !== opt)
+                                                : [...cur.rows, { option: opt, qty: '' }]
+                                            });
+                                          }}
+                                          className="accent-purple-600 w-4 h-4 shrink-0" />
+                                        <span className={`text-sm ${isChecked ? 'font-bold text-purple-800' : 'text-gray-700'}`}>{opt}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        ))}
-                        {canSplit && (
-                          <button
-                            type="button"
-                            onClick={() => addSplitRow(item.id)}
-                            className="self-start text-xs text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-1 rounded-lg border border-purple-200 transition-colors font-bold flex items-center gap-1 mt-0.5"
-                          >
-                            <span className="text-sm leading-none">+</span> פיצול
-                          </button>
-                        )}
+
+                          {/* שורה 2: כמות פר-אופציה (רק כשנבחרו 2 אופציות ומעלה) */}
+                          {s.rows.length > 1 && (
+                            <div className="flex flex-wrap gap-2 pr-1">
+                              {s.rows.map((row, idx) => (
+                                <div key={row.option} className="flex items-center gap-1.5 bg-purple-50/70 rounded-lg px-2.5 py-1.5 border border-purple-200">
+                                  <input
+                                    type="number" min="0" step="0.5" placeholder="כמות"
+                                    value={row.qty}
+                                    onChange={e => {
+                                      const cur = getOptState(item.id);
+                                      updateOptState(item.id, { rows: cur.rows.map((r, i) => i === idx ? { ...r, qty: e.target.value } : r) });
+                                    }}
+                                    className="w-14 p-1 text-sm border border-purple-200 rounded text-center bg-white font-bold focus:ring-2 focus:ring-purple-400 outline-none"
+                                  />
+                                  <span className="text-xs font-bold text-purple-700 whitespace-nowrap">{row.option}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* שורה 3: הערה בלבד */}
+                          <input
+                            type="text" placeholder="הערה"
+                            value={s.notes}
+                            onChange={e => updateOptState(item.id, { notes: e.target.value })}
+                            className="p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none w-full"
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // פריטים ללא אופציות — שורה פשוטה
+                  const rows = Array.isArray(formItemsState[item.id])
+                    ? formItemsState[item.id]
+                    : [{ qty: '', notes: '', kashrut: '' }];
+                  return (
+                    <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
+                      <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
+                      <div className="flex-1 flex gap-2 flex-wrap sm:flex-nowrap">
+                        <input
+                          type="number" min="0" step="0.5" placeholder="כמות..."
+                          value={rows[0]?.qty ?? ''}
+                          onChange={e => updateItemState(item.id, 'qty', e.target.value, 0)}
+                          className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
+                        />
+                        <input
+                          type="text" placeholder="הערה"
+                          value={rows[0]?.notes ?? ''}
+                          onChange={e => updateItemState(item.id, 'notes', e.target.value, 0)}
+                          className="flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                        />
                       </div>
                     </div>
                   );
                 })}
-                
-                {/* הוראות אריזה מיוחדות רק תחת קטגוריית "עוף" */}
-                {categoryName === 'עוף' && (
-                  <div className="p-3 bg-purple-50/50 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-t border-purple-100">
-                    <div className="w-full sm:w-40 font-bold text-purple-800 shrink-0 text-sm">
-                      הוראות אריזה (עופות):
+
+                {isSearchable && (() => {
+                  const selectedSimple = simpleItems.filter(item => {
+                    const rows = formItemsState[item.id];
+                    return Array.isArray(rows) && parseFloat(rows[0]?.qty) > 0;
+                  });
+                  const unselected = simpleItems.filter(item => {
+                    const rows = formItemsState[item.id];
+                    return !(Array.isArray(rows) && parseFloat(rows[0]?.qty) > 0);
+                  });
+                  const dropKey = `list_${categoryName}`;
+                  const isListOpen = openDropdown === dropKey;
+                  const filteredUnselected = query ? unselected.filter(i => i.name.includes(query)) : unselected;
+                  return (
+                    <div className="p-3 space-y-2">
+                      {/* פריטים שנבחרו — עם שדה כמות */}
+                      {selectedSimple.map(item => {
+                        const rows = Array.isArray(formItemsState[item.id]) ? formItemsState[item.id] : [{ qty: '' }];
+                        return (
+                          <div key={item.id} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border ${cc.qtyBg} ${cc.qtyBorder}`}>
+                            <span className={`flex-1 text-sm font-bold ${cc.qtyText} truncate`}>{item.name}</span>
+                            {['קהילות', 'לנדא'].map(k => {
+                              const isActive = rows[0]?.kashrut === k;
+                              return (
+                                <div key={k}
+                                  onClick={() => updateItemState(item.id, 'kashrut', isActive ? '' : k, 0)}
+                                  className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer transition-all select-none shrink-0
+                                    ${isActive ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                  <span className={`text-[11px] font-black shrink-0 ${isActive ? cc.cardActiveText : 'text-gray-300'}`}>{isActive ? '✓' : '○'}</span>
+                                  <span className={`text-[11px] font-bold ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{k}</span>
+                                </div>
+                              );
+                            })}
+                            <input type="number" min="0" step="0.5"
+                              value={rows[0]?.qty || ''}
+                              onChange={e => updateItemState(item.id, 'qty', e.target.value, 0)}
+                              className={`w-14 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} border-transparent bg-white shrink-0`}
+                            />
+                            <button type="button" onClick={() => updateItemState(item.id, 'qty', '', 0)}
+                              className="w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold text-gray-500 hover:bg-gray-200 transition-all shrink-0">×</button>
+                          </div>
+                        );
+                      })}
+
+                      {/* כפתור פתיחת רשימה */}
+                      <div className="relative">
+                        <button type="button"
+                          onClick={() => { setOpenDropdown(isListOpen ? null : dropKey); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }}
+                          className={`w-full flex items-center justify-center gap-2 p-2.5 text-sm border-2 border-dashed rounded-xl font-bold transition-all
+                            ${isListOpen ? `${cc.qtyBg} ${cc.qtyBorder} ${cc.qtyText}` : 'border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600'}`}>
+                          <span className="text-lg leading-none">+</span>
+                          <span>הוסף מוצר</span>
+                        </button>
+
+                        {isListOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40 bg-black/30" onClick={() => { setOpenDropdown(null); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }} />
+                            <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-2xl overflow-hidden flex w-auto max-w-xs" style={{maxHeight:'55vh'}}>
+                              {/* חיפוש + כותרת — משמאל */}
+                              <div className="w-28 shrink-0 border-l border-gray-100 bg-gray-50 flex flex-col">
+                                <div className="flex items-center justify-between p-2 border-b border-gray-100">
+                                  <span className={`text-xs font-bold ${cc.qtyText}`}>{categoryName}</span>
+                                  <button type="button" onClick={() => { setOpenDropdown(null); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }}
+                                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 font-bold text-xs">×</button>
+                                </div>
+                                <div className="p-2">
+                                  <input type="text" placeholder="חיפוש..."
+                                    autoFocus
+                                    value={categorySearch[categoryName] || ''}
+                                    onChange={e => setCategorySearch(prev => ({...prev, [categoryName]: e.target.value}))}
+                                    className={`w-full p-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 ${cc.ring} outline-none bg-white`}
+                                  />
+                                </div>
+                              </div>
+                              {/* רשימת תוצאות — מימין */}
+                              <div className="flex-1 overflow-y-auto">
+                                {filteredUnselected.length === 0
+                                  ? <div className="text-center text-xs text-gray-400 py-6">לא נמצאו תוצאות</div>
+                                  : filteredUnselected.map(item => (
+                                      <button key={item.id} type="button"
+                                        onClick={() => {
+                                          updateItemState(item.id, 'qty', '1', 0);
+                                          setOpenDropdown(null);
+                                          setCategorySearch(prev => ({...prev, [categoryName]: ''}));
+                                        }}
+                                        className="w-full text-right px-3 py-2.5 text-sm text-gray-900 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-0 font-bold transition-colors whitespace-nowrap">
+                                        {item.name}
+                                      </button>
+                                    ))
+                                }
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                      {['כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים'].map(opt => (
-                        <label key={opt} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                          <input 
-                            type="radio" 
-                            name="packing" 
-                            value={opt} 
-                            checked={packingOption === opt}
-                            onChange={(e) => setPackingOption(e.target.value)}
-                            className="accent-purple-600"
-                          /> {opt}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
+
               </div>
             )}
           </div>
@@ -1381,11 +1561,13 @@
 
       const assignButcher = (orderId, butcherName) => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, assignedButcher: butcherName } : o));
+        collapseOrder(orderId);
         setButcherModal(null);
       };
 
       const moveToPacking = (orderId) => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'packing' } : o));
+        collapseOrder(orderId);
       };
 
       const requestComplete = (orderId) => {
@@ -1398,6 +1580,7 @@
           ? { ...o, status: 'completed', packaging: { ...packagingData } }
           : o
         ));
+        collapseOrder(packagingModal);
         setPackagingModal(null);
       };
 
@@ -1434,7 +1617,7 @@
 
                 {/* כותרת — תמיד גלויה, לחיצה פותחת/סוגרת */}
                 <div onClick={!dimmed ? () => toggleOrderExpand(order.id) : undefined}
-                  className={`p-4 rounded-t-xl ${!dimmed ? 'cursor-pointer hover:bg-gray-50/60' : ''}`}>
+                  className={`p-4 rounded-xl ${!dimmed ? 'cursor-pointer hover:bg-gray-50/60' : ''}`}>
                   <div className="flex justify-between items-start mb-1.5">
                     <div className="flex-1 min-w-0">
                       <div className="font-extrabold text-base text-gray-900 truncate">#{order.id} | {order.customer}</div>
@@ -1466,7 +1649,7 @@
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {cats.has('עוף')  && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">🐔 עוף</span>}
                     {cats.has('הודו') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-800 border border-green-300">🦃 הודו</span>}
-                    {cats.has('בשר ואחרים') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-800 border border-red-300">🥩 בשר</span>}
+                    {cats.has('בשר')  && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-800 border border-red-300">🥩 בשר</span>}
                     {cats.has('דגים') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-300">🐟 דגים</span>}
                     {!dimmed && <span className="text-gray-300 text-xs mr-auto">{isExpanded ? '▲' : '▼'}</span>}
                   </div>
@@ -1474,43 +1657,50 @@
 
                 {/* כפתורי פעולה — תמיד גלויים */}
                 {!dimmed && (
-                  <div className="px-3 pb-3 flex gap-1.5 flex-wrap" onClick={e => e.stopPropagation()}>
+                  <div className="px-3 pb-3 flex gap-1 flex-nowrap items-center" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => openPrint(order, 'general')}
+                      className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
+                      🖨️ כללי
+                    </button>
+                    {cats.has('דגים') && (
+                      <button onClick={() => openPrint(order, 'fish')}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
+                        🖨️ דגים
+                      </button>
+                    )}
+                    <button onClick={() => openEditModal(order)}
+                      className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight">
+                      ✏️
+                    </button>
+                    <button onClick={() => deleteOrder(order)}
+                      className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight">
+                      🗑️
+                    </button>
+                    {order.status === 'packing' && (
+                      <button onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o)); collapseOrder(order.id); }}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 shrink-0 leading-tight">↩</button>
+                    )}
+                    {order.status === 'new' && order.assignedButcher && (
+                      <button onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o)); collapseOrder(order.id); }}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 shrink-0 leading-tight">↩</button>
+                    )}
                     {order.status === 'new' && !order.assignedButcher && (
                       <button onClick={() => setButcherModal(order.id)}
-                        className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 transition-colors">
+                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 transition-colors shrink-0 leading-tight">
                         🔪 לעבודה
                       </button>
                     )}
                     {order.status === 'new' && order.assignedButcher && (
                       <button onClick={() => moveToPacking(order.id)}
-                        className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-yellow-500 hover:bg-yellow-600 text-white border border-yellow-600 transition-colors">
+                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-yellow-500 hover:bg-yellow-600 text-white border border-yellow-600 transition-colors shrink-0 leading-tight">
                         📦 לאריזה
                       </button>
                     )}
                     {order.status === 'packing' && (
                       <button onClick={() => requestComplete(order.id)}
-                        className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-green-500 hover:bg-green-600 text-white border border-green-600 transition-colors">
+                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-green-500 hover:bg-green-600 text-white border border-green-600 transition-colors shrink-0 leading-tight">
                         ✅ מוכן
                       </button>
-                    )}
-                    <button onClick={() => openPrint(order, 'general')}
-                      className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors">
-                      🖨️ כללי
-                    </button>
-                    {cats.has('דגים') && (
-                      <button onClick={() => openPrint(order, 'fish')}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors">
-                        🐟 דייג
-                      </button>
-                    )}
-                    <button onClick={() => openEditModal(order)} className="py-1.5 px-2 rounded-lg text-xs font-bold bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200">✏️</button>
-                    {order.status === 'packing' && (
-                      <button onClick={() => setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o))}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">↩</button>
-                    )}
-                    {order.status === 'new' && order.assignedButcher && (
-                      <button onClick={() => setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o))}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">↩</button>
                     )}
                   </div>
                 )}
@@ -1528,12 +1718,6 @@
                           groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
                         }
                       });
-                      const getCatColors = (cat) => {
-                        if (cat === 'עוף') return { qtyBg: 'bg-yellow-100', qtyText: 'text-yellow-800', qtyBorder: 'border-yellow-300', subBorder: 'border-yellow-300', subQty: 'text-yellow-700' };
-                        if (cat === 'הודו') return { qtyBg: 'bg-green-100', qtyText: 'text-green-800', qtyBorder: 'border-green-300', subBorder: 'border-green-300', subQty: 'text-green-700' };
-                        if (cat === 'דגים') return { qtyBg: 'bg-blue-100', qtyText: 'text-blue-800', qtyBorder: 'border-blue-300', subBorder: 'border-blue-300', subQty: 'text-blue-700' };
-                        return { qtyBg: 'bg-red-100', qtyText: 'text-red-800', qtyBorder: 'border-red-300', subBorder: 'border-red-300', subQty: 'text-red-700' };
-                      };
                       return (
                         <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3">
                           {groups.map((group, gIdx) => {
@@ -1547,7 +1731,7 @@
                                   </span>
                                   <span className="font-bold text-gray-800">{group.key}</span>
                                 </div>
-                                {group.items.length > 1 && (
+                                {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
                                     {group.items.map((item, iIdx) => {
                                       const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
@@ -1562,6 +1746,13 @@
                                 )}
                                 {group.items.length === 1 && group.items[0].notes && (
                                   <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {group.items[0].notes}</div>
+                                )}
+                                {group.items[0]?.checks?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mr-6 mt-1">
+                                    {group.items[0].checks.map(c => (
+                                      <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded font-bold border ${cc.qtyBg} ${cc.qtyText} ${cc.qtyBorder}`}>✓ {c}</span>
+                                    ))}
+                                  </div>
                                 )}
                               </li>
                             );
@@ -1583,6 +1774,7 @@
                         {order.packaging.fishBags > 0 && <span>🐟 {order.packaging.fishBags} שקיות דגים</span>}
                       </div>
                     )}
+
                   </div>
                 )}
               </div>
@@ -1660,6 +1852,11 @@
             );
           })()}
 
+          {/* overlay לסגירת dropdown בקליק מחוץ */}
+          {openDropdown !== null && (
+            <div className="fixed inset-0 z-20" onClick={() => setOpenDropdown(null)} />
+          )}
+
           {/* מודאל הזמנה חדשה */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1669,7 +1866,16 @@
                   <button onClick={closeModal} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
                 </div>
                 
-                <form onSubmit={handleAddOrder} className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
+                <form onSubmit={handleAddOrder}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+                      e.preventDefault();
+                      const focusable = Array.from(e.currentTarget.querySelectorAll('input:not([type=hidden]), select, textarea')).filter(el => !el.disabled);
+                      const idx = focusable.indexOf(e.target);
+                      if (idx !== -1 && idx < focusable.length - 1) focusable[idx + 1].focus();
+                    }
+                  }}
+                  className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
                   
                   {formErrorMessage && (
                     <div className="bg-red-50 border-r-4 border-red-500 p-3.5 rounded-lg text-red-800 text-sm font-bold flex justify-between items-center animate-bounce">
@@ -1785,7 +1991,7 @@
                     
                     {renderItemCategory('עוף')}
                     {renderItemCategory('הודו')}
-                    {renderItemCategory('בשר ואחרים')}
+                    {renderItemCategory('בשר')}
                     {renderItemCategory('דגים')}
                   </div>
 
@@ -1883,6 +2089,35 @@
             );
           })()}
 
+          {/* מודאל אישור מחיקה */}
+          {deleteConfirmOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🗑️</span>
+                  <div>
+                    <div className="font-extrabold text-gray-900 text-base">ביטול הזמנה</div>
+                    <div className="text-sm text-gray-500 mt-0.5">האם אתה בטוח שברצונך לבטל את ההזמנה?</div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100 text-sm font-bold text-gray-700">
+                  {deleteConfirmOrder.customer}
+                  {deleteConfirmOrder.phone && <span className="font-normal text-gray-400 mr-2">{deleteConfirmOrder.phone}</span>}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={confirmDelete}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-red-500 hover:bg-red-600 text-white transition-colors">
+                    כן, בטל הזמנה
+                  </button>
+                  <button onClick={() => setDeleteConfirmOrder(null)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
+                    חזרה
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* מודאל תצוגת בון A5 ריאליסטית לפני הדפסה */}
           {activePrintOrder && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1904,24 +2139,21 @@
                         if (!seen.has(key)) {
                           seen.add(key);
                           const grp = items.filter(i => (i.cleanName || i.name) === key);
-                          groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0), kashrut: grp[0].kashrut });
+                          groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
                         }
                       });
                       return groups;
                     };
                     const isFish = item => ORDER_FORM_TEMPLATE.find(t => t.name === (item.cleanName || item.name))?.category === 'דגים';
-                    const fishItems = allRegular.filter(isFish);
-                    const generalItems = allRegular.filter(i => !isFish(i));
-                    const fishGroups = buildGroups(fishItems);
-                    const generalGroups = buildGroups(generalItems);
+                    const fishGroups   = buildGroups(allRegular.filter(isFish));
+                    const generalGroups = buildGroups(allRegular.filter(i => !isFish(i)));
 
-                    const renderSlipTable = (groups, extraRow) => (
-                      <table className="w-full text-right text-xs border-collapse border border-black">
+                    const renderTable = (groups, extraRow) => (
+                      <table className="w-full text-right text-xs border-collapse border border-black mt-3">
                         <thead>
                           <tr className="bg-black text-white font-bold">
                             <th className="p-1.5 border border-black w-14 text-center">כמות</th>
                             <th className="p-1.5 border border-black">פריט</th>
-                            <th className="p-1.5 border border-black text-center">כשרות</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-black font-bold">
@@ -1932,7 +2164,7 @@
                               </td>
                               <td className="p-2 border border-black">
                                 <span className="block font-bold">{group.key}</span>
-                                {group.items.length > 1 && (
+                                {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className="mt-1 mr-1 space-y-0.5 border-r-2 border-gray-400 pr-1.5">
                                     {group.items.map((item, iIdx) => {
                                       const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
@@ -1948,8 +2180,12 @@
                                 {group.items.length === 1 && group.items[0].notes && (
                                   <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
                                 )}
+                                {group.items[0]?.checks?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {group.items[0].checks.map(c => <span key={c} className="text-[10px] px-1 py-0.5 border border-gray-300 rounded font-bold">✓ {c}</span>)}
+                                  </div>
+                                )}
                               </td>
-                              <td className="p-2 border border-black text-center text-[10px] text-gray-600 bg-gray-50/50">{group.kashrut}</td>
                             </tr>
                           ))}
                           {extraRow}
@@ -1964,13 +2200,15 @@
                       </div>
                     );
 
+                    const areaId = printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general';
+
                     return printMode === 'fish' ? (
                       <div id="physical-print-slip-area-fish"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
                         <div className="text-center font-extrabold text-base mb-2 text-blue-800">🐟 בון דייג</div>
                         {slipCustomer}
-                        {renderSlipTable(fishGroups, null)}
+                        {renderTable(fishGroups, null)}
                       </div>
                     ) : (
                       <div id="physical-print-slip-area-general"
@@ -1978,7 +2216,7 @@
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
                         <div className="text-center font-extrabold text-base mb-2">בון הזמנה</div>
                         {slipCustomer}
-                        {renderSlipTable(generalGroups, packingItem && (
+                        {renderTable(generalGroups, packingItem && (
                           <tr className="bg-gray-50">
                             <td className="p-2 border border-black text-center bg-gray-100">📦</td>
                             <td className="p-2 border border-black font-bold text-gray-700">{packingItem.notes}</td>
@@ -2067,11 +2305,44 @@
     };
 
     // --- Deliveries View ---
-    const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList }) => {
+    const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList, butchersList }) => {
       const [activeTab, setActiveTab] = useState('delivery');
       const [routeMode, setRouteMode] = useState(false);
       const [routeStops, setRouteStops] = useState([]); // [{orderId, address, customer}]
       const [origin, setOrigin] = useState(''); // נקודת מוצא
+      const [returnModal, setReturnModal] = useState(null);
+      const [returnStep, setReturnStep] = useState('destination');
+      const [returnPackaging, setReturnPackaging] = useState({ cartons: '', bags: '', fishBags: '' });
+
+      const openReturnModal = (order) => {
+        setReturnModal(order);
+        setReturnStep('destination');
+        setReturnPackaging({
+          cartons: order.packaging?.cartons ?? '',
+          bags: order.packaging?.bags ?? '',
+          fishBags: order.packaging?.fishBags ?? ''
+        });
+      };
+
+      const confirmReturnToPacking = () => {
+        setOrders(prev => prev.map(o => o.id === returnModal.id
+          ? { ...o, status: 'packing', packaging: {
+              cartons: Number(returnPackaging.cartons) || 0,
+              bags: Number(returnPackaging.bags) || 0,
+              fishBags: Number(returnPackaging.fishBags) || 0
+            }}
+          : o
+        ));
+        setReturnModal(null);
+      };
+
+      const confirmReturnToWork = (butcherName) => {
+        setOrders(prev => prev.map(o => o.id === returnModal.id
+          ? { ...o, status: 'new', assignedButcher: butcherName, packaging: undefined }
+          : o
+        ));
+        setReturnModal(null);
+      };
 
       const deliveryOrders = orders.filter(o => o.type === 'delivery' && o.status === 'completed');
       const pickupOrders   = orders.filter(o => o.type === 'pickup'   && o.status === 'completed');
@@ -2171,7 +2442,7 @@
             )}
           </div>
 
-          {/* שיוך שליח + כפתור */}
+          {/* שיוך שליח + כפתורים */}
           <div className="p-3 border-t border-gray-100 space-y-2 mt-auto">
             {isDelivery && (
               <select value={order.courier || ''} onChange={e => assignCourier(order.id, e.target.value)}
@@ -2180,6 +2451,11 @@
                 {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             )}
+            <button
+              onClick={() => openReturnModal(order)}
+              className="w-full py-2 rounded-xl text-xs font-bold bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 transition-colors">
+              ↩ החזר הזמנה
+            </button>
             <Button variant="success" icon={Icons.CheckCircle}
               className="w-full bg-green-600 hover:bg-green-700 py-2.5 font-bold justify-center"
               onClick={() => markAsDone(order.id)}>
@@ -2311,6 +2587,97 @@
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {activeOrders.map(order => renderCard(order, isDelivery))}
+            </div>
+          )}
+          {/* מודאל החזרת הזמנה */}
+          {returnModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-sm animate-in zoom-in-95 duration-200">
+                <div className="p-4 bg-orange-50 border-b border-orange-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-orange-900">↩ החזרת הזמנה</h3>
+                    <p className="text-xs text-orange-700 mt-0.5">#{returnModal.id} — {returnModal.customer}</p>
+                  </div>
+                  <button onClick={() => setReturnModal(null)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
+                </div>
+
+                {returnStep === 'destination' && (
+                  <div className="p-5 space-y-3">
+                    <p className="text-sm font-bold text-gray-700 text-center mb-2">להיכן להחזיר את ההזמנה?</p>
+                    <button onClick={() => setReturnStep('butcher')}
+                      className="w-full py-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 font-bold text-orange-900 text-base transition-all">
+                      🔪 החזר לעבודה (קצב)
+                    </button>
+                    <button onClick={() => setReturnStep('packing')}
+                      className="w-full py-4 rounded-xl border-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-400 font-bold text-yellow-900 text-base transition-all">
+                      📦 החזר לאריזה
+                    </button>
+                  </div>
+                )}
+
+                {returnStep === 'butcher' && (
+                  <div className="p-4 space-y-2">
+                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-1">← חזור</button>
+                    <p className="text-sm font-bold text-gray-700 mb-3">שייך לקצב:</p>
+                    {butchersList.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center py-4">אין קצבים מוגדרים — הוסף בניהול רשימות</p>
+                    )}
+                    {butchersList.map(b => (
+                      <button key={b.id} onClick={() => confirmReturnToWork(b.name)}
+                        className="w-full py-3 px-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 font-bold text-orange-900 text-base transition-all text-right">
+                        🔪 {b.name}
+                      </button>
+                    ))}
+                    <button onClick={() => confirmReturnToWork('')}
+                      className="w-full py-2.5 px-4 rounded-xl border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 font-bold text-gray-600 text-sm transition-all text-center">
+                      ללא שיוך לקצב
+                    </button>
+                  </div>
+                )}
+
+                {returnStep === 'packing' && (
+                  <div className="p-5 space-y-4">
+                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">← חזור</button>
+                    <p className="text-sm font-bold text-gray-700">עדכן פרטי אריזה (אם השתנה):</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">📦</div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">קרטונים</label>
+                        <input type="number" min="0" step="1" placeholder="0"
+                          value={returnPackaging.cartons}
+                          onChange={e => setReturnPackaging(p => ({ ...p, cartons: e.target.value }))}
+                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">🛍️</div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">שקיות</label>
+                        <input type="number" min="0" step="1" placeholder="0"
+                          value={returnPackaging.bags}
+                          onChange={e => setReturnPackaging(p => ({ ...p, bags: e.target.value }))}
+                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">🐟</div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">שקיות דגים</label>
+                        <input type="number" min="0" step="1" placeholder="0"
+                          value={returnPackaging.fishBags}
+                          onChange={e => setReturnPackaging(p => ({ ...p, fishBags: e.target.value }))}
+                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-1">
+                      <button onClick={() => setReturnModal(null)}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors">
+                        ביטול
+                      </button>
+                      <button onClick={confirmReturnToPacking}
+                        className="flex-1 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-sm border border-yellow-600 transition-colors">
+                        ✅ אשר החזרה לאריזה
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -2780,189 +3147,86 @@
       );
     };
 
-    // --- Product List Editor (with SKU + kashrut + storage types) ---
     const ProductListEditor = ({ items, setItems, kashrutList }) => {
-      const [newName, setNewName] = useState('');
-      const [newSku, setNewSku] = useState('');
-      const [newStorageTypes, setNewStorageTypes] = useState(['frozen']);
-      const [newKashrut, setNewKashrut] = useState(kashrutList[0]?.name || '');
       const [filterKashrut, setFilterKashrut] = useState('');
-
-      const handleAdd = (e) => {
-        e.preventDefault();
-        if (!newName.trim() || newStorageTypes.length === 0 || !newKashrut) return;
-        setItems(prev => [...prev, {
-          id: Date.now().toString(),
-          name: newName.trim(),
-          sku: newSku.trim(),
-          storageTypes: newStorageTypes,
-          kashrut: newKashrut
-        }]);
-        setNewName('');
-        setNewSku('');
-        setNewStorageTypes(['frozen']);
+      const addProduct = () => {
+        const newId = `p_${Date.now()}`;
+        const newItems = kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name }));
+        setItems(prev => [...prev, ...newItems]);
       };
-
-      const handleRemove = (id) => setItems(prev => prev.filter(p => p.id !== id));
-
-      const handleUpdate = (id, field, value) => {
-        setItems(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
-      };
-
-      const toggleNewType = (key) => {
-        setNewStorageTypes(prev =>
-          prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-        );
-      };
-
-      const toggleItemType = (id, key) => {
-        setItems(prev => prev.map(p => {
-          if (p.id !== id) return p;
-          const types = p.storageTypes || ['frozen'];
-          const next = types.includes(key) ? types.filter(k => k !== key) : [...types, key];
-          return { ...p, storageTypes: next.length > 0 ? next : types };
-        }));
-      };
-
-      const visibleItems = filterKashrut ? items.filter(p => p.kashrut === filterKashrut) : items;
-
+      const updateProduct = (id, field, value) => setItems(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+      const removeGroup = (name) => setItems(prev => prev.filter(p => p.name !== name));
+      const toggleStorage = (id, key) => setItems(prev => prev.map(p => {
+        if (p.id !== id) return p;
+        const has = (p.storageTypes || []).includes(key);
+        return { ...p, storageTypes: has ? (p.storageTypes.filter(k => k !== key)) : [...(p.storageTypes || []), key] };
+      }));
+      const uniqueNames = [...new Set(items.map(p => p.name).filter(Boolean))];
+      const allKashrutValues = kashrutList.map(k => k.name);
+      const filtered = filterKashrut ? items.filter(p => p.kashrut === filterKashrut) : items;
       return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="font-bold text-lg text-gray-800">מוצרי מלאי — רשימה מרכזית</h3>
-            <p className="text-xs text-gray-400 mt-0.5">ניהול כל המוצרים — כולל מק"ט, כשרות וסוג מלאי</p>
-          </div>
-
-          {/* טופס הוספה */}
-          <div className="p-5 border-b border-gray-100 bg-white">
-            <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
-              <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs font-bold text-gray-500 mb-1">שם מוצר *</label>
-                <input type="text" required value={newName} onChange={e => setNewName(e.target.value)}
-                  placeholder="שם המוצר..."
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-              </div>
-              <div className="w-32">
-                <label className="block text-xs font-bold text-gray-500 mb-1">מק"ט</label>
-                <input type="text" value={newSku} onChange={e => setNewSku(e.target.value)}
-                  placeholder="אופציונלי"
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono" />
-              </div>
-              <div className="w-32">
-                <label className="block text-xs font-bold text-gray-500 mb-1">כשרות *</label>
-                <select required value={newKashrut} onChange={e => setNewKashrut(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
-                  <option value="" disabled>בחר...</option>
-                  {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">שייך למלאי</label>
-                <div className="flex gap-2">
-                  {STORAGE_TYPES.map(st => (
-                    <label key={st.key}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 cursor-pointer font-bold text-sm transition-all select-none ${newStorageTypes.includes(st.key) ? st.activeClass : 'border-gray-200 text-gray-500 bg-white hover:border-gray-300'}`}>
-                      <input type="checkbox" className="hidden" checked={newStorageTypes.includes(st.key)}
-                        onChange={() => toggleNewType(st.key)} />
-                      {st.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <Button type="submit" variant="primary" icon={Icons.Plus} className="self-end">הוסף</Button>
-            </form>
-          </div>
-
-          {/* פילטר כשרות */}
-          <div className="px-5 py-3 border-b border-gray-100 flex gap-2 flex-wrap items-center">
-            <span className="text-xs font-bold text-gray-400 ml-1">סנן:</span>
-            <button onClick={() => setFilterKashrut('')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${!filterKashrut ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'}`}>
-              הכל ({items.length})
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+            <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי קפוא</h3>
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={() => setFilterKashrut('')} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${!filterKashrut ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>הכל</button>
+              {kashrutList.map(k => (
+                <button key={k.id} onClick={() => setFilterKashrut(k.name)} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${filterKashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>{k.name}</button>
+              ))}
+            </div>
+            <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors">
+              <Icons.Plus className="w-4 h-4" /> הוסף מוצר
             </button>
-            {kashrutList.map(k => {
-              const count = items.filter(p => p.kashrut === k.name).length;
-              const isActive = filterKashrut === k.name;
-              return (
-                <button key={k.id} onClick={() => setFilterKashrut(k.name)}
-                  style={isActive ? { backgroundColor: k.color, borderColor: k.color, color: 'white' } : { borderColor: (k.color||'#888')+'60', color: k.color }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all bg-white hover:opacity-80">
-                  {k.name} ({count})
-                </button>
-              );
-            })}
           </div>
-
-          {/* טבלת מוצרים */}
-          <div className="overflow-x-auto max-h-[440px] custom-scrollbar">
-            <table className="w-full text-right">
-              <thead className="bg-gray-50/80 text-gray-500 text-xs border-b border-gray-100 sticky top-0 backdrop-blur-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="p-3 font-bold">#</th>
-                  <th className="p-3 font-bold">שם מוצר</th>
-                  <th className="p-3 font-bold w-32">מק"ט</th>
-                  <th className="p-3 font-bold w-28">כשרות</th>
-                  <th className="p-3 font-bold text-center">סוג מלאי</th>
-                  <th className="p-3 font-bold w-14 text-center">מחק</th>
+                  <th className="text-right px-4 py-2.5 font-bold text-gray-600 w-8"></th>
+                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">שם מוצר</th>
+                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">מק"ט</th>
+                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">כשרות</th>
+                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">סוג מלאי</th>
+                  <th className="px-4 py-2.5 w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {visibleItems.length === 0 && (
-                  <tr><td colSpan={6} className="p-8 text-center text-gray-400 text-sm">אין מוצרים</td></tr>
-                )}
-                {visibleItems.map((item, idx) => {
-                  const types = item.storageTypes || ['frozen'];
-                  const kObj = kashrutList.find(k => k.name === item.kashrut);
-                  return (
-                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors"
-                      style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                      <td className="p-2.5 text-xs text-gray-400 font-bold">{idx + 1}</td>
-                      <td className="p-2">
-                        <input type="text" value={item.name}
-                          onChange={e => handleUpdate(item.id, 'name', e.target.value)}
-                          className="w-full p-1.5 border border-transparent hover:border-gray-300 focus:border-blue-400 rounded-lg text-sm font-bold bg-transparent focus:bg-white outline-none transition-all" />
-                      </td>
-                      <td className="p-2">
-                        <input type="text" value={item.sku || ''}
-                          onChange={e => handleUpdate(item.id, 'sku', e.target.value)}
-                          placeholder="—"
-                          className="w-full p-1.5 border border-transparent hover:border-gray-300 focus:border-blue-400 rounded-lg text-sm font-mono bg-transparent focus:bg-white outline-none transition-all text-gray-600" />
-                      </td>
-                      <td className="p-2">
-                        <select value={item.kashrut || ''}
-                          onChange={e => handleUpdate(item.id, 'kashrut', e.target.value)}
-                          style={kObj ? { borderColor: kObj.color+'60', color: kObj.color, backgroundColor: kObj.color+'15' } : {}}
-                          className="w-full p-1.5 border rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-blue-400">
-                          <option value="">—</option>
-                          {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                        </select>
-                      </td>
-                      <td className="p-2 text-center">
-                        <div className="flex gap-1.5 justify-center">
-                          {STORAGE_TYPES.map(st => (
-                            <button key={st.key} type="button"
-                              onClick={() => toggleItemType(item.id, st.key)}
-                              className={`px-2 py-0.5 rounded-lg border text-xs font-bold transition-all ${types.includes(st.key) ? st.activeClass : 'border-gray-200 text-gray-400 bg-white hover:border-gray-300'}`}>
+                {filtered.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-2 text-gray-300 text-xs font-mono">{p.id}</td>
+                    <td className="px-4 py-2">
+                      <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" placeholder="שם מוצר..." />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input value={p.sku || ''} onChange={e => updateProduct(p.id, 'sku', e.target.value)}
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none font-mono" placeholder='מק"ט...' />
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200">{p.kashrut}</span>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-1">
+                        {STORAGE_TYPES.map(st => {
+                          const active = (p.storageTypes || []).includes(st.key);
+                          return (
+                            <button key={st.key} type="button" onClick={() => toggleStorage(p.id, st.key)}
+                              className={`text-xs px-2 py-1 rounded-lg border font-bold transition-all ${active ? st.activeClass : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
                               {st.label}
                             </button>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="p-2.5 text-center">
-                        <button onClick={() => handleRemove(item.id)} className="text-gray-400 hover:text-red-500 transition-colors mx-auto block">
-                          <Icons.Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                          );
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => removeGroup(p.name)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition-colors" title="מחק מוצר זה מכל הכשרויות">
+                        <Icons.X className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-          </div>
-          <div className="p-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-400 text-center">
-            {visibleItems.length} מוצגים מתוך {items.length} סה"כ ·
-            {' '}{items.filter(p => (p.storageTypes||['frozen']).includes('frozen')).length} קפוא ·
-            {' '}{items.filter(p => (p.storageTypes||['frozen']).includes('fresh')).length} טרי
           </div>
         </div>
       );
@@ -3005,9 +3269,21 @@
 
       return (
         <div className="animate-in fade-in duration-300">
-          <div className="mb-5">
-            <h1 className="text-3xl font-extrabold text-gray-900">ארכיון הזמנות</h1>
-            <p className="text-gray-500 mt-1">כל ההזמנות שהושלמו — {doneOrders.length} רשומות</p>
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">ארכיון הזמנות</h1>
+              <p className="text-gray-500 mt-1">כל ההזמנות שהושלמו — {doneOrders.length} רשומות</p>
+            </div>
+            {orders.filter(o => o.status === 'delivered').length > 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`למחוק את כל ${orders.filter(o => o.status === 'delivered').length} ההזמנות בארכיון?`))
+                    setOrders(prev => prev.filter(o => o.status !== 'delivered'));
+                }}
+                className="mt-1 py-2 px-3 rounded-xl text-sm font-bold bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0">
+                🗑️ נקה ארכיון
+              </button>
+            )}
           </div>
 
           {/* סרגל סינון */}
@@ -3453,9 +3729,10 @@
         {
           id: 1044, createdAt: new Date().toLocaleDateString('he-IL'), customer: 'משפחת ישראלי', phone: '050-1234567', type: 'delivery', neighborhood: 'רמות',
           items: [
-            { name: 'עוף שלם (להוריד עור)', cleanName: 'עוף שלם', qty: 10, kashrut: 'לנדא' }, 
-            { name: 'סלמון (חבילות קפוא)', cleanName: 'סלמון', qty: 15, kashrut: 'קהילות' }
-          ], 
+            { name: 'עוף שלם', cleanName: 'עוף שלם', qty: 10, checks: ['להוריד עור'], kashrut: 'לנדא' },
+            { name: 'עוף מפורק (שניצל)', cleanName: 'עוף מפורק', qty: 5, checks: ['כל עוף במגש'], kashrut: 'לנדא' },
+            { name: 'סלמון (מנות)', cleanName: 'סלמון', qty: 15, checks: ['6 במגש'], kashrut: 'קהילות' }
+          ],
           status: 'new', courier: '', kashrut: 'לנדא',
           street: 'רחוב הרצל 12', entrance: 'ב', floor: '3', apt: '10', mobile: '052-9876543',
           flags: { mustCoordinate: true, notifyReady: true, chargeStatus: 'charge' }
@@ -3655,7 +3932,7 @@
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
-            return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} />;
+            return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} butchersList={butchersList} />;
           case 'contacts':
             return <ContactsView contactsList={contactsList} setContactsList={setContactsList} />;
           case 'lists':
