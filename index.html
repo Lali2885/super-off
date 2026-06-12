@@ -335,42 +335,67 @@
 
     // --- Constants ---
     const ORDER_FORM_TEMPLATE = [
-      { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', options: ['להוריד עור', 'לחלק כרעיים'] },
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, options: ['להוריד עור', 'לחלק כרעיים', 'שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'] },
-      { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', options: ['לחלק', 'שלם', 'בלי עור', 'למילוי'] },
-      { id: 'c6', category: 'עוף', name: 'שניצל', storageType: 'fresh', options: ['רגיל', 'דק', 'עבה'] },
-      { id: 'c7', category: 'עוף', name: 'חזה', storageType: 'fresh', options: ['עם עצם', 'בלי עצם', 'רצועות', 'קוביות'] },
-      { id: 'c8', category: 'עוף', name: 'פרגיות', storageType: 'fresh', options: ['עם עור', 'בלי עור', 'קוביות'] },
-      { id: 'c5a', category: 'עוף', name: 'שוקיים', storageType: 'fresh', options: [] },
-      { id: 'c5b', category: 'עוף', name: 'ירכיים', storageType: 'fresh', options: [] },
-      { id: 'c9', category: 'עוף', name: 'כנפיים', storageType: 'fresh', options: [] },
+      { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', inline: true, options: [], checkboxOptions: ['להוריד עור', 'לחלק כרעיים'] },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'] },
+      { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', inline: true, options: ['כרעיים עוף', 'כרעיים עוף בלי עור פרמיום'] },
+      { id: 'c7', category: 'עוף', name: 'חזה/שניצל', storageType: 'fresh', inline: true, options: ['שניצל עוף', 'חזה עוף טחון טהור', 'חזה עוף קוביות', 'חזה עוף רצועות', 'חזה עוף חצוי ונקי'] },
+      { id: 'c8', category: 'עוף', name: 'פרגיות', storageType: 'fresh', inline: true, options: ['פרגית עוף עם עור', 'פרגית בלי עור', 'קוביות פרגית', 'פרגית טחונה', 'סטייק פרגית', 'סטייק פרגית שטוח'] },
+      { id: 'c5a', category: 'עוף', name: 'שוקיים עוף', storageType: 'fresh', options: [] },
+      { id: 'c5b', category: 'עוף', name: 'ירכיים עוף', storageType: 'fresh', options: [] },
+      { id: 'c9', category: 'עוף', name: 'כנפיים עוף', storageType: 'fresh', options: [] },
+      { id: 'c10', category: 'עוף', name: 'גרונות ועצמות עוף', storageType: 'fresh', options: [] },
+      { id: 'c11', category: 'עוף', name: 'סט למרק', storageType: 'fresh', options: [] },
 
-      { id: 'm1', category: 'בשר ואחרים', name: 'עוף טחון', storageType: 'fresh', options: [] },
-      { id: 'm2', category: 'בשר ואחרים', name: 'הודו אדום טחון', storageType: 'fresh', options: [] },
-      { id: 'm3', category: 'בשר ואחרים', name: 'חזה הודו טחון', storageType: 'fresh', options: [] },
-      { id: 'm4', category: 'בשר ואחרים', name: 'בשר טחון', storageType: 'fresh', options: [] },
-      { id: 'm6', category: 'בשר ואחרים', name: 'קשתית / מיקס מס\' 2', storageType: 'fresh', options: [] },
+      { id: 'b1',  category: 'בשר', name: 'אצבעות אנטריקוט',           storageType: 'fresh', options: [] },
+      { id: 'b2',  category: 'בשר', name: 'בשר ראש',                   storageType: 'fresh', options: [] },
+      { id: 'b3',  category: 'בשר', name: 'גידי בקר',                  storageType: 'fresh', options: [] },
+      { id: 'b4',  category: 'בשר', name: 'לשון בקר',                  storageType: 'fresh', options: [] },
+      { id: 'b5',  category: 'בשר', name: 'נתח אסאדו עם עצם',          storageType: 'fresh', options: [] },
+      { id: 'b6',  category: 'בשר', name: 'פילה מדומה מס 6',           storageType: 'fresh', options: [] },
+      { id: 'b7',  category: 'בשר', name: 'צלי כתף מס 5',              storageType: 'fresh', options: [] },
+      { id: 'b8',  category: 'בשר', name: 'צלעות אונטריפ ברשת',        storageType: 'fresh', options: [] },
+      { id: 'b9',  category: 'בשר', name: 'שריר הזרוע מס\' 8',         storageType: 'fresh', options: [] },
+      { id: 'b10', category: 'בשר', name: 'אוסובוקו עגל',              storageType: 'fresh', options: [] },
+      { id: 'b11', category: 'בשר', name: 'אסאדו עגל עם עצם פרוס',    storageType: 'fresh', options: [] },
+      { id: 'b12', category: 'בשר', name: 'בקר טחון טהור',             storageType: 'fresh', options: [] },
+      { id: 'b13', category: 'בשר', name: 'בשר ראש קוביות',            storageType: 'fresh', options: [] },
+      { id: 'b14', category: 'בשר', name: 'טשולנט מיקס',               storageType: 'fresh', options: [] },
+      { id: 'b15', category: 'בשר', name: 'מיני אסאדו פרוס',           storageType: 'fresh', options: [] },
+      { id: 'b16', category: 'בשר', name: 'מיני אסאדו שלם',            storageType: 'fresh', options: [] },
+      { id: 'b17', category: 'בשר', name: 'סטייק אנגוס פידלוט',        storageType: 'fresh', options: [] },
+      { id: 'b18', category: 'בשר', name: 'סטייק אנטריקוט',            storageType: 'fresh', options: [] },
+      { id: 'b19', category: 'בשר', name: 'סטייק מיושן URU פרמיום',    storageType: 'fresh', options: [] },
+      { id: 'b20', category: 'בשר', name: 'עצמות ברך',                 storageType: 'fresh', options: [] },
+      { id: 'b21', category: 'בשר', name: 'עצמות מח',                  storageType: 'fresh', options: [] },
+      { id: 'b22', category: 'בשר', name: 'פלאנקען',                   storageType: 'fresh', options: [] },
+      { id: 'b23', category: 'בשר', name: 'קוביות בשר מס 8',           storageType: 'fresh', options: [] },
 
-      { id: 't1a', category: 'הודו', name: 'כרעיים הודו', storageType: 'fresh', options: [] },
       { id: 't1b', category: 'הודו', name: 'שוקיים הודו', storageType: 'fresh', options: [] },
       { id: 't1c', category: 'הודו', name: 'כנפיים הודו', storageType: 'fresh', options: [] },
-      { id: 't2', category: 'הודו', name: 'חזה הודו', storageType: 'fresh', options: ['שלם', 'קוביות', 'רצועות'] },
-      { id: 't3', category: 'הודו', name: 'שווארמה', storageType: 'fresh', options: ['שלם', 'קוביות', 'רצועות'] },
-      { id: 't4', category: 'הודו', name: 'גרונות', storageType: 'fresh', options: [] },
-      { id: 't5', category: 'הודו', name: 'סטייק פרוס', storageType: 'fresh', options: [] },
-      { id: 't6', category: 'הודו', name: 'קורקבן הודו', storageType: 'fresh', options: [] },
-      { id: 't7', category: 'הודו', name: 'כבד צלוי', storageType: 'fresh', options: [] },
+      { id: 't3', category: 'הודו', name: 'שווארמה', storageType: 'fresh', inline: true, options: ['קוביות שווארמה', 'רצועות שווארמה'] },
+      { id: 't4', category: 'הודו', name: 'גרון הודו', storageType: 'fresh', options: [] },
+      { id: 't5', category: 'הודו', name: 'חזה/שניצל הודו', storageType: 'fresh', inline: true, options: ['נתח חזה הודו', 'שניצל הודו פרוס'] },
+      { id: 't8', category: 'הודו', name: 'הודו אדום טחון', storageType: 'fresh', options: [] },
 
-      { id: 'd1', category: 'דגים', name: 'קרפיון', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd2', category: 'דגים', name: 'סלמון', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd3', category: 'דגים', name: 'פורל', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd4', category: 'דגים', name: 'אמנון', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd5', category: 'דגים', name: 'בורי', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd6', category: 'דגים', name: 'דניס', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd7', category: 'דגים', name: 'לברק', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd8', category: 'דגים', name: 'ברמונדי', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] },
-      { id: 'd9', category: 'דגים', name: 'מוסר', storageType: 'frozen', options: ['חבילות קפוא', 'יחידות לפילה טרי'] }
+      { id: 'd1', category: 'דגים', name: 'קרפיון', storageType: 'frozen', inline: true, options: ['קרפיון פרוס', 'קרפיון טחון', 'פרוסות קרפיון', 'ראש ועצמות'] },
+      { id: 'd2', category: 'דגים', name: 'סלמון', storageType: 'frozen', inline: true, options: ['מנות', 'בייבי'], checkboxOptions: ['6 במגש', '8 במגש'] },
+      { id: 'd3', category: 'דגים', name: 'פורל', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd4', category: 'דגים', name: 'אמנון', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd5', category: 'דגים', name: 'בורי', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd6', category: 'דגים', name: 'דניס', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd7', category: 'דגים', name: 'לברק', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd8', category: 'דגים', name: 'ברמונדי', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
+      { id: 'd9', category: 'דגים', name: 'דג נילוס', storageType: 'frozen', inline: true, options: ['טחון', 'מנות'] }
     ];
+
+    const CATEGORY_COLORS = {
+      'עוף':        { outer: 'border-yellow-200', headerBg: 'bg-yellow-50',  headerHover: 'hover:bg-yellow-100', headerText: 'text-yellow-900', headerBorder: 'border-yellow-200', divider: 'divide-yellow-100', qtyBg: 'bg-yellow-100', qtyText: 'text-yellow-900', qtyBorder: 'border-yellow-300', subBorder: 'border-yellow-300', subQty: 'text-yellow-700', cardActive: 'bg-yellow-100 border-yellow-500 shadow-sm', cardHover: 'hover:border-yellow-300 hover:bg-yellow-50', cardActiveText: 'text-yellow-900', inputActive: 'border-yellow-400 text-yellow-900', ring: 'focus:ring-yellow-400' },
+      'הודו':       { outer: 'border-green-200',  headerBg: 'bg-green-50',   headerHover: 'hover:bg-green-100',  headerText: 'text-green-900',  headerBorder: 'border-green-200',  divider: 'divide-green-100',  qtyBg: 'bg-green-100',  qtyText: 'text-green-900',  qtyBorder: 'border-green-300',  subBorder: 'border-green-300',  subQty: 'text-green-700',  cardActive: 'bg-green-100 border-green-500 shadow-sm',  cardHover: 'hover:border-green-300 hover:bg-green-50',  cardActiveText: 'text-green-900',  inputActive: 'border-green-400 text-green-900',  ring: 'focus:ring-green-400' },
+      'בשר': { outer: 'border-red-200',    headerBg: 'bg-red-50',     headerHover: 'hover:bg-red-100',    headerText: 'text-red-900',    headerBorder: 'border-red-200',    divider: 'divide-red-100',    qtyBg: 'bg-red-100',    qtyText: 'text-red-900',    qtyBorder: 'border-red-300',    subBorder: 'border-red-300',    subQty: 'text-red-700',    cardActive: 'bg-red-100 border-red-500 shadow-sm',    cardHover: 'hover:border-red-300 hover:bg-red-50',    cardActiveText: 'text-red-900',    inputActive: 'border-red-400 text-red-900',    ring: 'focus:ring-red-400' },
+      'דגים':       { outer: 'border-blue-200',   headerBg: 'bg-blue-50',    headerHover: 'hover:bg-blue-100',   headerText: 'text-blue-900',   headerBorder: 'border-blue-200',   divider: 'divide-blue-100',   qtyBg: 'bg-blue-100',   qtyText: 'text-blue-900',   qtyBorder: 'border-blue-300',   subBorder: 'border-blue-300',   subQty: 'text-blue-700',   cardActive: 'bg-blue-100 border-blue-500 shadow-sm',   cardHover: 'hover:border-blue-300 hover:bg-blue-50',   cardActiveText: 'text-blue-900',   inputActive: 'border-blue-400 text-blue-900',   ring: 'focus:ring-blue-400' },
+    };
+    const DEFAULT_CAT_COLORS = { outer: 'border-gray-200', headerBg: 'bg-gray-50', headerHover: 'hover:bg-gray-100', headerText: 'text-gray-900', headerBorder: 'border-gray-200', divider: 'divide-gray-100', qtyBg: 'bg-purple-100', qtyText: 'text-purple-800', qtyBorder: 'border-purple-200', subBorder: 'border-purple-200', subQty: 'text-purple-600', cardActive: 'bg-purple-100 border-purple-500 shadow-sm', cardHover: 'hover:border-purple-300 hover:bg-purple-50', cardActiveText: 'text-purple-900', inputActive: 'border-purple-400 text-purple-900', ring: 'focus:ring-purple-400' };
+    const getCatColors = (cat) => CATEGORY_COLORS[cat] || DEFAULT_CAT_COLORS;
 
     // --- Dashboard View ---
     const DashboardView = ({ orders, stock, shortages, setActiveTab }) => {
@@ -952,9 +977,13 @@
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
+      const [deleteConfirmOrder, setDeleteConfirmOrder] = useState(null);
+      const [printMode, setPrintMode] = useState('general'); // 'general' | 'fish'
+      const openPrint = (order, mode) => { setPrintMode(mode); setActivePrintOrder(order); };
       const [orderType, setOrderType] = useState('delivery');
       const [formItemsState, setFormItemsState] = useState({});
       const [packingOption, setPackingOption] = useState('');
+      const [categorySearch, setCategorySearch] = useState({});
       const [formErrorMessage, setFormErrorMessage] = useState('');
 
       // Client state fields
@@ -975,13 +1004,16 @@
       const [assignedButcher, setAssignedButcher] = useState('');
 
       const [expandedCategories, setExpandedCategories] = useState({
-        'עוף': true,
+        'עוף': false,
         'הודו': false,
-        'בשר ואחרים': false,
+        'בשר': false,
         'דגים': false
       });
 
       const [openDropdown, setOpenDropdown] = useState(null);
+      const [expandedOrders, setExpandedOrders] = useState(new Set());
+      const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+      const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
 
       const toggleCategory = (category) => {
         setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
@@ -998,14 +1030,20 @@
       // פריטים עם אופציות — קריאה ועדכון state
       const getOptState = (id) => {
         const s = formItemsState[id];
-        return (s && !Array.isArray(s)) ? s : { totalQty: '', rows: [], kashrut: '', notes: '' };
+        return (s && !Array.isArray(s)) ? s : { totalQty: '', rows: [], checks: [], kashrut: '', notes: '' };
       };
 
       const updateOptState = (id, update) => {
         setFormItemsState(prev => {
-          const s = (prev[id] && !Array.isArray(prev[id])) ? prev[id] : { totalQty: '', rows: [], kashrut: '', notes: '' };
+          const s = (prev[id] && !Array.isArray(prev[id])) ? prev[id] : { totalQty: '', rows: [], checks: [], kashrut: '', notes: '' };
           return { ...prev, [id]: { ...s, ...update } };
         });
+      };
+
+      const deleteOrder = (order) => setDeleteConfirmOrder(order);
+      const confirmDelete = () => {
+        setOrders(prev => prev.filter(o => o.id !== deleteConfirmOrder.id));
+        setDeleteConfirmOrder(null);
       };
 
       const openEditModal = (order) => {
@@ -1059,7 +1097,7 @@
           if (!arr) return;
           const rows = arr.map(r => ({ option: r.option, qty: r.qty })).filter(r => r.option);
           const totalQty = arr.reduce((sum, r) => sum + (parseFloat(r.qty) || 0), 0).toString();
-          rebuilt[template.id] = { totalQty, rows, kashrut: arr[0]?.kashrut || '', notes: arr[0]?.notes || '' };
+          rebuilt[template.id] = { totalQty, rows, checks: arr[0]?.checks || [], kashrut: arr[0]?.kashrut || '', notes: arr[0]?.notes || '' };
         });
         setFormItemsState(rebuilt);
         setPackingOption(rebuildPacking);
@@ -1094,9 +1132,20 @@
               // פריטים עם אופציות — פורמט חדש
               const s = formItemsState[template.id];
               if (!s || Array.isArray(s)) return [];
+              const rows = s.rows || [];
+              if (template.inline) {
+                // inline: כל אופציה עם כמות עצמאית; fallback לכמות כללית
+                const checks = s.checks || [];
+                const withQty = rows.filter(r => parseFloat(r.qty) > 0)
+                  .map(r => ({ name: `${template.name} (${r.option})`, cleanName: template.name, qty: parseFloat(r.qty), notes: s.notes || '', checks, kashrut: kashrut }));
+                if (withQty.length > 0) return withQty;
+                const totalQty = parseFloat(s.totalQty) || 0;
+                if (totalQty > 0) return [{ name: template.name, cleanName: template.name, qty: totalQty, notes: s.notes || '', checks, kashrut: kashrut }];
+                if (checks.length > 0) return [{ name: template.name, cleanName: template.name, qty: 0, notes: s.notes || '', checks, kashrut: kashrut }];
+                return [];
+              }
               const totalQty = parseFloat(s.totalQty) || 0;
               if (totalQty <= 0) return [];
-              const rows = s.rows || [];
               if (rows.length === 0) {
                 return [{ name: template.name, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
               } else if (rows.length === 1) {
@@ -1122,9 +1171,6 @@
           return;
         }
 
-        if (packingOption) {
-          populatedItems.push({ name: 'אריזת עופות', qty: '-', notes: packingOption, kashrut: '-' });
-        }
 
         const newOrder = {
           id: Math.floor(1000 + Math.random() * 9000),
@@ -1151,8 +1197,8 @@
         closeModal();
       };
 
-      const triggerPhysicalPrint = () => {
-        const printContent = document.getElementById('physical-print-slip-area').innerHTML;
+      const triggerPhysicalPrint = (areaId = 'physical-print-slip-area-general') => {
+        const printContent = document.getElementById(areaId).innerHTML;
         const printWindow = window.open('', '_blank', 'width=800,height=900');
         printWindow.document.write(`
           <html dir="rtl">
@@ -1188,70 +1234,100 @@
         if (itemsInCategory.length === 0) return null;
         const isExpanded = expandedCategories[categoryName];
 
+        const cc = getCatColors(categoryName);
+        const simpleItems = itemsInCategory.filter(i => i.options.length === 0);
+        const isSearchable = simpleItems.length > 8;
+        const query = (categorySearch[categoryName] || '').trim();
         return (
-          <div className="mb-4 bg-white rounded-lg border border-purple-100 overflow-hidden shadow-sm transition-all duration-200">
-            <button 
-              type="button" 
+          <div className={`mb-4 bg-white rounded-lg border overflow-hidden shadow-sm transition-all duration-200 ${cc.outer}`}>
+            <button
+              type="button"
               onClick={() => toggleCategory(categoryName)}
-              className="w-full bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold px-4 py-3 border-b border-purple-100 flex justify-between items-center transition-colors"
+              className={`w-full font-bold px-4 py-3 border-b flex justify-between items-center transition-colors ${cc.headerBg} ${cc.headerHover} ${cc.headerText} ${cc.headerBorder}`}
             >
               <span>{categoryName}</span>
               <Icons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
-            
+
             {isExpanded && (
-              <div className="divide-y divide-gray-100 animate-in slide-in-from-top-2 duration-200">
-                {itemsInCategory.map(item => {
-                  if (item.options.length > 0 && item.inline) {
-                    // אופציות inline — כולן גלויות, toggle + כמות לצד כל נבחרת
+              <div className={`divide-y animate-in slide-in-from-top-2 duration-200 ${cc.divider}`}>
+                {itemsInCategory.filter(i => !isSearchable || i.options.length > 0).map(item => {
+                  if (item.inline && (item.options.length > 0 || item.checkboxOptions?.length > 0)) {
+                    // אופציות inline — כמות כללית + רשת קוביות, 2 בשורה
                     const s = getOptState(item.id);
                     return (
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">{item.name}</div>
+                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-1 text-sm">{item.name}</div>
                         <div className="flex-1 flex flex-col gap-2">
-                          <input
-                            type="number" min="0" step="0.5" placeholder="כמות..."
-                            value={s.totalQty}
-                            onChange={e => updateOptState(item.id, { totalQty: e.target.value })}
-                            className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
-                          />
-                          <div className="flex flex-wrap gap-1.5">
+                          {/* כמות — כשאין אופציות, או כשיש showTotalQty */}
+                          {(item.options.length === 0 || item.showTotalQty) && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500 shrink-0">כמות:</span>
+                              <input type="number" min="0" step="0.5" placeholder="0"
+                                value={s.totalQty}
+                                onChange={e => updateOptState(item.id, { totalQty: e.target.value })}
+                                className={`w-20 p-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold`}
+                              />
+                            </div>
+                          )}
+                          {/* רשת קוביות אופציות */}
+                          {item.options.length > 0 && (
+                          <div className="grid grid-cols-2 gap-1.5">
                             {item.options.map(opt => {
                               const row = s.rows.find(r => r.option === opt);
-                              const isSelected = !!row;
+                              const qty = row?.qty || '';
+                              const isActive = parseFloat(qty) > 0;
                               return (
-                                <div key={opt} className="flex items-center gap-1">
-                                  <button type="button"
-                                    onClick={() => {
+                                <div key={opt}
+                                  onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
+                                  className={`flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl border-2 cursor-pointer transition-all
+                                    ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                  <span className={`text-xs font-bold leading-tight flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                  <input type="number" min="0" step="0.5" placeholder="כמות"
+                                    value={qty}
+                                    onChange={e => {
+                                      const newVal = e.target.value;
                                       const cur = getOptState(item.id);
                                       const exists = cur.rows.some(r => r.option === opt);
-                                      updateOptState(item.id, {
-                                        rows: exists
-                                          ? cur.rows.filter(r => r.option !== opt)
-                                          : [...cur.rows, { option: opt, qty: '' }]
-                                      });
+                                      if (exists) {
+                                        updateOptState(item.id, { rows: cur.rows.map(r => r.option === opt ? { ...r, qty: newVal } : r) });
+                                      } else if (newVal !== '') {
+                                        updateOptState(item.id, { rows: [...cur.rows, { option: opt, qty: newVal }] });
+                                      }
                                     }}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${isSelected ? 'bg-purple-600 text-white border-purple-700 shadow-sm' : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400 hover:text-purple-700'}`}>
-                                    {isSelected ? '✓ ' : ''}{opt}
-                                  </button>
-                                  {isSelected && s.rows.length > 1 && (
-                                    <input type="number" min="0" step="0.5" placeholder="כמות"
-                                      value={row.qty}
-                                      onChange={e => {
-                                        const cur = getOptState(item.id);
-                                        updateOptState(item.id, { rows: cur.rows.map(r => r.option === opt ? { ...r, qty: e.target.value } : r) });
-                                      }}
-                                      className="w-12 p-1 text-xs border border-purple-300 rounded text-center bg-white font-bold focus:ring-1 focus:ring-purple-400 outline-none"
-                                    />
-                                  )}
+                                    className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} transition-colors
+                                      ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50 text-gray-700'}`}
+                                  />
                                 </div>
                               );
                             })}
                           </div>
+                          )}
+                          {/* checkbox options — ללא כמות, שורה אחת */}
+                          {item.checkboxOptions && item.checkboxOptions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 border-t border-dashed border-gray-200 pt-1.5">
+                              {item.checkboxOptions.map(opt => {
+                                const isChecked = (s.checks || []).includes(opt);
+                                return (
+                                  <div key={opt}
+                                    onClick={() => {
+                                      const cur = getOptState(item.id);
+                                      const checks = cur.checks || [];
+                                      updateOptState(item.id, { checks: isChecked ? checks.filter(c => c !== opt) : [...checks, opt] });
+                                    }}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer transition-all select-none
+                                      ${isChecked ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                    <span className={`text-[11px] font-black shrink-0 ${isChecked ? cc.cardActiveText : 'text-gray-300'}`}>{isChecked ? '✓' : '○'}</span>
+                                    <span className={`text-[11px] font-bold ${isChecked ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                           <input type="text" placeholder="הערה"
                             value={s.notes}
                             onChange={e => updateOptState(item.id, { notes: e.target.value })}
-                            className="p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none w-full"
+                            className={`p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none w-full`}
                           />
                         </div>
                       </div>
@@ -1367,20 +1443,104 @@
                   );
                 })}
 
-                {/* הוראות אריזה תחת קטגוריית "עוף" */}
-                {categoryName === 'עוף' && (
-                  <div className="p-3 bg-purple-50/50 flex flex-col sm:flex-row items-start sm:items-center gap-3 border-t border-purple-100">
-                    <div className="w-full sm:w-40 font-bold text-purple-800 shrink-0 text-sm">הוראות אריזה (עופות):</div>
-                    <div className="flex flex-wrap gap-3">
-                      {['כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'].map(opt => (
-                        <label key={opt} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                          <input type="radio" name="packing" value={opt} checked={packingOption === opt}
-                            onChange={e => setPackingOption(e.target.value)} className="accent-purple-600" /> {opt}
-                        </label>
-                      ))}
+                {isSearchable && (() => {
+                  const selectedSimple = simpleItems.filter(item => {
+                    const rows = formItemsState[item.id];
+                    return Array.isArray(rows) && parseFloat(rows[0]?.qty) > 0;
+                  });
+                  const unselected = simpleItems.filter(item => {
+                    const rows = formItemsState[item.id];
+                    return !(Array.isArray(rows) && parseFloat(rows[0]?.qty) > 0);
+                  });
+                  const dropKey = `list_${categoryName}`;
+                  const isListOpen = openDropdown === dropKey;
+                  const filteredUnselected = query ? unselected.filter(i => i.name.includes(query)) : unselected;
+                  return (
+                    <div className="p-3 space-y-2">
+                      {/* פריטים שנבחרו — עם שדה כמות */}
+                      {selectedSimple.map(item => {
+                        const rows = Array.isArray(formItemsState[item.id]) ? formItemsState[item.id] : [{ qty: '' }];
+                        return (
+                          <div key={item.id} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border ${cc.qtyBg} ${cc.qtyBorder}`}>
+                            <span className={`flex-1 text-sm font-bold ${cc.qtyText} truncate`}>{item.name}</span>
+                            {['קהילות', 'לנדא'].map(k => {
+                              const isActive = rows[0]?.kashrut === k;
+                              return (
+                                <div key={k}
+                                  onClick={() => updateItemState(item.id, 'kashrut', isActive ? '' : k, 0)}
+                                  className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer transition-all select-none shrink-0
+                                    ${isActive ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                  <span className={`text-[11px] font-black shrink-0 ${isActive ? cc.cardActiveText : 'text-gray-300'}`}>{isActive ? '✓' : '○'}</span>
+                                  <span className={`text-[11px] font-bold ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{k}</span>
+                                </div>
+                              );
+                            })}
+                            <input type="number" min="0" step="0.5"
+                              value={rows[0]?.qty || ''}
+                              onChange={e => updateItemState(item.id, 'qty', e.target.value, 0)}
+                              className={`w-14 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} border-transparent bg-white shrink-0`}
+                            />
+                            <button type="button" onClick={() => updateItemState(item.id, 'qty', '', 0)}
+                              className="w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold text-gray-500 hover:bg-gray-200 transition-all shrink-0">×</button>
+                          </div>
+                        );
+                      })}
+
+                      {/* כפתור פתיחת רשימה */}
+                      <div className="relative">
+                        <button type="button"
+                          onClick={() => { setOpenDropdown(isListOpen ? null : dropKey); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }}
+                          className={`w-full flex items-center justify-center gap-2 p-2.5 text-sm border-2 border-dashed rounded-xl font-bold transition-all
+                            ${isListOpen ? `${cc.qtyBg} ${cc.qtyBorder} ${cc.qtyText}` : 'border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600'}`}>
+                          <span className="text-lg leading-none">+</span>
+                          <span>הוסף מוצר</span>
+                        </button>
+
+                        {isListOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40 bg-black/30" onClick={() => { setOpenDropdown(null); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }} />
+                            <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-2xl overflow-hidden flex w-auto max-w-xs" style={{maxHeight:'55vh'}}>
+                              {/* חיפוש + כותרת — משמאל */}
+                              <div className="w-28 shrink-0 border-l border-gray-100 bg-gray-50 flex flex-col">
+                                <div className="flex items-center justify-between p-2 border-b border-gray-100">
+                                  <span className={`text-xs font-bold ${cc.qtyText}`}>{categoryName}</span>
+                                  <button type="button" onClick={() => { setOpenDropdown(null); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }}
+                                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 font-bold text-xs">×</button>
+                                </div>
+                                <div className="p-2">
+                                  <input type="text" placeholder="חיפוש..."
+                                    autoFocus
+                                    value={categorySearch[categoryName] || ''}
+                                    onChange={e => setCategorySearch(prev => ({...prev, [categoryName]: e.target.value}))}
+                                    className={`w-full p-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 ${cc.ring} outline-none bg-white`}
+                                  />
+                                </div>
+                              </div>
+                              {/* רשימת תוצאות — מימין */}
+                              <div className="flex-1 overflow-y-auto">
+                                {filteredUnselected.length === 0
+                                  ? <div className="text-center text-xs text-gray-400 py-6">לא נמצאו תוצאות</div>
+                                  : filteredUnselected.map(item => (
+                                      <button key={item.id} type="button"
+                                        onClick={() => {
+                                          updateItemState(item.id, 'qty', '1', 0);
+                                          setOpenDropdown(null);
+                                          setCategorySearch(prev => ({...prev, [categoryName]: ''}));
+                                        }}
+                                        className="w-full text-right px-3 py-2.5 text-sm text-gray-900 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-0 font-bold transition-colors whitespace-nowrap">
+                                        {item.name}
+                                      </button>
+                                    ))
+                                }
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
+
               </div>
             )}
           </div>
@@ -1396,11 +1556,13 @@
 
       const assignButcher = (orderId, butcherName) => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, assignedButcher: butcherName } : o));
+        collapseOrder(orderId);
         setButcherModal(null);
       };
 
       const moveToPacking = (orderId) => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'packing' } : o));
+        collapseOrder(orderId);
       };
 
       const requestComplete = (orderId) => {
@@ -1413,6 +1575,7 @@
           ? { ...o, status: 'completed', packaging: { ...packagingData } }
           : o
         ));
+        collapseOrder(packagingModal);
         setPackagingModal(null);
       };
 
@@ -1435,144 +1598,183 @@
 
             const sortByKashrut = (arr) => [...arr].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
 
-            const renderOrderCard = (order, dimmed = false, draggable = false) => (
+            const renderOrderCard = (order, dimmed = false, draggable = false) => {
+              const isExpanded = dimmed || expandedOrders.has(order.id);
+              const regularItems = order.items.filter(i => i.qty !== '-');
+              const packingItem = order.items.find(i => i.qty === '-');
+              const cats = new Set(regularItems.map(i => ORDER_FORM_TEMPLATE.find(t => t.name === (i.cleanName || i.name))?.category).filter(Boolean));
+              return (
               <div key={order.id}
                 draggable={draggable}
                 onDragStart={draggable ? () => setDraggingId(order.id) : undefined}
                 onDragEnd={draggable ? () => setDraggingId(null) : undefined}
-                onClick={!dimmed ? () => openEditModal(order) : undefined}
-                className={`bg-white p-4 rounded-xl shadow-sm border flex flex-col transition-all ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200 cursor-pointer hover:shadow-md hover:border-purple-300 hover:bg-purple-50/20'} ${draggable ? 'active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
-                {/* כותרת כרטיס */}
-                <div className="flex justify-between items-start mb-2 border-b border-gray-100 pb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-extrabold text-base text-gray-900 truncate">#{order.id} | {order.customer}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      <Icons.Phone className="w-3 h-3 inline ml-1 text-gray-400" />{order.phone}
+                className={`bg-white rounded-xl shadow-sm border flex flex-col transition-all ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200'} ${draggable ? 'active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
+
+                {/* כותרת — תמיד גלויה, לחיצה פותחת/סוגרת */}
+                <div onClick={!dimmed ? () => toggleOrderExpand(order.id) : undefined}
+                  className={`p-4 rounded-xl ${!dimmed ? 'cursor-pointer hover:bg-gray-50/60' : ''}`}>
+                  <div className="flex justify-between items-start mb-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-extrabold text-base text-gray-900 truncate">#{order.id} | {order.customer}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        <Icons.Phone className="w-3 h-3 inline ml-1 text-gray-400" />{order.phone}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0 mr-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${order.type === 'delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
+                        {order.type === 'delivery' ? <Icons.Truck className="w-3 h-3" /> : <Icons.Package className="w-3 h-3" />}
+                        {order.type === 'delivery' ? 'משלוח' : 'איסוף'}
+                      </span>
+                      {order.timeString && <span className="text-[10px] text-gray-400">⏰ {order.timeString}</span>}
+                      {order.createdAt && <span className="text-[10px] text-gray-400">📅 {order.createdAt}</span>}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0 mr-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${order.type === 'delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
-                      {order.type === 'delivery' ? <Icons.Truck className="w-3 h-3" /> : <Icons.Package className="w-3 h-3" />}
-                      {order.type === 'delivery' ? 'משלוח' : 'איסוף'}
-                    </span>
-                    {order.timeString && <span className="text-[10px] text-gray-400">⏰ {order.timeString}</span>}
-                    {order.createdAt && <span className="text-[10px] text-gray-400">📅 {order.createdAt}</span>}
+
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">{order.kashrut}</span>
+                    {order.assignedButcher && <span className="text-[10px] bg-orange-100 text-orange-800 border border-orange-200 px-1.5 py-0.5 rounded font-bold">🔪 {order.assignedButcher}</span>}
+                    {order.neighborhood && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold"><Icons.MapPin className="w-2.5 h-2.5 inline" /> {order.neighborhood}</span>}
+                    {order.flags?.mustCoordinate && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">🚨 תאום</span>}
+                    {order.flags?.notifyReady && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-bold">📞 להודיע</span>}
+                    {order.flags?.chargeStatus === 'charge' && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">💳 לחייב</span>}
+                    {order.flags?.chargeStatus === 'noCharge' && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">🆓 לא לחייב</span>}
+                  </div>
+
+                  {/* תגיות קטגוריה + חץ */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {cats.has('עוף')  && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">🐔 עוף</span>}
+                    {cats.has('הודו') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-800 border border-green-300">🦃 הודו</span>}
+                    {cats.has('בשר')  && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-800 border border-red-300">🥩 בשר</span>}
+                    {cats.has('דגים') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-300">🐟 דגים</span>}
+                    {!dimmed && <span className="text-gray-300 text-xs mr-auto">{isExpanded ? '▲' : '▼'}</span>}
                   </div>
                 </div>
 
-                {/* תגיות */}
-                <div className="flex flex-wrap gap-1 mb-2">
-                  <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">{order.kashrut}</span>
-                  {order.assignedButcher && <span className="text-[10px] bg-orange-100 text-orange-800 border border-orange-200 px-1.5 py-0.5 rounded font-bold">🔪 {order.assignedButcher}</span>}
-                  {order.neighborhood && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold"><Icons.MapPin className="w-2.5 h-2.5 inline" /> {order.neighborhood}</span>}
-                  {order.flags?.mustCoordinate && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">🚨 תאום</span>}
-                  {order.flags?.notifyReady && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-bold">📞 להודיע</span>}
-                  {order.flags?.chargeStatus === 'charge' && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">💳 לחייב</span>}
-                  {order.flags?.chargeStatus === 'noCharge' && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">🆓 לא לחייב</span>}
-                </div>
-
-                {/* פריטים */}
-                {(() => {
-                  const regularItems = order.items.filter(i => i.qty !== '-');
-                  const packingItem = order.items.find(i => i.qty === '-');
-                  const seen = new Set();
-                  const groups = [];
-                  regularItems.forEach(item => {
-                    const key = item.cleanName || item.name;
-                    if (!seen.has(key)) {
-                      seen.add(key);
-                      const grp = regularItems.filter(i => (i.cleanName || i.name) === key);
-                      groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
-                    }
-                  });
-                  return (
-                    <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3 flex-1">
-                      {groups.map((group, gIdx) => (
-                        <li key={gIdx} className="px-2 py-2 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 bg-purple-100 text-purple-800 border-purple-200">
-                              {group.items.length > 1 ? group.total : group.items[0].qty}
-                            </span>
-                            <span className="font-bold text-gray-800">{group.key}</span>
-                          </div>
-                          {group.items.length > 1 && (
-                            <div className="mr-6 mt-1.5 space-y-1 border-r-2 border-purple-200 pr-2">
-                              {group.items.map((item, iIdx) => {
-                                const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
-                                return (
-                                  <div key={iIdx} className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                                    <span className="font-extrabold text-purple-600 min-w-[20px] text-center">{item.qty}</span>
-                                    <span>{opt}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          {group.items.length === 1 && group.items[0].notes && (
-                            <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {group.items[0].notes}</div>
-                          )}
-                        </li>
-                      ))}
-                      {packingItem && (
-                        <li className="px-2 py-1.5 flex items-center gap-2 text-xs">
-                          <span className="font-black px-1.5 py-0.5 rounded border bg-gray-100 text-gray-500 border-gray-200 text-center shrink-0">📦</span>
-                          <span className="text-gray-600 font-medium">{packingItem.notes}</span>
-                        </li>
-                      )}
-                    </ul>
-                  );
-                })()}
-
-                {/* תצוגת אריזה להזמנות שהסתיימו */}
-                {dimmed && order.packaging && (order.packaging.cartons || order.packaging.bags || order.packaging.fishBags) && (
-                  <div className="mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex flex-wrap gap-3 text-xs font-bold text-green-800">
-                    {order.packaging.cartons > 0 && <span>📦 {order.packaging.cartons} קרטונים</span>}
-                    {order.packaging.bags > 0 && <span>🛍️ {order.packaging.bags} שקיות</span>}
-                    {order.packaging.fishBags > 0 && <span>🐟 {order.packaging.fishBags} שקיות דגים</span>}
-                  </div>
-                )}
-
-                {/* כפתורים */}
+                {/* כפתורי פעולה — תמיד גלויים */}
                 {!dimmed && (
-                  <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                    {/* כפתור שמאלי דינמי */}
+                  <div className="px-3 pb-3 flex gap-1 flex-nowrap items-center" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => openPrint(order, 'general')}
+                      className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
+                      🖨️ כללי
+                    </button>
+                    {cats.has('דגים') && (
+                      <button onClick={() => openPrint(order, 'fish')}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
+                        🖨️ דגים
+                      </button>
+                    )}
+                    <button onClick={() => openEditModal(order)}
+                      className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight">
+                      ✏️
+                    </button>
+                    <button onClick={() => deleteOrder(order)}
+                      className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight">
+                      🗑️
+                    </button>
+                    {order.status === 'packing' && (
+                      <button onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o)); collapseOrder(order.id); }}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 shrink-0 leading-tight">↩</button>
+                    )}
+                    {order.status === 'new' && order.assignedButcher && (
+                      <button onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o)); collapseOrder(order.id); }}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 shrink-0 leading-tight">↩</button>
+                    )}
                     {order.status === 'new' && !order.assignedButcher && (
                       <button onClick={() => setButcherModal(order.id)}
-                        className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 transition-colors">
+                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 transition-colors shrink-0 leading-tight">
                         🔪 לעבודה
                       </button>
                     )}
                     {order.status === 'new' && order.assignedButcher && (
                       <button onClick={() => moveToPacking(order.id)}
-                        className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-yellow-500 hover:bg-yellow-600 text-white border border-yellow-600 transition-colors">
+                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-yellow-500 hover:bg-yellow-600 text-white border border-yellow-600 transition-colors shrink-0 leading-tight">
                         📦 לאריזה
                       </button>
                     )}
                     {order.status === 'packing' && (
                       <button onClick={() => requestComplete(order.id)}
-                        className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-green-500 hover:bg-green-600 text-white border border-green-600 transition-colors">
-                        ✅ מוכן לאיסוף/משלוח
-                      </button>
-                    )}
-                    {/* בון */}
-                    <Button variant="secondary" icon={Icons.Printer} className="text-xs px-2 py-1.5" onClick={() => setActivePrintOrder(order)}>בון</Button>
-                    {/* כפתור חזרה */}
-                    {order.status === 'packing' && (
-                      <button onClick={() => setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o))}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">
-                        ↩
-                      </button>
-                    )}
-                    {order.status === 'new' && order.assignedButcher && (
-                      <button onClick={() => setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o))}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">
-                        ↩
+                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-green-500 hover:bg-green-600 text-white border border-green-600 transition-colors shrink-0 leading-tight">
+                        ✅ מוכן
                       </button>
                     )}
                   </div>
                 )}
+
+                {/* פירוט — נפתח בלחיצה */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-gray-100 pt-3">
+                    {(() => {
+                      const seen = new Set(); const groups = [];
+                      regularItems.forEach(item => {
+                        const key = item.cleanName || item.name;
+                        if (!seen.has(key)) {
+                          seen.add(key);
+                          const grp = regularItems.filter(i => (i.cleanName || i.name) === key);
+                          groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
+                        }
+                      });
+                      return (
+                        <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3">
+                          {groups.map((group, gIdx) => {
+                            const tmpl = ORDER_FORM_TEMPLATE.find(t => t.name === group.key);
+                            const cc = getCatColors(tmpl?.category);
+                            return (
+                              <li key={gIdx} className="px-2 py-2 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 ${cc.qtyBg} ${cc.qtyText} ${cc.qtyBorder}`}>
+                                    {group.items.length > 1 ? group.total : group.items[0].qty}
+                                  </span>
+                                  <span className="font-bold text-gray-800">{group.key}</span>
+                                </div>
+                                {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
+                                  <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
+                                    {group.items.map((item, iIdx) => {
+                                      const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
+                                      return (
+                                        <div key={iIdx} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                                          <span className={`font-extrabold min-w-[20px] text-center ${cc.subQty}`}>{item.qty}</span>
+                                          <span>{opt}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                {group.items.length === 1 && group.items[0].notes && (
+                                  <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {group.items[0].notes}</div>
+                                )}
+                                {group.items[0]?.checks?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mr-6 mt-1">
+                                    {group.items[0].checks.map(c => (
+                                      <span key={c} className={`text-[10px] px-1.5 py-0.5 rounded font-bold border ${cc.qtyBg} ${cc.qtyText} ${cc.qtyBorder}`}>✓ {c}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
+                          {packingItem && (
+                            <li className="px-2 py-1.5 flex items-center gap-2 text-xs">
+                              <span className="font-black px-1.5 py-0.5 rounded border bg-gray-100 text-gray-500 border-gray-200 text-center shrink-0">📦</span>
+                              <span className="text-gray-600 font-medium">{packingItem.notes}</span>
+                            </li>
+                          )}
+                        </ul>
+                      );
+                    })()}
+
+                    {dimmed && order.packaging && (order.packaging.cartons || order.packaging.bags || order.packaging.fishBags) && (
+                      <div className="mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex flex-wrap gap-3 text-xs font-bold text-green-800">
+                        {order.packaging.cartons > 0 && <span>📦 {order.packaging.cartons} קרטונים</span>}
+                        {order.packaging.bags > 0 && <span>🛍️ {order.packaging.bags} שקיות</span>}
+                        {order.packaging.fishBags > 0 && <span>🐟 {order.packaging.fishBags} שקיות דגים</span>}
+                      </div>
+                    )}
+
+                  </div>
+                )}
               </div>
-            );
+              );
+            };
 
             const renderKashrutGroups = (arr, dimmed = false, draggable = false) => {
               if (arr.length === 0) return (
@@ -1784,7 +1986,7 @@
                     
                     {renderItemCategory('עוף')}
                     {renderItemCategory('הודו')}
-                    {renderItemCategory('בשר ואחרים')}
+                    {renderItemCategory('בשר')}
                     {renderItemCategory('דגים')}
                   </div>
 
@@ -1882,6 +2084,35 @@
             );
           })()}
 
+          {/* מודאל אישור מחיקה */}
+          {deleteConfirmOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🗑️</span>
+                  <div>
+                    <div className="font-extrabold text-gray-900 text-base">ביטול הזמנה</div>
+                    <div className="text-sm text-gray-500 mt-0.5">האם אתה בטוח שברצונך לבטל את ההזמנה?</div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100 text-sm font-bold text-gray-700">
+                  {deleteConfirmOrder.customer}
+                  {deleteConfirmOrder.phone && <span className="font-normal text-gray-400 mr-2">{deleteConfirmOrder.phone}</span>}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={confirmDelete}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-red-500 hover:bg-red-600 text-white transition-colors">
+                    כן, בטל הזמנה
+                  </button>
+                  <button onClick={() => setDeleteConfirmOrder(null)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
+                    חזרה
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* מודאל תצוגת בון A5 ריאליסטית לפני הדפסה */}
           {activePrintOrder && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1891,142 +2122,112 @@
                   <button onClick={() => setActivePrintOrder(null)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
                 </div>
 
-                {/* תצוגת נייר A5 ריאליסטית */}
-                <div className="overflow-y-auto p-6 flex-1 bg-gray-300/50 flex justify-center items-center custom-scrollbar">
-                  <div 
-                    id="physical-print-slip-area" 
-                    className="bg-white p-8 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full min-h-[210mm] shadow-2xl text-black relative animate-in zoom-in-95 duration-200"
-                    style={{ fontFamily: 'Assistant, sans-serif' }}
-                  >
-                    <div className="text-center text-xs font-bold tracking-widest mb-1">בס"ד</div>
-                    
-                    <PoultryLogo className="h-20 object-contain mx-auto mb-2" />
+                {/* תצוגת בון */}
+                <div className="overflow-y-auto p-4 flex-1 bg-gray-300/50 flex flex-col gap-4 items-center custom-scrollbar">
+                  {(() => {
+                    const allRegular = activePrintOrder.items.filter(i => i.qty !== '-');
+                    const packingItem = activePrintOrder.items.find(i => i.qty === '-');
+                    const buildGroups = (items) => {
+                      const seen = new Set(); const groups = [];
+                      items.forEach(item => {
+                        const key = item.cleanName || item.name;
+                        if (!seen.has(key)) {
+                          seen.add(key);
+                          const grp = items.filter(i => (i.cleanName || i.name) === key);
+                          groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
+                        }
+                      });
+                      return groups;
+                    };
+                    const isFish = item => ORDER_FORM_TEMPLATE.find(t => t.name === (item.cleanName || item.name))?.category === 'דגים';
+                    const fishGroups   = buildGroups(allRegular.filter(isFish));
+                    const generalGroups = buildGroups(allRegular.filter(i => !isFish(i)));
 
-                    <div className="grid grid-cols-3 gap-2 text-xs font-bold border-b border-black pb-2 mb-3">
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{activePrintOrder.flags?.chargeStatus === 'noCharge' ? '☑' : '☐'}</span>
-                        <span>לא לחייב</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{activePrintOrder.flags?.mustCoordinate ? '☑' : '☐'}</span>
-                        <span>לתאם חובה</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg leading-none">{activePrintOrder.flags?.notifyReady ? '☑' : '☐'}</span>
-                        <span>להודיע שמוכן</span>
-                      </div>
-                    </div>
+                    const renderTable = (groups, extraRow) => (
+                      <table className="w-full text-right text-xs border-collapse border border-black mt-3">
+                        <thead>
+                          <tr className="bg-black text-white font-bold">
+                            <th className="p-1.5 border border-black w-14 text-center">כמות</th>
+                            <th className="p-1.5 border border-black">פריט</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-black font-bold">
+                          {groups.map((group, gIdx) => (
+                            <tr key={gIdx} className={gIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="p-2 border border-black text-center text-sm font-extrabold bg-gray-100">
+                                {group.items.length > 1 ? group.total : group.items[0].qty}
+                              </td>
+                              <td className="p-2 border border-black">
+                                <span className="block font-bold">{group.key}</span>
+                                {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
+                                  <div className="mt-1 mr-1 space-y-0.5 border-r-2 border-gray-400 pr-1.5">
+                                    {group.items.map((item, iIdx) => {
+                                      const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
+                                      return (
+                                        <div key={iIdx} className="flex gap-1.5 text-[10px] text-gray-600 font-bold">
+                                          <span className="min-w-[18px] text-center font-extrabold">{item.qty}</span>
+                                          <span>{opt}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                {group.items.length === 1 && group.items[0].notes && (
+                                  <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
+                                )}
+                                {group.items[0]?.checks?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {group.items[0].checks.map(c => <span key={c} className="text-[10px] px-1 py-0.5 border border-gray-300 rounded font-bold">✓ {c}</span>)}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {extraRow}
+                        </tbody>
+                      </table>
+                    );
 
-                    <div className="border border-black p-2 rounded mb-3 text-xs space-y-1.5 bg-gray-50/50">
-                      <div className="flex justify-between font-extrabold border-b border-gray-200 pb-1 mb-1">
-                        <span>סוג: {activePrintOrder.type === 'delivery' ? '🚚 משלוח היום' : '🏪 איסוף בחנות'}</span>
-                        <span>מספר הזמנה: #{activePrintOrder.id}</span>
+                    const slipCustomer = (
+                      <div className="border-b-2 border-black pb-2 mb-2">
+                        <div className="text-lg font-extrabold">{activePrintOrder.customer}</div>
+                        <div className="text-sm font-bold text-gray-700">{activePrintOrder.phone}{activePrintOrder.mobile ? ` | ${activePrintOrder.mobile}` : ''}</div>
                       </div>
-                      {activePrintOrder.timeString && (
-                        <div className="font-bold">מועד מבוקש: {activePrintOrder.timeString}</div>
-                      )}
-                    </div>
+                    );
 
-                    <div className="border-b border-black pb-2 mb-3 text-xs space-y-1.5 bg-white">
-                      <div><strong className="text-gray-600">שם הלקוח:</strong> <span className="font-extrabold text-base">{activePrintOrder.customer}</span></div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div><strong className="text-gray-600">טלפון:</strong> <span className="font-bold">{activePrintOrder.phone}</span></div>
-                        {activePrintOrder.mobile && <div><strong className="text-gray-600">נייד:</strong> <span className="font-bold">{activePrintOrder.mobile}</span></div>}
+                    const areaId = printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general';
+
+                    return printMode === 'fish' ? (
+                      <div id="physical-print-slip-area-fish"
+                        className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
+                        style={{ fontFamily: 'Assistant, sans-serif' }}>
+                        <div className="text-center font-extrabold text-base mb-2 text-blue-800">🐟 בון דייג</div>
+                        {slipCustomer}
+                        {renderTable(fishGroups, null)}
                       </div>
-                      {activePrintOrder.type === 'delivery' && (
-                        <>
-                          <div><strong className="text-gray-600">שכונה/אזור:</strong> <span className="font-bold">{activePrintOrder.neighborhood}</span></div>
-                          <div><strong className="text-gray-600">כתובת:</strong> <span className="font-medium">{activePrintOrder.street || 'לא הוזן רחוב'}</span></div>
-                          <div className="grid grid-cols-3 gap-1 text-[11px] bg-gray-100 p-1.5 rounded mt-1 text-center font-bold">
-                            <div>כניסה: {activePrintOrder.entrance || '-'}</div>
-                            <div>קומה: {activePrintOrder.floor || '-'}</div>
-                            <div>דירה: {activePrintOrder.apt || '-'}</div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="border border-black p-2 rounded mb-3 text-xs bg-purple-50/30">
-                      <div className="font-bold text-[10px] text-gray-500 mb-1 text-center">כשרות כללית של ההזמנה</div>
-                      <div className="flex gap-4 font-bold justify-center flex-wrap">
-                        {kashrutList.map(k => (
-                          <span key={k.id} className="flex items-center gap-1">
-                            <span>{activePrintOrder.kashrut === k.name ? '☑' : '☐'}</span> {k.name}
-                          </span>
+                    ) : (
+                      <div id="physical-print-slip-area-general"
+                        className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
+                        style={{ fontFamily: 'Assistant, sans-serif' }}>
+                        <div className="text-center font-extrabold text-base mb-2">בון הזמנה</div>
+                        {slipCustomer}
+                        {renderTable(generalGroups, packingItem && (
+                          <tr className="bg-gray-50">
+                            <td className="p-2 border border-black text-center bg-gray-100">📦</td>
+                            <td className="p-2 border border-black font-bold text-gray-700">{packingItem.notes}</td>
+                          </tr>
                         ))}
                       </div>
-                    </div>
-
-                    <table className="w-full text-right text-xs border-collapse border border-black">
-                      <thead>
-                        <tr className="bg-black text-white font-bold">
-                          <th className="p-1.5 border border-black w-14 text-center">כמות</th>
-                          <th className="p-1.5 border border-black">פריט</th>
-                          <th className="p-1.5 border border-black text-center">כשרות</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-black font-bold">
-                        {(() => {
-                          const regularItems = activePrintOrder.items.filter(i => i.qty !== '-');
-                          const packingItem = activePrintOrder.items.find(i => i.qty === '-');
-                          const seen = new Set();
-                          const groups = [];
-                          regularItems.forEach(item => {
-                            const key = item.cleanName || item.name;
-                            if (!seen.has(key)) {
-                              seen.add(key);
-                              const grp = regularItems.filter(i => (i.cleanName || i.name) === key);
-                              groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0), kashrut: grp[0].kashrut });
-                            }
-                          });
-                          return <>
-                            {groups.map((group, gIdx) => (
-                              <tr key={gIdx} className={gIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="p-2 border border-black text-center text-sm font-extrabold bg-gray-100">
-                                  {group.items.length > 1 ? group.total : group.items[0].qty}
-                                </td>
-                                <td className="p-2 border border-black">
-                                  <span className="block font-bold">{group.key}</span>
-                                  {group.items.length > 1 && (
-                                    <div className="mt-1 mr-1 space-y-0.5 border-r-2 border-gray-400 pr-1.5">
-                                      {group.items.map((item, iIdx) => {
-                                        const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
-                                        return (
-                                          <div key={iIdx} className="flex gap-1.5 text-[10px] text-gray-600 font-bold">
-                                            <span className="min-w-[18px] text-center font-extrabold">{item.qty}</span>
-                                            <span>{opt}</span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                  {group.items.length === 1 && group.items[0].notes && (
-                                    <span className="block text-[10px] text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
-                                  )}
-                                </td>
-                                <td className="p-2 border border-black text-center text-[10px] text-gray-600 bg-gray-50/50">{group.kashrut}</td>
-                              </tr>
-                            ))}
-                            {packingItem && (
-                              <tr className="bg-gray-50">
-                                <td className="p-2 border border-black text-center text-sm bg-gray-100">📦</td>
-                                <td className="p-2 border border-black font-bold text-gray-700" colSpan="2">{packingItem.notes}</td>
-                              </tr>
-                            )}
-                          </>;
-                        })()}
-                      </tbody>
-                    </table>
-
-                    <div className="text-center text-[10px] font-bold text-gray-500 mt-6 pt-2 border-t border-dashed border-gray-300">
-                      <p>נארז ונחתך באהבה | סופרעוף</p>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
 
-                <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-3 shrink-0">
-                  <Button variant="outline" className="flex-1" onClick={() => setActivePrintOrder(null)}>סגור תצוגה</Button>
-                  <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2.5 shadow-md" onClick={triggerPhysicalPrint}>הדפס בון פיזי (A5 / PDF)</Button>
+                <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-2 shrink-0">
+                  <Button variant="outline" className="flex-1" onClick={() => setActivePrintOrder(null)}>סגור</Button>
+                  <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2"
+                    onClick={() => triggerPhysicalPrint(printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general')}>
+                    הדפס
+                  </Button>
                 </div>
               </div>
             </div>
@@ -2099,11 +2300,44 @@
     };
 
     // --- Deliveries View ---
-    const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList }) => {
+    const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList, butchersList }) => {
       const [activeTab, setActiveTab] = useState('delivery');
       const [routeMode, setRouteMode] = useState(false);
       const [routeStops, setRouteStops] = useState([]); // [{orderId, address, customer}]
       const [origin, setOrigin] = useState(''); // נקודת מוצא
+      const [returnModal, setReturnModal] = useState(null);
+      const [returnStep, setReturnStep] = useState('destination');
+      const [returnPackaging, setReturnPackaging] = useState({ cartons: '', bags: '', fishBags: '' });
+
+      const openReturnModal = (order) => {
+        setReturnModal(order);
+        setReturnStep('destination');
+        setReturnPackaging({
+          cartons: order.packaging?.cartons ?? '',
+          bags: order.packaging?.bags ?? '',
+          fishBags: order.packaging?.fishBags ?? ''
+        });
+      };
+
+      const confirmReturnToPacking = () => {
+        setOrders(prev => prev.map(o => o.id === returnModal.id
+          ? { ...o, status: 'packing', packaging: {
+              cartons: Number(returnPackaging.cartons) || 0,
+              bags: Number(returnPackaging.bags) || 0,
+              fishBags: Number(returnPackaging.fishBags) || 0
+            }}
+          : o
+        ));
+        setReturnModal(null);
+      };
+
+      const confirmReturnToWork = (butcherName) => {
+        setOrders(prev => prev.map(o => o.id === returnModal.id
+          ? { ...o, status: 'new', assignedButcher: butcherName, packaging: undefined }
+          : o
+        ));
+        setReturnModal(null);
+      };
 
       const deliveryOrders = orders.filter(o => o.type === 'delivery' && o.status === 'completed');
       const pickupOrders   = orders.filter(o => o.type === 'pickup'   && o.status === 'completed');
@@ -2203,7 +2437,7 @@
             )}
           </div>
 
-          {/* שיוך שליח + כפתור */}
+          {/* שיוך שליח + כפתורים */}
           <div className="p-3 border-t border-gray-100 space-y-2 mt-auto">
             {isDelivery && (
               <select value={order.courier || ''} onChange={e => assignCourier(order.id, e.target.value)}
@@ -2212,6 +2446,11 @@
                 {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             )}
+            <button
+              onClick={() => openReturnModal(order)}
+              className="w-full py-2 rounded-xl text-xs font-bold bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 transition-colors">
+              ↩ החזר הזמנה
+            </button>
             <Button variant="success" icon={Icons.CheckCircle}
               className="w-full bg-green-600 hover:bg-green-700 py-2.5 font-bold justify-center"
               onClick={() => markAsDone(order.id)}>
@@ -2343,6 +2582,97 @@
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {activeOrders.map(order => renderCard(order, isDelivery))}
+            </div>
+          )}
+          {/* מודאל החזרת הזמנה */}
+          {returnModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-sm animate-in zoom-in-95 duration-200">
+                <div className="p-4 bg-orange-50 border-b border-orange-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-orange-900">↩ החזרת הזמנה</h3>
+                    <p className="text-xs text-orange-700 mt-0.5">#{returnModal.id} — {returnModal.customer}</p>
+                  </div>
+                  <button onClick={() => setReturnModal(null)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
+                </div>
+
+                {returnStep === 'destination' && (
+                  <div className="p-5 space-y-3">
+                    <p className="text-sm font-bold text-gray-700 text-center mb-2">להיכן להחזיר את ההזמנה?</p>
+                    <button onClick={() => setReturnStep('butcher')}
+                      className="w-full py-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 font-bold text-orange-900 text-base transition-all">
+                      🔪 החזר לעבודה (קצב)
+                    </button>
+                    <button onClick={() => setReturnStep('packing')}
+                      className="w-full py-4 rounded-xl border-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-400 font-bold text-yellow-900 text-base transition-all">
+                      📦 החזר לאריזה
+                    </button>
+                  </div>
+                )}
+
+                {returnStep === 'butcher' && (
+                  <div className="p-4 space-y-2">
+                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-1">← חזור</button>
+                    <p className="text-sm font-bold text-gray-700 mb-3">שייך לקצב:</p>
+                    {butchersList.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center py-4">אין קצבים מוגדרים — הוסף בניהול רשימות</p>
+                    )}
+                    {butchersList.map(b => (
+                      <button key={b.id} onClick={() => confirmReturnToWork(b.name)}
+                        className="w-full py-3 px-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 font-bold text-orange-900 text-base transition-all text-right">
+                        🔪 {b.name}
+                      </button>
+                    ))}
+                    <button onClick={() => confirmReturnToWork('')}
+                      className="w-full py-2.5 px-4 rounded-xl border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 font-bold text-gray-600 text-sm transition-all text-center">
+                      ללא שיוך לקצב
+                    </button>
+                  </div>
+                )}
+
+                {returnStep === 'packing' && (
+                  <div className="p-5 space-y-4">
+                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">← חזור</button>
+                    <p className="text-sm font-bold text-gray-700">עדכן פרטי אריזה (אם השתנה):</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">📦</div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">קרטונים</label>
+                        <input type="number" min="0" step="1" placeholder="0"
+                          value={returnPackaging.cartons}
+                          onChange={e => setReturnPackaging(p => ({ ...p, cartons: e.target.value }))}
+                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">🛍️</div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">שקיות</label>
+                        <input type="number" min="0" step="1" placeholder="0"
+                          value={returnPackaging.bags}
+                          onChange={e => setReturnPackaging(p => ({ ...p, bags: e.target.value }))}
+                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">🐟</div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1.5">שקיות דגים</label>
+                        <input type="number" min="0" step="1" placeholder="0"
+                          value={returnPackaging.fishBags}
+                          onChange={e => setReturnPackaging(p => ({ ...p, fishBags: e.target.value }))}
+                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-1">
+                      <button onClick={() => setReturnModal(null)}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors">
+                        ביטול
+                      </button>
+                      <button onClick={confirmReturnToPacking}
+                        className="flex-1 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-sm border border-yellow-600 transition-colors">
+                        ✅ אשר החזרה לאריזה
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -2849,9 +3179,21 @@
 
       return (
         <div className="animate-in fade-in duration-300">
-          <div className="mb-5">
-            <h1 className="text-3xl font-extrabold text-gray-900">ארכיון הזמנות</h1>
-            <p className="text-gray-500 mt-1">כל ההזמנות שהושלמו — {doneOrders.length} רשומות</p>
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">ארכיון הזמנות</h1>
+              <p className="text-gray-500 mt-1">כל ההזמנות שהושלמו — {doneOrders.length} רשומות</p>
+            </div>
+            {orders.filter(o => o.status === 'delivered').length > 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`למחוק את כל ${orders.filter(o => o.status === 'delivered').length} ההזמנות בארכיון?`))
+                    setOrders(prev => prev.filter(o => o.status !== 'delivered'));
+                }}
+                className="mt-1 py-2 px-3 rounded-xl text-sm font-bold bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0">
+                🗑️ נקה ארכיון
+              </button>
+            )}
           </div>
 
           {/* סרגל סינון */}
@@ -3293,9 +3635,10 @@
         {
           id: 1044, createdAt: new Date().toLocaleDateString('he-IL'), customer: 'משפחת ישראלי', phone: '050-1234567', type: 'delivery', neighborhood: 'רמות',
           items: [
-            { name: 'עוף שלם (להוריד עור)', cleanName: 'עוף שלם', qty: 10, kashrut: 'לנדא' }, 
-            { name: 'סלמון (חבילות קפוא)', cleanName: 'סלמון', qty: 15, kashrut: 'קהילות' }
-          ], 
+            { name: 'עוף שלם', cleanName: 'עוף שלם', qty: 10, checks: ['להוריד עור'], kashrut: 'לנדא' },
+            { name: 'עוף מפורק (שניצל)', cleanName: 'עוף מפורק', qty: 5, checks: ['כל עוף במגש'], kashrut: 'לנדא' },
+            { name: 'סלמון (מנות)', cleanName: 'סלמון', qty: 15, checks: ['6 במגש'], kashrut: 'קהילות' }
+          ],
           status: 'new', courier: '', kashrut: 'לנדא',
           street: 'רחוב הרצל 12', entrance: 'ב', floor: '3', apt: '10', mobile: '052-9876543',
           flags: { mustCoordinate: true, notifyReady: true, chargeStatus: 'charge' }
@@ -3488,7 +3831,7 @@
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
-            return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} />;
+            return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} butchersList={butchersList} />;
           case 'contacts':
             return <ContactsView contactsList={contactsList} setContactsList={setContactsList} />;
           case 'lists':
