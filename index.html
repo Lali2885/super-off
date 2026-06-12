@@ -669,7 +669,8 @@
         setFrozenStock(prev => ({ ...prev, [`${product}|${kashrut}`]: Math.max(0, num * TRAYS_PER_CARTON) }));
       };
 
-      const kashrutTrays = frozenProductsList.reduce((sum, p) => sum + (frozenStock[`${p.name}|${activeKashrut}`] || 0), 0);
+      const activeProducts = frozenProductsList.filter(p => (p.kashrut || '') === activeKashrut);
+      const kashrutTrays = activeProducts.reduce((sum, p) => sum + (frozenStock[`${p.name}|${activeKashrut}`] || 0), 0);
       const kashrutCartons = Math.floor(kashrutTrays / TRAYS_PER_CARTON);
       const kashrutRemainder = kashrutTrays % TRAYS_PER_CARTON;
 
@@ -727,7 +728,7 @@
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {frozenProductsList.map((p, idx) => { const product = p.name;
+                  {activeProducts.map((p, idx) => { const product = p.name;
                     const trays = frozenStock[`${product}|${activeKashrut}`] || 0;
                     const cartons = Math.floor(trays / TRAYS_PER_CARTON);
                     const remainder = trays % TRAYS_PER_CARTON;
@@ -2628,20 +2629,23 @@
       );
     };
 
-    // --- Product List Editor (with SKU + storage types) ---
-    const ProductListEditor = ({ items, setItems }) => {
+    // --- Product List Editor (with SKU + kashrut + storage types) ---
+    const ProductListEditor = ({ items, setItems, kashrutList }) => {
       const [newName, setNewName] = useState('');
       const [newSku, setNewSku] = useState('');
       const [newStorageTypes, setNewStorageTypes] = useState(['frozen']);
+      const [newKashrut, setNewKashrut] = useState(kashrutList[0]?.name || '');
+      const [filterKashrut, setFilterKashrut] = useState('');
 
       const handleAdd = (e) => {
         e.preventDefault();
-        if (!newName.trim() || newStorageTypes.length === 0) return;
+        if (!newName.trim() || newStorageTypes.length === 0 || !newKashrut) return;
         setItems(prev => [...prev, {
           id: Date.now().toString(),
           name: newName.trim(),
           sku: newSku.trim(),
-          storageTypes: newStorageTypes
+          storageTypes: newStorageTypes,
+          kashrut: newKashrut
         }]);
         setNewName('');
         setNewSku('');
@@ -2669,27 +2673,37 @@
         }));
       };
 
+      const visibleItems = filterKashrut ? items.filter(p => p.kashrut === filterKashrut) : items;
+
       return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-4 border-b border-gray-200 bg-gray-50">
             <h3 className="font-bold text-lg text-gray-800">מוצרי מלאי — רשימה מרכזית</h3>
-            <p className="text-xs text-gray-400 mt-0.5">ניהול כל המוצרים — כולל מק"ט וסוג מלאי (ניתן לסמן יותר מסוג אחד)</p>
+            <p className="text-xs text-gray-400 mt-0.5">ניהול כל המוצרים — כולל מק"ט, כשרות וסוג מלאי</p>
           </div>
 
           {/* טופס הוספה */}
           <div className="p-5 border-b border-gray-100 bg-white">
             <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
-              <div className="flex-1 min-w-[150px]">
+              <div className="flex-1 min-w-[140px]">
                 <label className="block text-xs font-bold text-gray-500 mb-1">שם מוצר *</label>
                 <input type="text" required value={newName} onChange={e => setNewName(e.target.value)}
                   placeholder="שם המוצר..."
                   className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
               </div>
-              <div className="w-36">
+              <div className="w-32">
                 <label className="block text-xs font-bold text-gray-500 mb-1">מק"ט</label>
                 <input type="text" value={newSku} onChange={e => setNewSku(e.target.value)}
                   placeholder="אופציונלי"
                   className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono" />
+              </div>
+              <div className="w-32">
+                <label className="block text-xs font-bold text-gray-500 mb-1">כשרות *</label>
+                <select required value={newKashrut} onChange={e => setNewKashrut(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                  <option value="" disabled>בחר...</option>
+                  {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">שייך למלאי</label>
@@ -2704,28 +2718,50 @@
                   ))}
                 </div>
               </div>
-              <Button type="submit" variant="primary" icon={Icons.Plus} className="self-end">הוסף מוצר</Button>
+              <Button type="submit" variant="primary" icon={Icons.Plus} className="self-end">הוסף</Button>
             </form>
           </div>
 
+          {/* פילטר כשרות */}
+          <div className="px-5 py-3 border-b border-gray-100 flex gap-2 flex-wrap items-center">
+            <span className="text-xs font-bold text-gray-400 ml-1">סנן:</span>
+            <button onClick={() => setFilterKashrut('')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${!filterKashrut ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'}`}>
+              הכל ({items.length})
+            </button>
+            {kashrutList.map(k => {
+              const count = items.filter(p => p.kashrut === k.name).length;
+              const isActive = filterKashrut === k.name;
+              return (
+                <button key={k.id} onClick={() => setFilterKashrut(k.name)}
+                  style={isActive ? { backgroundColor: k.color, borderColor: k.color, color: 'white' } : { borderColor: (k.color||'#888')+'60', color: k.color }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-all bg-white hover:opacity-80">
+                  {k.name} ({count})
+                </button>
+              );
+            })}
+          </div>
+
           {/* טבלת מוצרים */}
-          <div className="overflow-x-auto max-h-[480px] custom-scrollbar">
+          <div className="overflow-x-auto max-h-[440px] custom-scrollbar">
             <table className="w-full text-right">
               <thead className="bg-gray-50/80 text-gray-500 text-xs border-b border-gray-100 sticky top-0 backdrop-blur-sm">
                 <tr>
                   <th className="p-3 font-bold">#</th>
                   <th className="p-3 font-bold">שם מוצר</th>
-                  <th className="p-3 font-bold w-36">מק"ט</th>
-                  <th className="p-3 font-bold text-center">שייך למלאי</th>
+                  <th className="p-3 font-bold w-32">מק"ט</th>
+                  <th className="p-3 font-bold w-28">כשרות</th>
+                  <th className="p-3 font-bold text-center">סוג מלאי</th>
                   <th className="p-3 font-bold w-14 text-center">מחק</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {items.length === 0 && (
-                  <tr><td colSpan={5} className="p-8 text-center text-gray-400 text-sm">אין מוצרים ברשימה</td></tr>
+                {visibleItems.length === 0 && (
+                  <tr><td colSpan={6} className="p-8 text-center text-gray-400 text-sm">אין מוצרים</td></tr>
                 )}
-                {items.map((item, idx) => {
+                {visibleItems.map((item, idx) => {
                   const types = item.storageTypes || ['frozen'];
+                  const kObj = kashrutList.find(k => k.name === item.kashrut);
                   return (
                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors"
                       style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
@@ -2741,12 +2777,21 @@
                           placeholder="—"
                           className="w-full p-1.5 border border-transparent hover:border-gray-300 focus:border-blue-400 rounded-lg text-sm font-mono bg-transparent focus:bg-white outline-none transition-all text-gray-600" />
                       </td>
+                      <td className="p-2">
+                        <select value={item.kashrut || ''}
+                          onChange={e => handleUpdate(item.id, 'kashrut', e.target.value)}
+                          style={kObj ? { borderColor: kObj.color+'60', color: kObj.color, backgroundColor: kObj.color+'15' } : {}}
+                          className="w-full p-1.5 border rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-blue-400">
+                          <option value="">—</option>
+                          {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                        </select>
+                      </td>
                       <td className="p-2 text-center">
                         <div className="flex gap-1.5 justify-center">
                           {STORAGE_TYPES.map(st => (
                             <button key={st.key} type="button"
                               onClick={() => toggleItemType(item.id, st.key)}
-                              className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all ${types.includes(st.key) ? st.activeClass : 'border-gray-200 text-gray-400 bg-white hover:border-gray-300 hover:text-gray-600'}`}>
+                              className={`px-2 py-0.5 rounded-lg border text-xs font-bold transition-all ${types.includes(st.key) ? st.activeClass : 'border-gray-200 text-gray-400 bg-white hover:border-gray-300'}`}>
                               {st.label}
                             </button>
                           ))}
@@ -2764,7 +2809,9 @@
             </table>
           </div>
           <div className="p-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-400 text-center">
-            {items.length} מוצרים ברשימה · {items.filter(p => (p.storageTypes||['frozen']).includes('frozen')).length} קפוא · {items.filter(p => (p.storageTypes||['frozen']).includes('fresh')).length} טרי
+            {visibleItems.length} מוצגים מתוך {items.length} סה"כ ·
+            {' '}{items.filter(p => (p.storageTypes||['frozen']).includes('frozen')).length} קפוא ·
+            {' '}{items.filter(p => (p.storageTypes||['frozen']).includes('fresh')).length} טרי
           </div>
         </div>
       );
@@ -2780,7 +2827,7 @@
 
           <div className="flex flex-col gap-6">
             <NeighborhoodEditor neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />
-            <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} />
+            <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} kashrutList={kashrutList} />
             <ListEditor title="קצבים" items={butchersList} setItems={setButchersList} placeholder="הזן שם קצב חדש..." />
             <ListEditor title="סוגי כשרות פעילים" items={kashrutList} setItems={setKashrutList} placeholder="הזן סוג כשרות חדש..." showColor={true} />
             <ListEditor title="צי רכב ושליחים" items={couriersList} setItems={setCouriersList} placeholder="הזן שם שליח חדש..." />
@@ -2944,7 +2991,9 @@
       }));
 
       const frozenTotalByKashrut = kashrutList.map(k => {
-        const trays = frozenProductsList.reduce((sum, p) => sum + (frozenStock[`${p.name}|${k.name}`] || 0), 0);
+        const trays = frozenProductsList
+          .filter(p => (p.kashrut || '') === k.name)
+          .reduce((sum, p) => sum + (frozenStock[`${p.name}|${k.name}`] || 0), 0);
         return { ...k, trays, cartons: Math.floor(trays / TRAYS_PER_CARTON), remainder: trays % TRAYS_PER_CARTON };
       });
 
@@ -3242,7 +3291,9 @@
         'שניצל|קהילות': 5, 'בשר טחון|קהילות': 8
       });
       const [frozenProductsList, setFrozenProductsList] = useState(
-        FROZEN_PRODUCTS.map((name, i) => ({ id: String(i + 1), name, sku: '', storageTypes: ['frozen'] }))
+        FROZEN_PRODUCTS.flatMap((name, i) =>
+          FROZEN_KASHRUT.map((kashrut, j) => ({ id: `${i + 1}_${j + 1}`, name, sku: '', storageTypes: ['frozen'], kashrut }))
+        )
       );
       const [frozenStock, setFrozenStock] = useState(initFrozenStock);
 
@@ -3353,7 +3404,14 @@
                 if (row.id === 'kashrutList') setKashrutList(row.data);
                 if (row.id === 'butchersList') setButchersList(row.data);
                 if (row.id === 'couriersList') setCouriersList(row.data);
-                if (row.id === 'frozenProductsList') setFrozenProductsList(row.data.map(p => ({ sku: '', storageTypes: ['frozen'], ...p })));
+                if (row.id === 'frozenProductsList') {
+                  const raw = row.data.map(p => ({ sku: '', storageTypes: ['frozen'], ...p }));
+                  const needsMigration = raw.every(p => !p.kashrut);
+                  setFrozenProductsList(needsMigration
+                    ? raw.flatMap((p, i) => FROZEN_KASHRUT.map((k, j) => ({ ...p, id: `${p.id}_${j + 1}`, kashrut: k })))
+                    : raw
+                  );
+                }
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
                 if (row.id === 'contactsList') setContactsList(row.data);
               });
