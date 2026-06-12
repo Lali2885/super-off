@@ -958,6 +958,8 @@
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
+      const [printMode, setPrintMode] = useState('general'); // 'general' | 'fish'
+      const openPrint = (order, mode) => { setPrintMode(mode); setActivePrintOrder(order); };
       const [orderType, setOrderType] = useState('delivery');
       const [formItemsState, setFormItemsState] = useState({});
       const [packingOption, setPackingOption] = useState('');
@@ -981,6 +983,8 @@
       const [assignedButcher, setAssignedButcher] = useState('');
 
       const [openDropdown, setOpenDropdown] = useState(null);
+      const [expandedOrders, setExpandedOrders] = useState(new Set());
+      const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
       const [expandedCategories, setExpandedCategories] = useState({
         'עוף': true,
@@ -1416,68 +1420,61 @@
 
             const sortByKashrut = (arr) => [...arr].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
 
-            const renderOrderCard = (order, dimmed = false, draggable = false) => (
+            const renderOrderCard = (order, dimmed = false, draggable = false) => {
+              const isExpanded = dimmed || expandedOrders.has(order.id);
+              const regularItems = order.items.filter(i => i.qty !== '-');
+              const packingItem = order.items.find(i => i.qty === '-');
+              const cats = new Set(regularItems.map(i => ORDER_FORM_TEMPLATE.find(t => t.name === (i.cleanName || i.name))?.category).filter(Boolean));
+              return (
               <div key={order.id}
                 draggable={draggable}
                 onDragStart={draggable ? () => setDraggingId(order.id) : undefined}
                 onDragEnd={draggable ? () => setDraggingId(null) : undefined}
-                onClick={!dimmed ? () => openEditModal(order) : undefined}
-                className={`bg-white p-4 rounded-xl shadow-sm border flex flex-col transition-all ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200 cursor-pointer hover:shadow-md hover:border-purple-300 hover:bg-purple-50/20'} ${draggable ? 'active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
-                {/* כותרת כרטיס */}
-                <div className="flex justify-between items-start mb-2 border-b border-gray-100 pb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-extrabold text-base text-gray-900 truncate">#{order.id} | {order.customer}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      <Icons.Phone className="w-3 h-3 inline ml-1 text-gray-400" />{order.phone}
+                className={`bg-white rounded-xl shadow-sm border flex flex-col transition-all ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200'} ${draggable ? 'active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
+
+                {/* כותרת — תמיד גלויה, לחיצה פותחת/סוגרת */}
+                <div onClick={!dimmed ? () => toggleOrderExpand(order.id) : undefined}
+                  className={`p-4 rounded-t-xl ${!dimmed ? 'cursor-pointer hover:bg-gray-50/60' : ''}`}>
+                  <div className="flex justify-between items-start mb-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-extrabold text-base text-gray-900 truncate">#{order.id} | {order.customer}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        <Icons.Phone className="w-3 h-3 inline ml-1 text-gray-400" />{order.phone}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0 mr-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${order.type === 'delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
+                        {order.type === 'delivery' ? <Icons.Truck className="w-3 h-3" /> : <Icons.Package className="w-3 h-3" />}
+                        {order.type === 'delivery' ? 'משלוח' : 'איסוף'}
+                      </span>
+                      {order.timeString && <span className="text-[10px] text-gray-400">⏰ {order.timeString}</span>}
+                      {order.createdAt && <span className="text-[10px] text-gray-400">📅 {order.createdAt}</span>}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0 mr-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${order.type === 'delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
-                      {order.type === 'delivery' ? <Icons.Truck className="w-3 h-3" /> : <Icons.Package className="w-3 h-3" />}
-                      {order.type === 'delivery' ? 'משלוח' : 'איסוף'}
-                    </span>
-                    {order.timeString && <span className="text-[10px] text-gray-400">⏰ {order.timeString}</span>}
-                    {order.createdAt && <span className="text-[10px] text-gray-400">📅 {order.createdAt}</span>}
+
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">{order.kashrut}</span>
+                    {order.assignedButcher && <span className="text-[10px] bg-orange-100 text-orange-800 border border-orange-200 px-1.5 py-0.5 rounded font-bold">🔪 {order.assignedButcher}</span>}
+                    {order.neighborhood && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold"><Icons.MapPin className="w-2.5 h-2.5 inline" /> {order.neighborhood}</span>}
+                    {order.flags?.mustCoordinate && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">🚨 תאום</span>}
+                    {order.flags?.notifyReady && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-bold">📞 להודיע</span>}
+                    {order.flags?.chargeStatus === 'charge' && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">💳 לחייב</span>}
+                    {order.flags?.chargeStatus === 'noCharge' && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">🆓 לא לחייב</span>}
+                  </div>
+
+                  {/* תגיות קטגוריה + חץ */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {cats.has('עוף')  && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">🐔 עוף</span>}
+                    {cats.has('הודו') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-800 border border-green-300">🦃 הודו</span>}
+                    {cats.has('בשר ואחרים') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-800 border border-red-300">🥩 בשר</span>}
+                    {cats.has('דגים') && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-300">🐟 דגים</span>}
+                    {!dimmed && <span className="text-gray-300 text-xs mr-auto">{isExpanded ? '▲' : '▼'}</span>}
                   </div>
                 </div>
 
-                {/* תגיות */}
-                <div className="flex flex-wrap gap-1 mb-2">
-                  <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">{order.kashrut}</span>
-                  {order.assignedButcher && <span className="text-[10px] bg-orange-100 text-orange-800 border border-orange-200 px-1.5 py-0.5 rounded font-bold">🔪 {order.assignedButcher}</span>}
-                  {order.neighborhood && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold"><Icons.MapPin className="w-2.5 h-2.5 inline" /> {order.neighborhood}</span>}
-                  {order.flags?.mustCoordinate && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">🚨 תאום</span>}
-                  {order.flags?.notifyReady && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-bold">📞 להודיע</span>}
-                  {order.flags?.chargeStatus === 'charge' && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">💳 לחייב</span>}
-                  {order.flags?.chargeStatus === 'noCharge' && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">🆓 לא לחייב</span>}
-                </div>
-
-                {/* פריטים */}
-                <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3 flex-1">
-                  {order.items.map((item, idx) => (
-                    <li key={idx} className="px-2 py-1.5 flex items-start gap-2 text-xs">
-                      <span className={`font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 ${item.qty === '-' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-purple-100 text-purple-800 border-purple-200'}`}>{item.qty}</span>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-bold text-gray-800">{item.name}</span>
-                        {item.notes && <div className="text-red-500 font-medium">✂️ {item.notes}</div>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* תצוגת אריזה להזמנות שהסתיימו */}
-                {dimmed && order.packaging && (order.packaging.cartons || order.packaging.bags || order.packaging.fishBags) && (
-                  <div className="mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex flex-wrap gap-3 text-xs font-bold text-green-800">
-                    {order.packaging.cartons > 0 && <span>📦 {order.packaging.cartons} קרטונים</span>}
-                    {order.packaging.bags > 0 && <span>🛍️ {order.packaging.bags} שקיות</span>}
-                    {order.packaging.fishBags > 0 && <span>🐟 {order.packaging.fishBags} שקיות דגים</span>}
-                  </div>
-                )}
-
-                {/* כפתורים */}
+                {/* כפתורי פעולה — תמיד גלויים */}
                 {!dimmed && (
-                  <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                    {/* כפתור שמאלי דינמי */}
+                  <div className="px-3 pb-3 flex gap-1.5 flex-wrap" onClick={e => e.stopPropagation()}>
                     {order.status === 'new' && !order.assignedButcher && (
                       <button onClick={() => setButcherModal(order.id)}
                         className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 transition-colors">
@@ -1493,28 +1490,104 @@
                     {order.status === 'packing' && (
                       <button onClick={() => requestComplete(order.id)}
                         className="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold bg-green-500 hover:bg-green-600 text-white border border-green-600 transition-colors">
-                        ✅ מוכן לאיסוף/משלוח
+                        ✅ מוכן
                       </button>
                     )}
-                    {/* בון */}
-                    <Button variant="secondary" icon={Icons.Printer} className="text-xs px-2 py-1.5" onClick={() => setActivePrintOrder(order)}>בון</Button>
-                    {/* כפתור חזרה */}
+                    <button onClick={() => openPrint(order, 'general')}
+                      className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors">
+                      🖨️ כללי
+                    </button>
+                    {cats.has('דגים') && (
+                      <button onClick={() => openPrint(order, 'fish')}
+                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors">
+                        🐟 דייג
+                      </button>
+                    )}
+                    <button onClick={() => openEditModal(order)} className="py-1.5 px-2 rounded-lg text-xs font-bold bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200">✏️</button>
                     {order.status === 'packing' && (
                       <button onClick={() => setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o))}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">
-                        ↩
-                      </button>
+                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">↩</button>
                     )}
                     {order.status === 'new' && order.assignedButcher && (
                       <button onClick={() => setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o))}
-                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">
-                        ↩
-                      </button>
+                        className="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200">↩</button>
+                    )}
+                  </div>
+                )}
+
+                {/* פירוט — נפתח בלחיצה */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-gray-100 pt-3">
+                    {(() => {
+                      const seen = new Set(); const groups = [];
+                      regularItems.forEach(item => {
+                        const key = item.cleanName || item.name;
+                        if (!seen.has(key)) {
+                          seen.add(key);
+                          const grp = regularItems.filter(i => (i.cleanName || i.name) === key);
+                          groups.push({ key, items: grp, total: grp.reduce((s, i) => s + (parseFloat(i.qty) || 0), 0) });
+                        }
+                      });
+                      const getCatColors = (cat) => {
+                        if (cat === 'עוף') return { qtyBg: 'bg-yellow-100', qtyText: 'text-yellow-800', qtyBorder: 'border-yellow-300', subBorder: 'border-yellow-300', subQty: 'text-yellow-700' };
+                        if (cat === 'הודו') return { qtyBg: 'bg-green-100', qtyText: 'text-green-800', qtyBorder: 'border-green-300', subBorder: 'border-green-300', subQty: 'text-green-700' };
+                        if (cat === 'דגים') return { qtyBg: 'bg-blue-100', qtyText: 'text-blue-800', qtyBorder: 'border-blue-300', subBorder: 'border-blue-300', subQty: 'text-blue-700' };
+                        return { qtyBg: 'bg-red-100', qtyText: 'text-red-800', qtyBorder: 'border-red-300', subBorder: 'border-red-300', subQty: 'text-red-700' };
+                      };
+                      return (
+                        <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3">
+                          {groups.map((group, gIdx) => {
+                            const tmpl = ORDER_FORM_TEMPLATE.find(t => t.name === group.key);
+                            const cc = getCatColors(tmpl?.category);
+                            return (
+                              <li key={gIdx} className="px-2 py-2 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 ${cc.qtyBg} ${cc.qtyText} ${cc.qtyBorder}`}>
+                                    {group.items.length > 1 ? group.total : group.items[0].qty}
+                                  </span>
+                                  <span className="font-bold text-gray-800">{group.key}</span>
+                                </div>
+                                {group.items.length > 1 && (
+                                  <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
+                                    {group.items.map((item, iIdx) => {
+                                      const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
+                                      return (
+                                        <div key={iIdx} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                                          <span className={`font-extrabold min-w-[20px] text-center ${cc.subQty}`}>{item.qty}</span>
+                                          <span>{opt}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                {group.items.length === 1 && group.items[0].notes && (
+                                  <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {group.items[0].notes}</div>
+                                )}
+                              </li>
+                            );
+                          })}
+                          {packingItem && (
+                            <li className="px-2 py-1.5 flex items-center gap-2 text-xs">
+                              <span className="font-black px-1.5 py-0.5 rounded border bg-gray-100 text-gray-500 border-gray-200 text-center shrink-0">📦</span>
+                              <span className="text-gray-600 font-medium">{packingItem.notes}</span>
+                            </li>
+                          )}
+                        </ul>
+                      );
+                    })()}
+
+                    {dimmed && order.packaging && (order.packaging.cartons || order.packaging.bags || order.packaging.fishBags) && (
+                      <div className="mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex flex-wrap gap-3 text-xs font-bold text-green-800">
+                        {order.packaging.cartons > 0 && <span>📦 {order.packaging.cartons} קרטונים</span>}
+                        {order.packaging.bags > 0 && <span>🛍️ {order.packaging.bags} שקיות</span>}
+                        {order.packaging.fishBags > 0 && <span>🐟 {order.packaging.fishBags} שקיות דגים</span>}
+                      </div>
                     )}
                   </div>
                 )}
               </div>
-            );
+              );
+            };
 
             const renderKashrutGroups = (arr, dimmed = false, draggable = false) => {
               if (arr.length === 0) return (
@@ -1819,8 +1892,8 @@
                   <button onClick={() => setActivePrintOrder(null)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
                 </div>
 
-                {/* תצוגת שני בונים */}
-                <div className="overflow-y-auto p-4 flex-1 bg-gray-300/50 flex flex-col gap-6 items-center custom-scrollbar">
+                {/* תצוגת בון */}
+                <div className="overflow-y-auto p-4 flex-1 bg-gray-300/50 flex flex-col gap-4 items-center custom-scrollbar">
                   {(() => {
                     const allRegular = activePrintOrder.items.filter(i => i.qty !== '-');
                     const packingItem = activePrintOrder.items.find(i => i.qty === '-');
@@ -1884,77 +1957,44 @@
                       </table>
                     );
 
-                    const slipHeader = (
-                      <>
-                        <div className="border-b border-black pb-2 mb-3 text-xs space-y-1.5 bg-white">
-                          <div><strong className="text-gray-600">שם הלקוח:</strong> <span className="font-extrabold text-base">{activePrintOrder.customer}</span></div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div><strong className="text-gray-600">טלפון:</strong> <span className="font-bold">{activePrintOrder.phone}</span></div>
-                            {activePrintOrder.mobile && <div><strong className="text-gray-600">נייד:</strong> <span className="font-bold">{activePrintOrder.mobile}</span></div>}
-                          </div>
-                        </div>
-                        <div className="border border-black p-2 rounded mb-3 text-xs space-y-1 bg-gray-50/50">
-                          <div className="flex justify-between font-extrabold">
-                            <span>סוג: {activePrintOrder.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}</span>
-                            <span>הזמנה: #{activePrintOrder.id}</span>
-                          </div>
-                          {activePrintOrder.timeString && <div className="font-bold">מועד: {activePrintOrder.timeString}</div>}
-                        </div>
-                      </>
+                    const slipCustomer = (
+                      <div className="border-b-2 border-black pb-2 mb-2">
+                        <div className="text-lg font-extrabold">{activePrintOrder.customer}</div>
+                        <div className="text-sm font-bold text-gray-700">{activePrintOrder.phone}{activePrintOrder.mobile ? ` | ${activePrintOrder.mobile}` : ''}</div>
+                      </div>
                     );
 
-                    return <>
-                      {/* בון כללי */}
-                      <div id="physical-print-slip-area-general"
-                        className="bg-white p-6 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
+                    return printMode === 'fish' ? (
+                      <div id="physical-print-slip-area-fish"
+                        className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
-                        <div className="text-center text-xs font-bold tracking-widest mb-1">בס"ד</div>
-                        <PoultryLogo className="h-16 object-contain mx-auto mb-2" />
-                        <div className="text-center font-extrabold text-sm mb-2 border-b border-black pb-1">בון הזמנה כללי</div>
-                        <div className="grid grid-cols-3 gap-2 text-xs font-bold border-b border-black pb-2 mb-3">
-                          <div className="flex items-center gap-1"><span className="text-lg leading-none">{activePrintOrder.flags?.chargeStatus === 'noCharge' ? '☑' : '☐'}</span><span>לא לחייב</span></div>
-                          <div className="flex items-center gap-1"><span className="text-lg leading-none">{activePrintOrder.flags?.mustCoordinate ? '☑' : '☐'}</span><span>לתאם חובה</span></div>
-                          <div className="flex items-center gap-1"><span className="text-lg leading-none">{activePrintOrder.flags?.notifyReady ? '☑' : '☐'}</span><span>להודיע שמוכן</span></div>
-                        </div>
-                        {slipHeader}
-                        <div className="border border-black p-2 rounded mb-3 text-xs bg-purple-50/30">
-                          <div className="font-bold text-[10px] text-gray-500 mb-1 text-center">כשרות</div>
-                          <div className="flex gap-4 font-bold justify-center flex-wrap">
-                            {kashrutList.map(k => (<span key={k.id} className="flex items-center gap-1"><span>{activePrintOrder.kashrut === k.name ? '☑' : '☐'}</span> {k.name}</span>))}
-                          </div>
-                        </div>
+                        <div className="text-center font-extrabold text-base mb-2 text-blue-800">🐟 בון דייג</div>
+                        {slipCustomer}
+                        {renderSlipTable(fishGroups, null)}
+                      </div>
+                    ) : (
+                      <div id="physical-print-slip-area-general"
+                        className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
+                        style={{ fontFamily: 'Assistant, sans-serif' }}>
+                        <div className="text-center font-extrabold text-base mb-2">בון הזמנה</div>
+                        {slipCustomer}
                         {renderSlipTable(generalGroups, packingItem && (
                           <tr className="bg-gray-50">
-                            <td className="p-2 border border-black text-center text-sm bg-gray-100">📦</td>
-                            <td className="p-2 border border-black font-bold text-gray-700" colSpan="2">{packingItem.notes}</td>
+                            <td className="p-2 border border-black text-center bg-gray-100">📦</td>
+                            <td className="p-2 border border-black font-bold text-gray-700">{packingItem.notes}</td>
                           </tr>
                         ))}
-                        <div className="text-center text-[10px] font-bold text-gray-500 mt-4 pt-2 border-t border-dashed border-gray-300">נארז ונחתך באהבה | סופרעוף</div>
                       </div>
-
-                      {/* בון דייג */}
-                      {fishGroups.length > 0 && (
-                        <div id="physical-print-slip-area-fish"
-                          className="bg-white p-6 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
-                          style={{ fontFamily: 'Assistant, sans-serif' }}>
-                          <div className="text-center text-xs font-bold tracking-widest mb-1">בס"ד</div>
-                          <PoultryLogo className="h-16 object-contain mx-auto mb-2" />
-                          <div className="text-center font-extrabold text-sm mb-2 border-b-2 border-blue-600 pb-1 text-blue-800">🐟 בון דייג</div>
-                          {slipHeader}
-                          {renderSlipTable(fishGroups, null)}
-                          <div className="text-center text-[10px] font-bold text-gray-500 mt-4 pt-2 border-t border-dashed border-gray-300">נארז ונחתך באהבה | סופרעוף</div>
-                        </div>
-                      )}
-                    </>;
+                    );
                   })()}
                 </div>
 
-                <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-2 shrink-0 flex-wrap">
+                <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-2 shrink-0">
                   <Button variant="outline" className="flex-1" onClick={() => setActivePrintOrder(null)}>סגור</Button>
-                  <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2" onClick={() => triggerPhysicalPrint('physical-print-slip-area-general')}>הדפס בון כללי</Button>
-                  {activePrintOrder?.items.some(i => i.qty !== '-' && ORDER_FORM_TEMPLATE.find(t => t.name === (i.cleanName || i.name))?.category === 'דגים') && (
-                    <Button variant="secondary" icon={Icons.Printer} className="flex-1 font-bold py-2" onClick={() => triggerPhysicalPrint('physical-print-slip-area-fish')}>הדפס בון דייג 🐟</Button>
-                  )}
+                  <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2"
+                    onClick={() => triggerPhysicalPrint(printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general')}>
+                    הדפס
+                  </Button>
                 </div>
               </div>
             </div>
