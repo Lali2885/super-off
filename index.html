@@ -3399,7 +3399,7 @@
                       {catItems.map(p => (
                         <tr key={p.id} className="hover:bg-gray-50/60 border-b border-gray-50">
                           <td className="px-4 py-2">
-                            <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
+                            <input value={p.name} onChange={e => p.name ? updateByName(p.name, 'name', e.target.value) : updateProduct(p.id, 'name', e.target.value)}
                               className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" placeholder="שם מוצר..." />
                           </td>
                           <td className="px-4 py-2">
