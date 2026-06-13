@@ -3215,6 +3215,8 @@
       const [activeStorage, setActiveStorage] = useState(new Set());
       const [sortBy, setSortBy] = useState('');
       const [sortDir, setSortDir] = useState('asc');
+      const [showAddModal, setShowAddModal] = useState(false);
+      const [newProduct, setNewProduct] = useState({ name: '', category: 'עוף', sku: '', storageTypes: ['frozen'] });
       const tableRef = useRef(null);
 
       useEffect(() => {
@@ -3224,11 +3226,27 @@
         return () => document.removeEventListener('mousedown', handler);
       }, [openFilter]);
 
-      const addProduct = () => {
-        const newId = `p_${Date.now()}`;
+      const openAddModal = () => {
         const cat = activeCats.size === 1 ? [...activeCats][0] : 'עוף';
-        setItems(prev => [...prev, ...kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name, category: cat }))]);
+        setNewProduct({ name: '', category: cat, sku: '', storageTypes: ['frozen'] });
+        setShowAddModal(true);
       };
+
+      const confirmAddProduct = () => {
+        if (!newProduct.name.trim()) return;
+        const newId = `p_${Date.now()}`;
+        setItems(prev => [...prev, ...kashrutList.map((k, j) => ({
+          id: `${newId}_${j}`, name: newProduct.name.trim(),
+          sku: newProduct.sku, storageTypes: newProduct.storageTypes,
+          kashrut: k.name, category: newProduct.category,
+        }))]);
+        setShowAddModal(false);
+      };
+
+      const toggleNewStorage = (key) => setNewProduct(p => {
+        const has = p.storageTypes.includes(key);
+        return { ...p, storageTypes: has ? p.storageTypes.filter(k => k !== key) : [...p.storageTypes, key] };
+      });
       const updateProduct = (id, field, value) => setItems(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
       const updateByName  = (name, field, value) => setItems(prev => prev.map(p => p.name === name ? { ...p, [field]: value } : p));
       const removeGroup   = (name) => setItems(prev => prev.filter(p => p.name !== name));
@@ -3342,7 +3360,7 @@
               <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי</h3>
               <p className="text-xs text-gray-400 mt-0.5">לחץ על כותרת עמודה לסינון ומיון</p>
             </div>
-            <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors shrink-0">
+            <button onClick={openAddModal} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors shrink-0">
               <Icons.Plus className="w-4 h-4" /> הוסף מוצר
             </button>
           </div>
@@ -3423,6 +3441,88 @@
               </tbody>
             </table>
           </div>
+
+          {/* מודל הוספת מוצר */}
+          {showAddModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-extrabold text-gray-900">הוספת מוצר חדש</h3>
+                  <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Icons.X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {/* שם מוצר */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">שם מוצר *</label>
+                    <input
+                      autoFocus
+                      type="text" value={newProduct.name}
+                      onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && confirmAddProduct()}
+                      placeholder="לדוגמה: כרעיים שלם..."
+                      className="w-full p-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* קטגוריה */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">קטגוריה</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {PRODUCT_CATEGORIES.map(cat => (
+                        <button key={cat} type="button" onClick={() => setNewProduct(p => ({ ...p, category: cat }))}
+                          className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.category === cat ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+                          {CAT_EMOJI[cat]} {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* מק"ט */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">מק"ט (אופציונלי)</label>
+                    <input
+                      type="text" value={newProduct.sku}
+                      onChange={e => setNewProduct(p => ({ ...p, sku: e.target.value }))}
+                      placeholder='מספר מק"ט...'
+                      className="w-full p-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-400 font-mono"
+                    />
+                  </div>
+
+                  {/* סוג מלאי */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">סוג מלאי</label>
+                    <div className="flex gap-2">
+                      {STORAGE_TYPES.map(st => {
+                        const active = newProduct.storageTypes.includes(st.key);
+                        return (
+                          <button key={st.key} type="button" onClick={() => toggleNewStorage(st.key)}
+                            className={`text-sm px-4 py-2 rounded-xl border font-bold transition-all ${active ? st.activeClass : 'bg-white text-gray-400 border-gray-300 hover:border-gray-500'}`}>
+                            {st.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-400">המוצר יתווסף לכל סוגי הכשרות ברשימה ({kashrutList.map(k => k.name).join(', ')})</p>
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button onClick={confirmAddProduct} disabled={!newProduct.name.trim()}
+                    className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors">
+                    הוסף לרשימה
+                  </button>
+                  <button onClick={() => setShowAddModal(false)}
+                    className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     };
