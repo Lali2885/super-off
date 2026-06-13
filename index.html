@@ -3226,14 +3226,12 @@
         return () => document.removeEventListener('mousedown', handler);
       }, [openFilter]);
 
-      const [renameModal, setRenameModal] = useState({ open: false, oldName: '', newName: '' });
+      const [editingName, setEditingName] = useState({ id: null, value: '' });
 
-      const openRenameModal = (name) => setRenameModal({ open: true, oldName: name, newName: name });
-      const confirmRename = () => {
-        const trimmed = renameModal.newName.trim();
-        if (!trimmed || trimmed === renameModal.oldName) { setRenameModal(r => ({ ...r, open: false })); return; }
-        updateByName(renameModal.oldName, 'name', trimmed);
-        setRenameModal({ open: false, oldName: '', newName: '' });
+      const commitRename = (originalName) => {
+        const trimmed = editingName.value.trim();
+        if (trimmed && trimmed !== originalName) updateByName(originalName, 'name', trimmed);
+        setEditingName({ id: null, value: '' });
       };
 
       const openAddModal = () => {
@@ -3409,13 +3407,17 @@
                       {catItems.map(p => (
                         <tr key={p.id} className="hover:bg-gray-50/60 border-b border-gray-50">
                           <td className="px-4 py-2">
-                            <div className="flex items-center gap-1.5 group">
-                              <span className="text-sm text-gray-800 font-medium flex-1">{p.name || <span className="text-gray-300 italic">ללא שם</span>}</span>
-                              <button onClick={() => openRenameModal(p.name)}
-                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 hover:bg-blue-50 p-1 rounded-lg transition-all shrink-0" title="שנה שם">
-                                <Icons.Edit className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                            {editingName.id === p.id
+                              ? <input autoFocus type="text" value={editingName.value}
+                                  onChange={e => setEditingName(s => ({ ...s, value: e.target.value }))}
+                                  onBlur={() => commitRename(p.name)}
+                                  onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setEditingName({ id: null, value: '' }); }}
+                                  className="w-full p-1 border border-blue-400 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-300" />
+                              : <span onClick={() => setEditingName({ id: p.id, value: p.name })}
+                                  className="text-sm text-gray-800 font-medium cursor-text hover:bg-blue-50 px-1 py-0.5 rounded transition-colors block w-full">
+                                  {p.name || <span className="text-gray-300 italic">ללא שם</span>}
+                                </span>
+                            }
                           </td>
                           <td className="px-4 py-2">
                             <select value={p._cat} onChange={e => updateByName(p.name, 'category', e.target.value)}
@@ -3456,40 +3458,6 @@
               </tbody>
             </table>
           </div>
-
-          {/* מודל שינוי שם */}
-          {renameModal.open && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setRenameModal(r => ({ ...r, open: false }))}>
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-extrabold text-gray-900">שינוי שם מוצר</h3>
-                  <button onClick={() => setRenameModal(r => ({ ...r, open: false }))} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Icons.X className="w-5 h-5" />
-                  </button>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">שם חדש</label>
-                  <input
-                    autoFocus
-                    type="text" value={renameModal.newName}
-                    onChange={e => setRenameModal(r => ({ ...r, newName: e.target.value }))}
-                    onKeyDown={e => e.key === 'Enter' && confirmRename()}
-                    className="w-full p-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button onClick={confirmRename} disabled={!renameModal.newName.trim()}
-                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors">
-                    שמור שם
-                  </button>
-                  <button onClick={() => setRenameModal(r => ({ ...r, open: false }))}
-                    className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
-                    ביטול
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* מודל הוספת מוצר */}
           {showAddModal && (
