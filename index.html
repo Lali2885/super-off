@@ -3208,30 +3208,38 @@
     };
 
     const ProductListEditor = ({ items, setItems, kashrutList }) => {
-      const [filterCategory, setFilterCategory] = useState('');
-      const [filterKashrut, setFilterKashrut] = useState('קהילות');
-      const [filterStorage, setFilterStorage] = useState('');
+      const [openFilter, setOpenFilter] = useState(null);
+      const [searchName, setSearchName] = useState('');
+      const [activeCats, setActiveCats] = useState(new Set());
+      const [activeKashrut, setActiveKashrut] = useState(new Set());
+      const [activeStorage, setActiveStorage] = useState(new Set());
       const [sortBy, setSortBy] = useState('');
       const [sortDir, setSortDir] = useState('asc');
+      const tableRef = useRef(null);
+
+      useEffect(() => {
+        if (!openFilter) return;
+        const handler = (e) => { if (tableRef.current && !tableRef.current.contains(e.target)) setOpenFilter(null); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+      }, [openFilter]);
 
       const addProduct = () => {
         const newId = `p_${Date.now()}`;
-        const cat = filterCategory || 'עוף';
-        const newItems = kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name, category: cat }));
-        setItems(prev => [...prev, ...newItems]);
+        const cat = activeCats.size === 1 ? [...activeCats][0] : 'עוף';
+        setItems(prev => [...prev, ...kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name, category: cat }))]);
       };
       const updateProduct = (id, field, value) => setItems(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
-      const updateByName = (name, field, value) => setItems(prev => prev.map(p => p.name === name ? { ...p, [field]: value } : p));
-      const removeGroup = (name) => setItems(prev => prev.filter(p => p.name !== name));
+      const updateByName  = (name, field, value) => setItems(prev => prev.map(p => p.name === name ? { ...p, [field]: value } : p));
+      const removeGroup   = (name) => setItems(prev => prev.filter(p => p.name !== name));
       const toggleStorage = (id, key) => setItems(prev => prev.map(p => {
         if (p.id !== id) return p;
         const has = (p.storageTypes || []).includes(key);
         return { ...p, storageTypes: has ? p.storageTypes.filter(k => k !== key) : [...(p.storageTypes || []), key] };
       }));
-      const toggleSort = (field) => {
-        if (sortBy === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-        else { setSortBy(field); setSortDir('asc'); }
-      };
+      const toggleSet = (setter, value) => setter(prev => { const n = new Set(prev); n.has(value) ? n.delete(value) : n.add(value); return n; });
+      const setSort   = (field, dir)  => { setSortBy(field); setSortDir(dir); setOpenFilter(null); };
+      const clearSort = ()            => { setSortBy('');    setOpenFilter(null); };
 
       const orderedKashrutList = [
         ...kashrutList.filter(k => k.name === 'קהילות'),
@@ -3240,108 +3248,138 @@
       ];
 
       const enriched = items.map(p => ({ ...p, _cat: p.category || getProductCategory(p.name) }));
-
       let filtered = enriched;
-      if (filterCategory) filtered = filtered.filter(p => p._cat === filterCategory);
-      if (filterKashrut)  filtered = filtered.filter(p => p.kashrut === filterKashrut);
-      if (filterStorage)  filtered = filtered.filter(p => (p.storageTypes || []).includes(filterStorage));
-      if (sortBy) {
-        filtered = [...filtered].sort((a, b) => {
-          const va = sortBy === 'name' ? (a.name || '') : (a.sku || '');
-          const vb = sortBy === 'name' ? (b.name || '') : (b.sku || '');
-          const cmp = va.localeCompare(vb, 'he');
-          return sortDir === 'asc' ? cmp : -cmp;
-        });
-      }
+      if (searchName)         filtered = filtered.filter(p => p.name.includes(searchName));
+      if (activeCats.size)    filtered = filtered.filter(p => activeCats.has(p._cat));
+      if (activeKashrut.size) filtered = filtered.filter(p => activeKashrut.has(p.kashrut));
+      if (activeStorage.size) filtered = filtered.filter(p => (p.storageTypes || []).some(s => activeStorage.has(s)));
+      if (sortBy) filtered = [...filtered].sort((a, b) => {
+        const va = sortBy === 'name' ? (a.name || '') : (a.sku || '');
+        const vb = sortBy === 'name' ? (b.name || '') : (b.sku || '');
+        return sortDir === 'asc' ? va.localeCompare(vb, 'he') : vb.localeCompare(va, 'he');
+      });
 
-      const visibleCats = filterCategory
-        ? [filterCategory]
-        : PRODUCT_CATEGORIES.filter(cat => filtered.some(p => p._cat === cat));
+      const visibleCats = PRODUCT_CATEGORIES.filter(c => filtered.some(p => p._cat === c));
+      const isActive = {
+        name:     !!searchName || sortBy === 'name',
+        category: activeCats.size > 0,
+        sku:      sortBy === 'sku',
+        kashrut:  activeKashrut.size > 0,
+        storage:  activeStorage.size > 0,
+      };
 
-      const filterBtn = (active, onClick, label) => (
-        <button onClick={onClick} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${active ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>{label}</button>
+      // helper renderers (functions, not components, to avoid remount issues)
+      const sortRow = (field, dir, label) => (
+        <button onClick={() => setSort(field, dir)}
+          className={`w-full text-right px-2 py-1.5 rounded-lg hover:bg-gray-50 text-sm flex items-center gap-2 ${sortBy === field && sortDir === dir ? 'text-blue-600 font-bold' : 'text-gray-700'}`}>
+          {dir === 'asc' ? '↑' : '↓'} {label}
+        </button>
       );
-      const sortIcon = (field) => sortBy === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+      const checkRow = (label, checked, onChange) => (
+        <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
+          <input type="checkbox" checked={checked} onChange={onChange} className="rounded accent-blue-500" />
+          {label}
+        </label>
+      );
+      const clearBtn = (onClick, label = 'נקה סינון') => (
+        <button onClick={onClick} className="w-full text-right px-2 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded-lg border-t border-gray-100 mt-1 pt-2">
+          ✕ {label}
+        </button>
+      );
+
+      const colHeader = (field, label) => {
+        const active = isActive[field];
+        const isOpen = openFilter === field;
+        return (
+          <th className="text-right px-4 py-2.5 text-xs relative">
+            <button onClick={() => setOpenFilter(isOpen ? null : field)}
+              className={`flex items-center gap-1 font-bold transition-colors whitespace-nowrap ${active ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              {label}
+              <span className={`text-[9px] ml-0.5 ${active ? 'text-blue-400' : 'text-gray-300'}`}>{active ? '▼' : '▾'}</span>
+            </button>
+            {isOpen && (
+              <div className="absolute top-full right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl min-w-[190px] p-1.5 text-right"
+                onClick={e => e.stopPropagation()}>
+                {field === 'name' && <>
+                  <input autoFocus type="text" placeholder="חיפוש שם מוצר..." value={searchName}
+                    onChange={e => setSearchName(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 mb-1" />
+                  <div className="border-t border-gray-100 pt-1">
+                    {sortRow('name', 'asc',  'מיון א → ת')}
+                    {sortRow('name', 'desc', 'מיון ת → א')}
+                    {sortBy === 'name' && clearBtn(clearSort, 'נקה מיון')}
+                    {searchName       && clearBtn(() => { setSearchName(''); }, 'נקה חיפוש')}
+                  </div>
+                </>}
+                {field === 'category' && <>
+                  {PRODUCT_CATEGORIES.map(cat => checkRow(`${CAT_EMOJI[cat]} ${cat}`, activeCats.has(cat), () => toggleSet(setActiveCats, cat)))}
+                  {activeCats.size > 0 && clearBtn(() => { setActiveCats(new Set()); setOpenFilter(null); })}
+                </>}
+                {field === 'sku' && <>
+                  {sortRow('sku', 'asc',  'מיון עולה')}
+                  {sortRow('sku', 'desc', 'מיון יורד')}
+                  {sortBy === 'sku' && clearBtn(clearSort, 'נקה מיון')}
+                </>}
+                {field === 'kashrut' && <>
+                  {orderedKashrutList.map(k => checkRow(k.name, activeKashrut.has(k.name), () => toggleSet(setActiveKashrut, k.name)))}
+                  {activeKashrut.size > 0 && clearBtn(() => { setActiveKashrut(new Set()); setOpenFilter(null); })}
+                </>}
+                {field === 'storage' && <>
+                  {checkRow('🧊 קפוא', activeStorage.has('frozen'), () => toggleSet(setActiveStorage, 'frozen'))}
+                  {checkRow('🥩 טרי',   activeStorage.has('fresh'),  () => toggleSet(setActiveStorage, 'fresh'))}
+                  {activeStorage.size > 0 && clearBtn(() => { setActiveStorage(new Set()); setOpenFilter(null); })}
+                </>}
+              </div>
+            )}
+          </th>
+        );
+      };
 
       return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* כותרת + פילטרים */}
-          <div className="px-5 py-4 border-b border-gray-100 space-y-2.5">
-            <div className="flex items-center justify-between gap-3">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" ref={tableRef}>
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+            <div>
               <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי</h3>
-              <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors shrink-0">
-                <Icons.Plus className="w-4 h-4" /> הוסף מוצר
-              </button>
+              <p className="text-xs text-gray-400 mt-0.5">לחץ על כותרת עמודה לסינון ומיון</p>
             </div>
-
-            {/* שורה 1: קטגוריה */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-gray-400 shrink-0">קטגוריה:</span>
-              {filterBtn(!filterCategory, () => setFilterCategory(''), 'הכל')}
-              {PRODUCT_CATEGORIES.map(cat => {
-                const s = CAT_STYLES[cat] || {};
-                return (
-                  <button key={cat} onClick={() => setFilterCategory(filterCategory === cat ? '' : cat)}
-                    className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${filterCategory === cat ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
-                    {CAT_EMOJI[cat]} {cat}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* שורה 2: כשרות */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-gray-400 shrink-0">כשרות:</span>
-              {orderedKashrutList.map(k => filterBtn(filterKashrut === k.name, () => setFilterKashrut(filterKashrut === k.name ? '' : k.name), k.name))}
-              {filterBtn(!filterKashrut, () => setFilterKashrut(''), 'הכל')}
-            </div>
-
-            {/* שורה 3: סוג מלאי + מיון */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-gray-400 shrink-0">סוג מלאי:</span>
-                {filterBtn(!filterStorage, () => setFilterStorage(''), 'הכל')}
-                {filterBtn(filterStorage === 'frozen', () => setFilterStorage(filterStorage === 'frozen' ? '' : 'frozen'), '🧊 קפוא')}
-                {filterBtn(filterStorage === 'fresh',  () => setFilterStorage(filterStorage === 'fresh'  ? '' : 'fresh'),  '🥩 טרי')}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-400 shrink-0">מיון:</span>
-                <button onClick={() => toggleSort('name')} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${sortBy === 'name' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>שם{sortIcon('name')}</button>
-                <button onClick={() => toggleSort('sku')}  className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${sortBy === 'sku'  ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>מק"ט{sortIcon('sku')}</button>
-              </div>
-            </div>
+            <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors shrink-0">
+              <Icons.Plus className="w-4 h-4" /> הוסף מוצר
+            </button>
           </div>
 
-          {/* טבלה מקובצת לפי קטגוריה */}
           <div className="overflow-x-auto">
-            {visibleCats.length === 0 && (
-              <div className="p-8 text-center text-gray-400 text-sm">אין מוצרים התואמים לפילטר הנבחר</div>
-            )}
-            {visibleCats.map(cat => {
-              const catItems = filtered.filter(p => p._cat === cat);
-              if (!catItems.length) return null;
-              const s = CAT_STYLES[cat] || CAT_STYLES['עוף'];
-              return (
-                <div key={cat}>
-                  <div className={`px-4 py-2 flex items-center gap-2 border-y ${s.header}`}>
-                    <span className={`w-2.5 h-2.5 rounded-full ${s.dot}`}></span>
-                    <span className={`font-bold text-sm ${s.text}`}>{CAT_EMOJI[cat]} {cat}</span>
-                    <span className="text-xs opacity-50 mr-1">({catItems.length} פריטים)</span>
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                      <tr>
-                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">שם מוצר</th>
-                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">קטגוריה</th>
-                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">מק"ט</th>
-                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">כשרות</th>
-                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">סוג מלאי</th>
-                        <th className="px-4 py-2 w-10"></th>
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {colHeader('name',     'שם מוצר')}
+                  {colHeader('category', 'קטגוריה')}
+                  {colHeader('sku',      'מק"ט')}
+                  {colHeader('kashrut',  'כשרות')}
+                  {colHeader('storage',  'סוג מלאי')}
+                  <th className="px-4 py-2.5 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleCats.length === 0 && (
+                  <tr><td colSpan={6} className="p-8 text-center text-gray-400 text-sm">אין מוצרים התואמים לסינון הנבחר</td></tr>
+                )}
+                {visibleCats.map(cat => {
+                  const catItems = filtered.filter(p => p._cat === cat);
+                  if (!catItems.length) return null;
+                  const s = CAT_STYLES[cat] || CAT_STYLES['עוף'];
+                  return (
+                    <React.Fragment key={cat}>
+                      <tr className={`border-y ${s.header}`}>
+                        <td colSpan={6} className={`px-4 py-2 font-bold text-sm ${s.text}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-full ${s.dot} shrink-0`}></span>
+                            {CAT_EMOJI[cat]} {cat}
+                            <span className="font-normal text-xs opacity-50">({catItems.length} פריטים)</span>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
                       {catItems.map(p => (
-                        <tr key={p.id} className="hover:bg-gray-50/60">
+                        <tr key={p.id} className="hover:bg-gray-50/60 border-b border-gray-50">
                           <td className="px-4 py-2">
                             <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
                               className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" placeholder="שם מוצר..." />
@@ -3373,17 +3411,17 @@
                             </div>
                           </td>
                           <td className="px-4 py-2">
-                            <button onClick={() => removeGroup(p.name)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition-colors" title="מחק מוצר זה מכל הכשרויות">
+                            <button onClick={() => removeGroup(p.name)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition-colors">
                               <Icons.X className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       );
