@@ -328,48 +328,63 @@
 
     const NEW_PRODUCTS_TEMPLATE = [
       // עוף חסר
-      { name: 'עוף שלם', storageTypes: ['fresh'] },
+      { name: 'עוף שלם', storageTypes: ['fresh'], category: 'עוף' },
       // הודו
-      { name: 'שוקיים הודו',       storageTypes: ['fresh'] },
-      { name: 'כנפיים הודו',       storageTypes: ['fresh'] },
-      { name: 'שווארמה',           storageTypes: ['fresh'] },
-      { name: 'גרון הודו',         storageTypes: ['fresh'] },
-      { name: 'חזה/שניצל הודו',    storageTypes: ['fresh'] },
-      { name: 'הודו אדום טחון',    storageTypes: ['fresh'] },
+      { name: 'שוקיים הודו',        storageTypes: ['fresh'], category: 'הודו' },
+      { name: 'כנפיים הודו',        storageTypes: ['fresh'], category: 'הודו' },
+      { name: 'שווארמה',            storageTypes: ['fresh'], category: 'הודו' },
+      { name: 'גרון הודו',          storageTypes: ['fresh'], category: 'הודו' },
+      { name: 'חזה/שניצל הודו',     storageTypes: ['fresh'], category: 'הודו' },
+      { name: 'הודו אדום טחון',     storageTypes: ['fresh'], category: 'הודו' },
       // בשר
-      { name: 'אצבעות אנטריקוט',       storageTypes: ['fresh'] },
-      { name: 'בשר ראש',               storageTypes: ['fresh'] },
-      { name: 'גידי בקר',              storageTypes: ['fresh'] },
-      { name: 'לשון בקר',              storageTypes: ['fresh'] },
-      { name: 'נתח אסאדו עם עצם',      storageTypes: ['fresh'] },
-      { name: 'פילה מדומה מס 6',       storageTypes: ['fresh'] },
-      { name: 'צלי כתף מס 5',          storageTypes: ['fresh'] },
-      { name: 'צלעות אונטריפ ברשת',    storageTypes: ['fresh'] },
-      { name: 'שריר הזרוע מס 8',       storageTypes: ['fresh'] },
-      { name: 'אוסובוקו עגל',          storageTypes: ['fresh'] },
-      { name: 'אסאדו עגל עם עצם פרוס', storageTypes: ['fresh'] },
-      { name: 'בשר ראש קוביות',        storageTypes: ['fresh'] },
-      { name: 'טשולנט מיקס',           storageTypes: ['fresh'] },
-      { name: 'מיני אסאדו פרוס',       storageTypes: ['fresh'] },
-      { name: 'מיני אסאדו שלם',        storageTypes: ['fresh'] },
-      { name: 'סטייק אנגוס פידלוט',    storageTypes: ['fresh'] },
-      { name: 'סטייק אנטריקוט',        storageTypes: ['fresh'] },
-      { name: 'סטייק מיושן URU פרמיום', storageTypes: ['fresh'] },
-      { name: 'עצמות ברך',             storageTypes: ['fresh'] },
-      { name: 'עצמות מח',              storageTypes: ['fresh'] },
-      { name: 'פלאנקען',               storageTypes: ['fresh'] },
-      { name: 'קוביות בשר מס 8',       storageTypes: ['fresh'] },
+      { name: 'אצבעות אנטריקוט',        storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'בשר ראש',                storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'גידי בקר',               storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'לשון בקר',               storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'נתח אסאדו עם עצם',       storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'פילה מדומה מס 6',        storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'צלי כתף מס 5',           storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'צלעות אונטריפ ברשת',     storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'שריר הזרוע מס 8',        storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'אוסובוקו עגל',           storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'אסאדו עגל עם עצם פרוס',  storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'בשר ראש קוביות',         storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'טשולנט מיקס',            storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'מיני אסאדו פרוס',        storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'מיני אסאדו שלם',         storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'סטייק אנגוס פידלוט',     storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'סטייק אנטריקוט',         storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'סטייק מיושן URU פרמיום', storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'עצמות ברך',              storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'עצמות מח',               storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'פלאנקען',                storageTypes: ['fresh'], category: 'בשר' },
+      { name: 'קוביות בשר מס 8',        storageTypes: ['fresh'], category: 'בשר' },
       // דגים
-      { name: 'קרפיון',  storageTypes: ['frozen'] },
-      { name: 'סלמון',   storageTypes: ['frozen'] },
-      { name: 'פורל',    storageTypes: ['frozen'] },
-      { name: 'אמנון',   storageTypes: ['frozen'] },
-      { name: 'בורי',    storageTypes: ['frozen'] },
-      { name: 'דניס',    storageTypes: ['frozen'] },
-      { name: 'לברק',    storageTypes: ['frozen'] },
-      { name: 'ברמונדי', storageTypes: ['frozen'] },
-      { name: 'דג נילוס', storageTypes: ['frozen'] },
+      { name: 'קרפיון',   storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'סלמון',    storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'פורל',     storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'אמנון',    storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'בורי',     storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'דניס',     storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'לברק',     storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'ברמונדי',  storageTypes: ['frozen'], category: 'דגים' },
+      { name: 'דג נילוס', storageTypes: ['frozen'], category: 'דגים' },
     ];
+
+    const PRODUCT_CATEGORIES = ['עוף', 'הודו', 'בשר', 'דגים'];
+    const CAT_STYLES = {
+      'עוף':  { header: 'bg-yellow-50 border-yellow-200', text: 'text-yellow-800', dot: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+      'הודו': { header: 'bg-green-50 border-green-200',   text: 'text-green-800',  dot: 'bg-green-400',  badge: 'bg-green-100 text-green-800 border-green-200'  },
+      'בשר':  { header: 'bg-red-50 border-red-200',       text: 'text-red-800',    dot: 'bg-red-400',    badge: 'bg-red-100 text-red-800 border-red-200'        },
+      'דגים': { header: 'bg-blue-50 border-blue-200',     text: 'text-blue-800',   dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-800 border-blue-200'     },
+    };
+    const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟' };
+
+    const getProductCategory = (name) => {
+      const t = NEW_PRODUCTS_TEMPLATE.find(p => p.name === name);
+      if (t?.category) return t.category;
+      return 'עוף';
+    };
     const STORAGE_TYPES = [
       { key: 'frozen', label: '🧊 קפוא', activeClass: 'bg-cyan-600 border-cyan-600 text-white' },
       { key: 'fresh',  label: '🥩 טרי',  activeClass: 'bg-blue-600 border-blue-600 text-white' },
@@ -3193,90 +3208,182 @@
     };
 
     const ProductListEditor = ({ items, setItems, kashrutList }) => {
+      const [filterCategory, setFilterCategory] = useState('');
       const [filterKashrut, setFilterKashrut] = useState('קהילות');
+      const [filterStorage, setFilterStorage] = useState('');
+      const [sortBy, setSortBy] = useState('');
+      const [sortDir, setSortDir] = useState('asc');
+
       const addProduct = () => {
         const newId = `p_${Date.now()}`;
-        const newItems = kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name }));
+        const cat = filterCategory || 'עוף';
+        const newItems = kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name, category: cat }));
         setItems(prev => [...prev, ...newItems]);
       };
       const updateProduct = (id, field, value) => setItems(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+      const updateByName = (name, field, value) => setItems(prev => prev.map(p => p.name === name ? { ...p, [field]: value } : p));
       const removeGroup = (name) => setItems(prev => prev.filter(p => p.name !== name));
       const toggleStorage = (id, key) => setItems(prev => prev.map(p => {
         if (p.id !== id) return p;
         const has = (p.storageTypes || []).includes(key);
-        return { ...p, storageTypes: has ? (p.storageTypes.filter(k => k !== key)) : [...(p.storageTypes || []), key] };
+        return { ...p, storageTypes: has ? p.storageTypes.filter(k => k !== key) : [...(p.storageTypes || []), key] };
       }));
-      const uniqueNames = [...new Set(items.map(p => p.name).filter(Boolean))];
-      const allKashrutValues = kashrutList.map(k => k.name);
-      const filtered = filterKashrut ? items.filter(p => p.kashrut === filterKashrut) : items;
+      const toggleSort = (field) => {
+        if (sortBy === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        else { setSortBy(field); setSortDir('asc'); }
+      };
+
       const orderedKashrutList = [
         ...kashrutList.filter(k => k.name === 'קהילות'),
         ...kashrutList.filter(k => k.name === 'לנדא'),
         ...kashrutList.filter(k => k.name !== 'קהילות' && k.name !== 'לנדא'),
       ];
+
+      const enriched = items.map(p => ({ ...p, _cat: p.category || getProductCategory(p.name) }));
+
+      let filtered = enriched;
+      if (filterCategory) filtered = filtered.filter(p => p._cat === filterCategory);
+      if (filterKashrut)  filtered = filtered.filter(p => p.kashrut === filterKashrut);
+      if (filterStorage)  filtered = filtered.filter(p => (p.storageTypes || []).includes(filterStorage));
+      if (sortBy) {
+        filtered = [...filtered].sort((a, b) => {
+          const va = sortBy === 'name' ? (a.name || '') : (a.sku || '');
+          const vb = sortBy === 'name' ? (b.name || '') : (b.sku || '');
+          const cmp = va.localeCompare(vb, 'he');
+          return sortDir === 'asc' ? cmp : -cmp;
+        });
+      }
+
+      const visibleCats = filterCategory
+        ? [filterCategory]
+        : PRODUCT_CATEGORIES.filter(cat => filtered.some(p => p._cat === cat));
+
+      const filterBtn = (active, onClick, label) => (
+        <button onClick={onClick} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${active ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>{label}</button>
+      );
+      const sortIcon = (field) => sortBy === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+
       return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
-            <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי קפוא</h3>
-            <div className="flex gap-2 flex-wrap">
-              {orderedKashrutList.map(k => (
-                <button key={k.id} onClick={() => setFilterKashrut(k.name)} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${filterKashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>{k.name}</button>
-              ))}
-              <button onClick={() => setFilterKashrut('')} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${!filterKashrut ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>הכל</button>
+          {/* כותרת + פילטרים */}
+          <div className="px-5 py-4 border-b border-gray-100 space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי</h3>
+              <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors shrink-0">
+                <Icons.Plus className="w-4 h-4" /> הוסף מוצר
+              </button>
             </div>
-            <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors">
-              <Icons.Plus className="w-4 h-4" /> הוסף מוצר
-            </button>
+
+            {/* שורה 1: קטגוריה */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-gray-400 shrink-0">קטגוריה:</span>
+              {filterBtn(!filterCategory, () => setFilterCategory(''), 'הכל')}
+              {PRODUCT_CATEGORIES.map(cat => {
+                const s = CAT_STYLES[cat] || {};
+                return (
+                  <button key={cat} onClick={() => setFilterCategory(filterCategory === cat ? '' : cat)}
+                    className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${filterCategory === cat ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+                    {CAT_EMOJI[cat]} {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* שורה 2: כשרות */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-gray-400 shrink-0">כשרות:</span>
+              {orderedKashrutList.map(k => filterBtn(filterKashrut === k.name, () => setFilterKashrut(filterKashrut === k.name ? '' : k.name), k.name))}
+              {filterBtn(!filterKashrut, () => setFilterKashrut(''), 'הכל')}
+            </div>
+
+            {/* שורה 3: סוג מלאי + מיון */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-gray-400 shrink-0">סוג מלאי:</span>
+                {filterBtn(!filterStorage, () => setFilterStorage(''), 'הכל')}
+                {filterBtn(filterStorage === 'frozen', () => setFilterStorage(filterStorage === 'frozen' ? '' : 'frozen'), '🧊 קפוא')}
+                {filterBtn(filterStorage === 'fresh',  () => setFilterStorage(filterStorage === 'fresh'  ? '' : 'fresh'),  '🥩 טרי')}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-400 shrink-0">מיון:</span>
+                <button onClick={() => toggleSort('name')} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${sortBy === 'name' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>שם{sortIcon('name')}</button>
+                <button onClick={() => toggleSort('sku')}  className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${sortBy === 'sku'  ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>מק"ט{sortIcon('sku')}</button>
+              </div>
+            </div>
           </div>
+
+          {/* טבלה מקובצת לפי קטגוריה */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-right px-4 py-2.5 font-bold text-gray-600 w-8"></th>
-                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">שם מוצר</th>
-                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">מק"ט</th>
-                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">כשרות</th>
-                  <th className="text-right px-4 py-2.5 font-bold text-gray-600">סוג מלאי</th>
-                  <th className="px-4 py-2.5 w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-2 text-gray-300 text-xs font-mono">{p.id}</td>
-                    <td className="px-4 py-2">
-                      <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" placeholder="שם מוצר..." />
-                    </td>
-                    <td className="px-4 py-2">
-                      <input value={p.sku || ''} onChange={e => updateProduct(p.id, 'sku', e.target.value)}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none font-mono" placeholder='מק"ט...' />
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200">{p.kashrut}</span>
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="flex gap-1">
-                        {STORAGE_TYPES.map(st => {
-                          const active = (p.storageTypes || []).includes(st.key);
-                          return (
-                            <button key={st.key} type="button" onClick={() => toggleStorage(p.id, st.key)}
-                              className={`text-xs px-2 py-1 rounded-lg border font-bold transition-all ${active ? st.activeClass : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
-                              {st.label}
+            {visibleCats.length === 0 && (
+              <div className="p-8 text-center text-gray-400 text-sm">אין מוצרים התואמים לפילטר הנבחר</div>
+            )}
+            {visibleCats.map(cat => {
+              const catItems = filtered.filter(p => p._cat === cat);
+              if (!catItems.length) return null;
+              const s = CAT_STYLES[cat] || CAT_STYLES['עוף'];
+              return (
+                <div key={cat}>
+                  <div className={`px-4 py-2 flex items-center gap-2 border-y ${s.header}`}>
+                    <span className={`w-2.5 h-2.5 rounded-full ${s.dot}`}></span>
+                    <span className={`font-bold text-sm ${s.text}`}>{CAT_EMOJI[cat]} {cat}</span>
+                    <span className="text-xs opacity-50 mr-1">({catItems.length} פריטים)</span>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">שם מוצר</th>
+                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">קטגוריה</th>
+                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">מק"ט</th>
+                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">כשרות</th>
+                        <th className="text-right px-4 py-2 font-bold text-gray-500 text-xs">סוג מלאי</th>
+                        <th className="px-4 py-2 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {catItems.map(p => (
+                        <tr key={p.id} className="hover:bg-gray-50/60">
+                          <td className="px-4 py-2">
+                            <input value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)}
+                              className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" placeholder="שם מוצר..." />
+                          </td>
+                          <td className="px-4 py-2">
+                            <select value={p._cat} onChange={e => updateByName(p.name, 'category', e.target.value)}
+                              className="p-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
+                              {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{CAT_EMOJI[c]} {c}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-4 py-2">
+                            <input value={p.sku || ''} onChange={e => updateProduct(p.id, 'sku', e.target.value)}
+                              className="w-28 p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none font-mono" placeholder='מק"ט...' />
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full border ${(CAT_STYLES[p._cat] || {}).badge || 'bg-purple-100 text-purple-700 border-purple-200'}`}>{p.kashrut}</span>
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="flex gap-1">
+                              {STORAGE_TYPES.map(st => {
+                                const active = (p.storageTypes || []).includes(st.key);
+                                return (
+                                  <button key={st.key} type="button" onClick={() => toggleStorage(p.id, st.key)}
+                                    className={`text-xs px-2 py-1 rounded-lg border font-bold transition-all ${active ? st.activeClass : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
+                                    {st.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2">
+                            <button onClick={() => removeGroup(p.name)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition-colors" title="מחק מוצר זה מכל הכשרויות">
+                              <Icons.X className="w-4 h-4" />
                             </button>
-                          );
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2">
-                      <button onClick={() => removeGroup(p.name)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition-colors" title="מחק מוצר זה מכל הכשרויות">
-                        <Icons.X className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
           </div>
         </div>
       );
