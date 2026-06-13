@@ -3148,7 +3148,7 @@
     };
 
     const ProductListEditor = ({ items, setItems, kashrutList }) => {
-      const [filterKashrut, setFilterKashrut] = useState('');
+      const [filterKashrut, setFilterKashrut] = useState('קהילות');
       const addProduct = () => {
         const newId = `p_${Date.now()}`;
         const newItems = kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: '', sku: '', storageTypes: ['frozen'], kashrut: k.name }));
@@ -3164,15 +3164,20 @@
       const uniqueNames = [...new Set(items.map(p => p.name).filter(Boolean))];
       const allKashrutValues = kashrutList.map(k => k.name);
       const filtered = filterKashrut ? items.filter(p => p.kashrut === filterKashrut) : items;
+      const orderedKashrutList = [
+        ...kashrutList.filter(k => k.name === 'קהילות'),
+        ...kashrutList.filter(k => k.name === 'לנדא'),
+        ...kashrutList.filter(k => k.name !== 'קהילות' && k.name !== 'לנדא'),
+      ];
       return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
             <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי קפוא</h3>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={() => setFilterKashrut('')} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${!filterKashrut ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>הכל</button>
-              {kashrutList.map(k => (
+              {orderedKashrutList.map(k => (
                 <button key={k.id} onClick={() => setFilterKashrut(k.name)} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${filterKashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>{k.name}</button>
               ))}
+              <button onClick={() => setFilterKashrut('')} className={`text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${!filterKashrut ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>הכל</button>
             </div>
             <button onClick={addProduct} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors">
               <Icons.Plus className="w-4 h-4" /> הוסף מוצר
