@@ -3312,7 +3312,7 @@
                   </div>
                 </>}
                 {field === 'category' && <>
-                  {PRODUCT_CATEGORIES.map(cat => checkRow(`${CAT_EMOJI[cat]} ${cat}`, activeCats.has(cat), () => toggleSet(setActiveCats, cat)))}
+                  {PRODUCT_CATEGORIES.map(cat => checkRow(`${CAT_EMOJI[cat]} ${cat}`, activeCats.has(cat), () => { toggleSet(setActiveCats, cat); setOpenFilter(null); }))}
                   {activeCats.size > 0 && clearBtn(() => { setActiveCats(new Set()); setOpenFilter(null); })}
                 </>}
                 {field === 'sku' && <>
@@ -3321,12 +3321,12 @@
                   {sortBy === 'sku' && clearBtn(clearSort, 'נקה מיון')}
                 </>}
                 {field === 'kashrut' && <>
-                  {orderedKashrutList.map(k => checkRow(k.name, activeKashrut.has(k.name), () => toggleSet(setActiveKashrut, k.name)))}
+                  {orderedKashrutList.map(k => checkRow(k.name, activeKashrut.has(k.name), () => { toggleSet(setActiveKashrut, k.name); setOpenFilter(null); }))}
                   {activeKashrut.size > 0 && clearBtn(() => { setActiveKashrut(new Set()); setOpenFilter(null); })}
                 </>}
                 {field === 'storage' && <>
-                  {checkRow('🧊 קפוא', activeStorage.has('frozen'), () => toggleSet(setActiveStorage, 'frozen'))}
-                  {checkRow('🥩 טרי',   activeStorage.has('fresh'),  () => toggleSet(setActiveStorage, 'fresh'))}
+                  {checkRow('🧊 קפוא', activeStorage.has('frozen'), () => { toggleSet(setActiveStorage, 'frozen'); setOpenFilter(null); })}
+                  {checkRow('🥩 טרי',   activeStorage.has('fresh'),  () => { toggleSet(setActiveStorage, 'fresh');  setOpenFilter(null); })}
                   {activeStorage.size > 0 && clearBtn(() => { setActiveStorage(new Set()); setOpenFilter(null); })}
                 </>}
               </div>
