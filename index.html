@@ -325,6 +325,51 @@
       'נגיסי עוף', 'עוף טחון', 'הודו טחון', 'בקר טחון'
     ];
     const FROZEN_KASHRUT = ['קהילות', 'לנדא'];
+
+    const NEW_PRODUCTS_TEMPLATE = [
+      // עוף חסר
+      { name: 'עוף שלם', storageTypes: ['fresh'] },
+      // הודו
+      { name: 'שוקיים הודו',       storageTypes: ['fresh'] },
+      { name: 'כנפיים הודו',       storageTypes: ['fresh'] },
+      { name: 'שווארמה',           storageTypes: ['fresh'] },
+      { name: 'גרון הודו',         storageTypes: ['fresh'] },
+      { name: 'חזה/שניצל הודו',    storageTypes: ['fresh'] },
+      { name: 'הודו אדום טחון',    storageTypes: ['fresh'] },
+      // בשר
+      { name: 'אצבעות אנטריקוט',       storageTypes: ['fresh'] },
+      { name: 'בשר ראש',               storageTypes: ['fresh'] },
+      { name: 'גידי בקר',              storageTypes: ['fresh'] },
+      { name: 'לשון בקר',              storageTypes: ['fresh'] },
+      { name: 'נתח אסאדו עם עצם',      storageTypes: ['fresh'] },
+      { name: 'פילה מדומה מס 6',       storageTypes: ['fresh'] },
+      { name: 'צלי כתף מס 5',          storageTypes: ['fresh'] },
+      { name: 'צלעות אונטריפ ברשת',    storageTypes: ['fresh'] },
+      { name: 'שריר הזרוע מס 8',       storageTypes: ['fresh'] },
+      { name: 'אוסובוקו עגל',          storageTypes: ['fresh'] },
+      { name: 'אסאדו עגל עם עצם פרוס', storageTypes: ['fresh'] },
+      { name: 'בשר ראש קוביות',        storageTypes: ['fresh'] },
+      { name: 'טשולנט מיקס',           storageTypes: ['fresh'] },
+      { name: 'מיני אסאדו פרוס',       storageTypes: ['fresh'] },
+      { name: 'מיני אסאדו שלם',        storageTypes: ['fresh'] },
+      { name: 'סטייק אנגוס פידלוט',    storageTypes: ['fresh'] },
+      { name: 'סטייק אנטריקוט',        storageTypes: ['fresh'] },
+      { name: 'סטייק מיושן URU פרמיום', storageTypes: ['fresh'] },
+      { name: 'עצמות ברך',             storageTypes: ['fresh'] },
+      { name: 'עצמות מח',              storageTypes: ['fresh'] },
+      { name: 'פלאנקען',               storageTypes: ['fresh'] },
+      { name: 'קוביות בשר מס 8',       storageTypes: ['fresh'] },
+      // דגים
+      { name: 'קרפיון',  storageTypes: ['frozen'] },
+      { name: 'סלמון',   storageTypes: ['frozen'] },
+      { name: 'פורל',    storageTypes: ['frozen'] },
+      { name: 'אמנון',   storageTypes: ['frozen'] },
+      { name: 'בורי',    storageTypes: ['frozen'] },
+      { name: 'דניס',    storageTypes: ['frozen'] },
+      { name: 'לברק',    storageTypes: ['frozen'] },
+      { name: 'ברמונדי', storageTypes: ['frozen'] },
+      { name: 'דג נילוס', storageTypes: ['frozen'] },
+    ];
     const STORAGE_TYPES = [
       { key: 'frozen', label: '🧊 קפוא', activeClass: 'bg-cyan-600 border-cyan-600 text-white' },
       { key: 'fresh',  label: '🥩 טרי',  activeClass: 'bg-blue-600 border-blue-600 text-white' },
@@ -3722,11 +3767,14 @@
         'עוף שלם|לנדא': 50, 'כרעיים|לנדא': 45,
         'שניצל|קהילות': 5, 'בשר טחון|קהילות': 8
       });
-      const [frozenProductsList, setFrozenProductsList] = useState(
-        FROZEN_PRODUCTS.flatMap((name, i) =>
+      const [frozenProductsList, setFrozenProductsList] = useState(() => [
+        ...FROZEN_PRODUCTS.flatMap((name, i) =>
           FROZEN_KASHRUT.map((kashrut, j) => ({ id: `${i + 1}_${j + 1}`, name, sku: '', storageTypes: ['frozen'], kashrut }))
-        )
-      );
+        ),
+        ...NEW_PRODUCTS_TEMPLATE.flatMap((p, i) =>
+          FROZEN_KASHRUT.map((kashrut, j) => ({ id: `new_${i + 1}_${j + 1}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut }))
+        ),
+      ]);
       const [frozenStock, setFrozenStock] = useState(initFrozenStock);
 
       // 2. הזמנות לקוחות
@@ -3840,10 +3888,20 @@
                 if (row.id === 'frozenProductsList') {
                   const raw = row.data.map(p => ({ sku: '', storageTypes: ['frozen'], ...p }));
                   const needsMigration = raw.every(p => !p.kashrut);
-                  setFrozenProductsList(needsMigration
+                  let loaded = needsMigration
                     ? raw.flatMap((p, i) => FROZEN_KASHRUT.map((k, j) => ({ ...p, id: `${p.id}_${j + 1}`, kashrut: k })))
-                    : raw
-                  );
+                    : raw;
+                  const existingNames = new Set(loaded.map(p => p.name));
+                  const missing = NEW_PRODUCTS_TEMPLATE.filter(p => !existingNames.has(p.name));
+                  if (missing.length > 0) {
+                    const kNames = (settingsRes.data.find(r => r.id === 'kashrutList')?.data || []).map(k => k.name);
+                    const kList = kNames.length ? kNames : FROZEN_KASHRUT;
+                    const base = Date.now();
+                    missing.forEach((p, i) => kList.forEach((kashrut, j) => {
+                      loaded.push({ id: `np_${base + i * 100 + j}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut });
+                    }));
+                  }
+                  setFrozenProductsList(loaded);
                 }
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
                 if (row.id === 'contactsList') setContactsList(row.data);
