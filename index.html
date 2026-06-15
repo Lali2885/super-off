@@ -1075,6 +1075,22 @@
       const [deleteConfirmOrder, setDeleteConfirmOrder] = useState(null);
       const [printMode, setPrintMode] = useState('general'); // 'general' | 'fish'
       const openPrint = (order, mode) => { setPrintMode(mode); setActivePrintOrder(order); };
+      const bonHeaderRef = useRef(null);
+      const bonTableRef  = useRef(null);
+      const [tableScale, setTableScale] = useState(1);
+      useEffect(() => {
+        if (!activePrintOrder) { setTableScale(1); return; }
+        const id = setTimeout(() => {
+          if (!bonHeaderRef.current || !bonTableRef.current) return;
+          const A5_CONTENT_H = Math.round(200 * 3.7795); // 200mm at 96dpi ≈ 756px
+          const BON_PADDING   = 40;                       // p-5 top+bottom
+          const headerH  = bonHeaderRef.current.offsetHeight;
+          const naturalH = bonTableRef.current.scrollHeight;
+          const available = A5_CONTENT_H - BON_PADDING - headerH;
+          setTableScale(Math.min(1, available / naturalH));
+        }, 60);
+        return () => clearTimeout(id);
+      }, [activePrintOrder, printMode]);
       const [orderType, setOrderType] = useState('delivery');
       const [formItemsState, setFormItemsState] = useState({});
       const [packingOption, setPackingOption] = useState('');
@@ -2443,41 +2459,58 @@
 
                     const areaId = printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general';
 
+                    const tableWrapStyle = {
+                      transform: `scale(${tableScale})`,
+                      transformOrigin: 'top right',
+                      height: bonTableRef.current
+                        ? Math.round(bonTableRef.current.scrollHeight * tableScale) + 'px'
+                        : 'auto',
+                      overflow: 'hidden',
+                    };
+
                     return printMode === 'fish' ? (
                       <div id="physical-print-slip-area-fish"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: BON_FONT }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-extrabold text-3xl text-blue-800">🐟 בון דגים</div>
-                          {logoImage
-                            ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
-                            : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
+                        <div ref={bonHeaderRef}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-extrabold text-3xl text-blue-800">🐟 בון דגים</div>
+                            {logoImage
+                              ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
+                              : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
+                          </div>
+                          {slipHeader}
                         </div>
-                        {slipHeader}
-                        {renderTable(fishGroups, null)}
+                        <div ref={bonTableRef} style={tableWrapStyle}>
+                          {renderTable(fishGroups, null)}
+                        </div>
                       </div>
                     ) : (
                       <div id="physical-print-slip-area-general"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: BON_FONT }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-extrabold text-3xl">בון הזמנה</div>
-                          {logoImage
-                            ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
-                            : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
-                        </div>
-                        {slipHeader}
-                        {renderTable(generalGroups, packingItem && (
-                          <tr className="bg-gray-50">
-                            <td className="p-2 border border-black text-center bg-gray-100 text-2xl">📦</td>
-                            <td className="p-2 border border-black font-bold text-2xl text-gray-700">{packingItem.notes}</td>
-                          </tr>
-                        ))}
-                        {fishGroups.length > 0 && (
-                          <div className="mt-16 border-2 border-red-600 rounded p-2 bg-red-50 text-center">
-                            <span className="text-red-700 font-extrabold text-2xl">🐟 שים לב — יש גם הזמנת דגים!</span>
+                        <div ref={bonHeaderRef}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-extrabold text-3xl">בון הזמנה</div>
+                            {logoImage
+                              ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
+                              : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
                           </div>
-                        )}
+                          {slipHeader}
+                        </div>
+                        <div ref={bonTableRef} style={tableWrapStyle}>
+                          {renderTable(generalGroups, packingItem && (
+                            <tr className="bg-gray-50">
+                              <td className="p-2 border border-black text-center bg-gray-100 text-2xl">📦</td>
+                              <td className="p-2 border border-black font-bold text-2xl text-gray-700">{packingItem.notes}</td>
+                            </tr>
+                          ))}
+                          {fishGroups.length > 0 && (
+                            <div className="mt-16 border-2 border-red-600 rounded p-2 bg-red-50 text-center">
+                              <span className="text-red-700 font-extrabold text-2xl">🐟 שים לב — יש גם הזמנת דגים!</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })()}
