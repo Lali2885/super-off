@@ -2372,7 +2372,7 @@
                                     {group.items.map((item, iIdx) => {
                                       const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
                                       return (
-                                        <div key={iIdx} className="flex gap-2 text-2xl text-gray-700 font-bold">
+                                        <div key={iIdx} className="flex gap-2 text-3xl text-gray-700 font-bold">
                                           <span style={{minWidth:'44px'}} className="text-center font-extrabold">{item.qty}</span>
                                           <span>{opt}</span>
                                         </div>
@@ -2381,11 +2381,11 @@
                                   </div>
                                 )}
                                 {group.items.length === 1 && group.items[0].notes && (
-                                  <span className="block text-2xl text-red-600 font-bold mt-1">✂️ {group.items[0].notes}</span>
+                                  <span className="block text-3xl text-red-600 font-bold mt-1">✂️ {group.items[0].notes}</span>
                                 )}
                                 {group.items[0]?.checks?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {group.items[0].checks.map(c => <span key={c} className="text-2xl px-2 py-0.5 border border-gray-300 rounded font-bold">✓ {c}</span>)}
+                                    {group.items[0].checks.map(c => <span key={c} className="text-3xl px-2 py-0.5 border border-gray-300 rounded font-bold">✓ {c}</span>)}
                                   </div>
                                 )}
                               </td>
@@ -2398,7 +2398,7 @@
 
                     const slipCustomer = (
                       <div className="border-b-2 border-black pb-3 mb-3">
-                        <div className="text-5xl font-extrabold">{activePrintOrder.customer}</div>
+                        <div className="text-4xl font-extrabold">{activePrintOrder.customer}</div>
                         <div className="text-3xl font-bold text-gray-700">{activePrintOrder.phone}{activePrintOrder.mobile ? ` | ${activePrintOrder.mobile}` : ''}</div>
                       </div>
                     );
@@ -2409,7 +2409,7 @@
                       <div id="physical-print-slip-area-fish"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
-                        <div className="text-center font-extrabold text-5xl mb-3 text-blue-800">🐟 בון דייג</div>
+                        <div className="text-center font-extrabold text-4xl mb-3 text-blue-800">🐟 בון דייג</div>
                         {slipCustomer}
                         {renderTable(fishGroups, null)}
                       </div>
@@ -2417,7 +2417,7 @@
                       <div id="physical-print-slip-area-general"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
-                        <div className="text-center font-extrabold text-5xl mb-3">בון הזמנה</div>
+                        <div className="text-center font-extrabold text-4xl mb-3">בון הזמנה</div>
                         {slipCustomer}
                         {renderTable(generalGroups, packingItem && (
                           <tr className="bg-gray-50">
@@ -2426,7 +2426,7 @@
                           </tr>
                         ))}
                         {fishGroups.length > 0 && (
-                          <div className="mt-3 border-2 border-red-600 rounded p-2 bg-red-50 text-center">
+                          <div className="mt-16 border-2 border-red-600 rounded p-2 bg-red-50 text-center">
                             <span className="text-red-700 font-extrabold text-2xl">🐟 שים לב — יש גם הזמנת דגים!</span>
                           </div>
                         )}
