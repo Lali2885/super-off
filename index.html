@@ -1105,8 +1105,8 @@
     };
 
     // --- Orders View ---
-    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList }) => {
-      const getSku = (name) => (frozenProductsList || []).find(p => p.name === name && p.sku)?.sku || '';
+    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap }) => {
+      const getSku = (itemId) => (orderFormSkuMap || {})[itemId] || '';
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
@@ -1392,7 +1392,7 @@
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                         <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-1 text-sm">
                           {item.name}
-                          {getSku(item.name) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.name)}</span>}
+                          {getSku(item.id) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id)}</span>}
                         </div>
                         <div className="flex-1 flex flex-col gap-2">
                           {/* כמות — כשאין אופציות, או כשיש showTotalQty */}
@@ -1479,7 +1479,7 @@
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                         <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
                           {item.name}
-                          {getSku(item.name) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.name)}</span>}
+                          {getSku(item.id) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id)}</span>}
                         </div>
                         <div className="flex-1 flex flex-col gap-2">
                           {/* שורה 1: כמות כוללת + dropdown אופציות */}
@@ -1565,7 +1565,7 @@
                     <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                       <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
                         {item.name}
-                        {getSku(item.name) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.name)}</span>}
+                        {getSku(item.id) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id)}</span>}
                       </div>
                       <div className="flex-1 flex gap-2 flex-wrap sm:flex-nowrap">
                         <input
@@ -1606,7 +1606,7 @@
                           <div key={item.id} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border ${cc.qtyBg} ${cc.qtyBorder}`}>
                             <span className={`flex-1 text-sm font-bold ${cc.qtyText}`}>
                               {item.name}
-                              {getSku(item.name) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.name)}</span>}
+                              {getSku(item.id) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id)}</span>}
                             </span>
                             {['קהילות', 'לנדא'].map(k => {
                               const isActive = rows[0]?.kashrut === k;
@@ -3629,7 +3629,52 @@
       );
     };
 
-    const ListsManagementView = ({ productsList, setProductsList, couriersList, setCouriersList, kashrutList, setKashrutList, butchersList, setButchersList, frozenProductsList, setFrozenProductsList, neighborhoodData, setNeighborhoodData }) => {
+    const OrderFormSkuEditor = ({ orderFormSkuMap, setOrderFormSkuMap }) => {
+      const [openCat, setOpenCat] = useState(null);
+      const catColors = { 'עוף': 'yellow', 'הודו': 'green', 'בשר': 'red', 'דגים': 'blue' };
+      return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+            <span className="font-extrabold text-gray-800">מקטי טופס הזמנה</span>
+            <span className="text-xs text-gray-400">מקט מוצר ליד כל שם בטופס</span>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {PRODUCT_CATEGORIES.map(cat => {
+              const items = ORDER_FORM_TEMPLATE.filter(i => i.category === cat);
+              const c = catColors[cat] || 'gray';
+              const isOpen = openCat === cat;
+              return (
+                <div key={cat}>
+                  <button type="button" onClick={() => setOpenCat(isOpen ? null : cat)}
+                    className={`w-full px-4 py-2.5 flex justify-between items-center font-bold text-sm text-${c}-800 bg-${c}-50 hover:bg-${c}-100 transition-colors`}>
+                    <span>{CAT_EMOJI[cat]} {cat}</span>
+                    <span className="text-gray-400 text-xs">{isOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="divide-y divide-gray-50">
+                      {items.map(item => (
+                        <div key={item.id} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50">
+                          <span className="flex-1 text-sm font-bold text-gray-800">{item.name}</span>
+                          <input
+                            type="text"
+                            placeholder="מקט..."
+                            value={orderFormSkuMap[item.id] || ''}
+                            onChange={e => setOrderFormSkuMap(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            className="w-28 p-1.5 text-sm border border-gray-200 rounded-lg text-center font-mono outline-none focus:ring-2 focus:ring-blue-300"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const ListsManagementView = ({ productsList, setProductsList, couriersList, setCouriersList, kashrutList, setKashrutList, butchersList, setButchersList, frozenProductsList, setFrozenProductsList, neighborhoodData, setNeighborhoodData, orderFormSkuMap, setOrderFormSkuMap }) => {
       return (
         <div className="animate-in fade-in duration-300 space-y-6">
           <div className="mb-6">
@@ -3638,6 +3683,7 @@
           </div>
 
           <div className="flex flex-col gap-6">
+            <OrderFormSkuEditor orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} />
             <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} kashrutList={kashrutList} />
             <NeighborhoodEditor neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />
             <ListEditor title="קצבים" items={butchersList} setItems={setButchersList} placeholder="הזן שם קצב חדש..." />
@@ -4155,6 +4201,7 @@
 
       const [neighborhoodData, setNeighborhoodData] = useState(INITIAL_NEIGHBORHOODS);
       const [contactsList, setContactsList] = useState([]);
+      const [orderFormSkuMap, setOrderFormSkuMap] = useState({});
 
       const [butchersList, setButchersList] = useState([
         { id: '1', name: 'משה' },
@@ -4272,6 +4319,7 @@
                 }
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
                 if (row.id === 'contactsList') setContactsList(row.data);
+                if (row.id === 'orderFormSkuMap') setOrderFormSkuMap(row.data);
               });
             }
             if (logRes.data?.length) setInventoryLog(logRes.data.map(r => r.data));
@@ -4335,6 +4383,10 @@
       }, [contactsList]);
       useEffect(() => {
         if (!dataLoadedRef.current || skipSaveRef.current) return;
+        db.from('settings').upsert({ id: 'orderFormSkuMap', data: orderFormSkuMap }).then();
+      }, [orderFormSkuMap]);
+      useEffect(() => {
+        if (!dataLoadedRef.current || skipSaveRef.current) return;
         inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
       }, [inventoryLog]);
 
@@ -4358,7 +4410,7 @@
           case 'inventory':
             return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />;
           case 'orders':
-            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} />;
+            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} />;
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
@@ -4366,7 +4418,7 @@
           case 'contacts':
             return <ContactsView contactsList={contactsList} setContactsList={setContactsList} />;
           case 'lists':
-            return <ListsManagementView productsList={[]} setProductsList={()=>{}} couriersList={couriersList} setCouriersList={setCouriersList} kashrutList={kashrutList} setKashrutList={setKashrutList} butchersList={butchersList} setButchersList={setButchersList} frozenProductsList={frozenProductsList} setFrozenProductsList={setFrozenProductsList} neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />;
+            return <ListsManagementView productsList={[]} setProductsList={()=>{}} couriersList={couriersList} setCouriersList={setCouriersList} kashrutList={kashrutList} setKashrutList={setKashrutList} butchersList={butchersList} setButchersList={setButchersList} frozenProductsList={frozenProductsList} setFrozenProductsList={setFrozenProductsList} neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} />;
           case 'archive':
             return <ArchiveView orders={orders} setOrders={setOrders} kashrutList={kashrutList} />;
           case 'stats':
