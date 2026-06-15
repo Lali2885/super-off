@@ -2437,15 +2437,14 @@
                           )}
                         </div>
 
-                        <div className="border border-black rounded p-1.5 mb-3 text-center bg-purple-50">
-                          <span className="font-extrabold text-xl">✡ כשרות: {activePrintOrder.kashrut}</span>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="flex-1 border border-black rounded p-1.5 text-center bg-purple-50">
+                            <span className="font-extrabold text-xl">כשרות: {activePrintOrder.kashrut}</span>
+                          </div>
+                          <div className="text-xs font-bold text-gray-400 text-center leading-tight" style={{maxWidth:'70px'}}>
+                            נארז ונחתך באהבה | סופר עוף
+                          </div>
                         </div>
-                      </div>
-                    );
-
-                    const slipFooter = (
-                      <div className="text-center text-sm font-bold text-gray-400 mt-4 pt-2 border-t border-dashed border-gray-300">
-                        נארז ונחתך באהבה | סופר עוף 🐔
                       </div>
                     );
 
@@ -2455,16 +2454,21 @@
                       <div id="physical-print-slip-area-fish"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: BON_FONT }}>
-                        <div className="text-center font-extrabold text-3xl mb-2 text-blue-800">🐟 בון דגים</div>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-extrabold text-3xl text-blue-800">🐟 בון דגים</div>
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>
+                        </div>
                         {slipHeader}
                         {renderTable(fishGroups, null)}
-                        {slipFooter}
                       </div>
                     ) : (
                       <div id="physical-print-slip-area-general"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: BON_FONT }}>
-                        <div className="text-center font-extrabold text-3xl mb-2">🐔 בון הזמנה</div>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-extrabold text-3xl">בון הזמנה</div>
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>
+                        </div>
                         {slipHeader}
                         {renderTable(generalGroups, packingItem && (
                           <tr className="bg-gray-50">
@@ -2477,7 +2481,6 @@
                             <span className="text-red-700 font-extrabold text-2xl">🐟 שים לב — יש גם הזמנת דגים!</span>
                           </div>
                         )}
-                        {slipFooter}
                       </div>
                     );
                   })()}
