@@ -1392,7 +1392,7 @@
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                         <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-1 text-sm">
                           {item.name}
-                          {getSku(item.id, kashrut) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id, kashrut)}</span>}
+                          {item.options.length === 0 && getSku(item.id, kashrut) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id, kashrut)}</span>}
                         </div>
                         <div className="flex-1 flex flex-col gap-2">
                           {/* כמות — כשאין אופציות, או כשיש showTotalQty */}
@@ -1418,7 +1418,10 @@
                                   onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
                                   className={`flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl border-2 cursor-pointer transition-all
                                     ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
-                                  <span className={`text-xs font-bold leading-tight flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                  <span className={`text-xs font-bold leading-tight flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>
+                                    {opt}
+                                    {getSku(`${item.id}|${opt}`, kashrut) && <span className="block text-[10px] font-normal opacity-70">{getSku(`${item.id}|${opt}`, kashrut)}</span>}
+                                  </span>
                                   <input type="number" min="0" step="0.5" placeholder="כמות"
                                     value={qty}
                                     onChange={e => {
@@ -3664,22 +3667,33 @@
                           <span key={k.id} style={{ color: k.color }} className="w-24 text-center text-[11px] font-extrabold truncate">{k.name}</span>
                         ))}
                       </div>
-                      {items.map(item => (
-                        <div key={item.id} className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">
-                          <span className="flex-1 text-sm font-bold text-gray-800">{item.name}</span>
-                          {kashrutList.map(k => (
-                            <input
-                              key={k.id}
-                              type="text"
-                              placeholder="מקט"
-                              value={(orderFormSkuMap[item.id] || {})[k.name] || ''}
-                              onChange={e => setSku(item.id, k.name, e.target.value)}
-                              style={{ borderColor: k.color + '60' }}
-                              className="w-24 p-1.5 text-xs border rounded-lg text-center font-mono outline-none focus:ring-2"
-                            />
-                          ))}
-                        </div>
-                      ))}
+                      {items.map(item => {
+                        const rows = item.options.length > 0 ? item.options : [null];
+                        return rows.map(opt => {
+                          const key = opt ? `${item.id}|${opt}` : item.id;
+                          return (
+                            <div key={key} className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">
+                              <span className="flex-1 text-sm text-gray-800">
+                                {opt
+                                  ? <><span className="text-gray-400 text-xs ml-1">{item.name} ›</span><span className="font-bold">{opt}</span></>
+                                  : <span className="font-bold">{item.name}</span>
+                                }
+                              </span>
+                              {kashrutList.map(k => (
+                                <input
+                                  key={k.id}
+                                  type="text"
+                                  placeholder="מקט"
+                                  value={(orderFormSkuMap[key] || {})[k.name] || ''}
+                                  onChange={e => setSku(key, k.name, e.target.value)}
+                                  style={{ borderColor: k.color + '60' }}
+                                  className="w-24 p-1.5 text-xs border rounded-lg text-center font-mono outline-none focus:ring-2"
+                                />
+                              ))}
+                            </div>
+                          );
+                        });
+                      })}
                     </div>
                   )}
                 </div>
