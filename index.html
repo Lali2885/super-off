@@ -380,6 +380,16 @@
     };
     const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟' };
 
+    const getDynProductPriority = (name, category) => {
+      if (category === 'עוף') {
+        if (name === 'עוף שלם') return 0;
+        if (name.includes('כרעיים')) return 1;
+        if (name.includes('שניצל') || name.includes('חזה')) return 2;
+        return 3;
+      }
+      return 99;
+    };
+
     const getProductCategory = (name) => {
       const t = NEW_PRODUCTS_TEMPLATE.find(p => p.name === name);
       if (t?.category) return t.category;
@@ -1669,7 +1679,8 @@
         const seen = new Set();
         const products = (frozenProductsList || [])
           .filter(p => (p.category || getProductCategory(p.name)) === categoryName)
-          .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; });
+          .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; })
+          .sort((a, b) => getDynProductPriority(a.name, categoryName) - getDynProductPriority(b.name, categoryName));
         if (!products.length) return null;
         const cc = getCatColors(categoryName);
         const isExpanded = expandedCategories[categoryName];
