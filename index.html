@@ -615,9 +615,17 @@
     };
 
     // --- Fresh Stock Panel ---
-    const FreshStockPanel = ({ stock, setStock, kashrutList }) => {
+    const FreshStockPanel = ({ stock, setStock, kashrutList, frozenProductsList }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
-      const freshItems = ORDER_FORM_TEMPLATE.filter(i => i.storageType === 'fresh');
+      const seen = new Set();
+      const freshItems = (frozenProductsList || [])
+        .filter(p => p.storageTypes?.includes('fresh'))
+        .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; })
+        .map(p => ({ name: p.name, category: p.category || getProductCategory(p.name) }))
+        .sort((a, b) => {
+          const order = { 'עוף': 0, 'הודו': 1, 'בשר': 2, 'דגים': 3 };
+          return (order[a.category] ?? 99) - (order[b.category] ?? 99);
+        });
 
       const updateQty = (product, kashrut, value) => {
         const num = parseFloat(value) || 0;
@@ -673,9 +681,9 @@
                     const qty = stock[`${item.name}|${activeKashrut}`] || 0;
                     const isLow = qty < 10;
                     return (
-                      <tr key={item.id} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                      <tr key={item.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                         <td className="p-2.5 font-bold text-gray-900">{item.name}</td>
-                        <td className="p-2.5 text-center text-xs text-gray-400">{item.category}</td>
+                        <td className="p-2.5 text-center text-xs text-gray-400">{CAT_EMOJI[item.category] || ''} {item.category}</td>
                         <td className="p-1.5 text-center">
                           <input type="number" min="0" step="0.5"
                             value={qty || ''}
@@ -883,8 +891,11 @@
         return obj;
       });
 
-      const freshItems  = ORDER_FORM_TEMPLATE.filter(i => i.storageType === 'fresh');
-      const frozenItems = ORDER_FORM_TEMPLATE.filter(i => i.storageType === 'frozen');
+      const seenFresh = new Set();
+      const freshItems = (frozenProductsList || [])
+        .filter(p => p.storageTypes?.includes('fresh'))
+        .filter(p => { if (seenFresh.has(p.name)) return false; seenFresh.add(p.name); return true; });
+      const frozenItems = frozenProductsList || [];
 
       const selectedKashrut = kashrutList.filter(k => exportKashrut[k.name]);
 
@@ -978,7 +989,7 @@
             <button
               onClick={() => setActiveTab('frozen')}
               className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'frozen' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-50'}`}>
-              🧊 מלאי קפוא ({frozenItems.length} פריטים)
+              🧊 מלאי קפוא ({new Set(frozenItems.filter(p => p.storageTypes?.includes('frozen')).map(p => p.name)).size} פריטים)
             </button>
             <button
               onClick={() => setActiveTab('fresh')}
@@ -1057,7 +1068,7 @@
           )}
 
           {activeTab === 'fresh' && (
-            <FreshStockPanel stock={stock} setStock={setStock} kashrutList={kashrutList} />
+            <FreshStockPanel stock={stock} setStock={setStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />
           )}
           {activeTab === 'frozen' && (
             <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />
