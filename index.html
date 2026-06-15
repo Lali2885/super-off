@@ -2349,6 +2349,11 @@
                             <td className="p-2 border border-black font-bold text-gray-700">{packingItem.notes}</td>
                           </tr>
                         ))}
+                        {fishGroups.length > 0 && (
+                          <div className="mt-3 border-2 border-red-600 rounded p-2 bg-red-50 text-center">
+                            <span className="text-red-700 font-extrabold text-sm">🐟 שים לב — יש גם הזמנת דגים!</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
