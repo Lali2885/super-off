@@ -398,58 +398,9 @@
     };
 
     // --- Constants ---
+    // עוף מפורק בלבד — שאר המוצרים נגזרים ישירות מ-frozenProductsList
     const ORDER_FORM_TEMPLATE = [
-      { id: 'c1', category: 'עוף', name: 'עוף שלם', storageType: 'fresh', inline: true, options: [], checkboxOptions: ['להוריד עור', 'לחלק כרעיים'] },
       { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'] },
-      { id: 'c4', category: 'עוף', name: 'כרעיים', storageType: 'fresh', inline: true, options: ['כרעיים שלם', 'כרעיים בלי עור'] },
-      { id: 'c7', category: 'עוף', name: 'חזה/שניצל', storageType: 'fresh', inline: true, options: ['שניצל עוף', 'חזה עוף טחון טהור', 'חזה עוף קוביות', 'חזה עוף רצועות', 'חזה עוף חצוי ונקי'] },
-      { id: 'c8', category: 'עוף', name: 'פרגיות', storageType: 'fresh', inline: true, options: ['פרגית עוף עם עור', 'פרגית בלי עור', 'קוביות פרגית', 'פרגית טחונה', 'סטייק פרגית', 'סטייק פרגית שטוח'] },
-      { id: 'c5a', category: 'עוף', name: 'שוקיים', storageType: 'fresh', options: [] },
-      { id: 'c5b', category: 'עוף', name: 'ירכיים', storageType: 'fresh', options: [] },
-      { id: 'c9', category: 'עוף', name: 'כנפיים', storageType: 'fresh', options: [] },
-      { id: 'c10', category: 'עוף', name: 'גרונות ועצמות', storageType: 'fresh', options: [] },
-      { id: 'c11', category: 'עוף', name: 'סט למרק', storageType: 'fresh', options: [] },
-
-      { id: 'b1',  category: 'בשר', name: 'אצבעות אנטריקוט',           storageType: 'fresh', options: [] },
-      { id: 'b2',  category: 'בשר', name: 'בשר ראש',                   storageType: 'fresh', options: [] },
-      { id: 'b3',  category: 'בשר', name: 'גידי בקר',                  storageType: 'fresh', options: [] },
-      { id: 'b4',  category: 'בשר', name: 'לשון בקר',                  storageType: 'fresh', options: [] },
-      { id: 'b5',  category: 'בשר', name: 'נתח אסאדו עם עצם',          storageType: 'fresh', options: [] },
-      { id: 'b6',  category: 'בשר', name: 'פילה מדומה מס 6',           storageType: 'fresh', options: [] },
-      { id: 'b7',  category: 'בשר', name: 'צלי כתף מס 5',              storageType: 'fresh', options: [] },
-      { id: 'b8',  category: 'בשר', name: 'צלעות אונטריפ ברשת',        storageType: 'fresh', options: [] },
-      { id: 'b9',  category: 'בשר', name: 'שריר הזרוע מס\' 8',         storageType: 'fresh', options: [] },
-      { id: 'b10', category: 'בשר', name: 'אוסובוקו עגל',              storageType: 'fresh', options: [] },
-      { id: 'b11', category: 'בשר', name: 'אסאדו עגל עם עצם פרוס',    storageType: 'fresh', options: [] },
-      { id: 'b12', category: 'בשר', name: 'בקר טחון טהור',             storageType: 'fresh', options: [] },
-      { id: 'b13', category: 'בשר', name: 'בשר ראש קוביות',            storageType: 'fresh', options: [] },
-      { id: 'b14', category: 'בשר', name: 'טשולנט מיקס',               storageType: 'fresh', options: [] },
-      { id: 'b15', category: 'בשר', name: 'מיני אסאדו פרוס',           storageType: 'fresh', options: [] },
-      { id: 'b16', category: 'בשר', name: 'מיני אסאדו שלם',            storageType: 'fresh', options: [] },
-      { id: 'b17', category: 'בשר', name: 'סטייק אנגוס פידלוט',        storageType: 'fresh', options: [] },
-      { id: 'b18', category: 'בשר', name: 'סטייק אנטריקוט',            storageType: 'fresh', options: [] },
-      { id: 'b19', category: 'בשר', name: 'סטייק מיושן URU פרמיום',    storageType: 'fresh', options: [] },
-      { id: 'b20', category: 'בשר', name: 'עצמות ברך',                 storageType: 'fresh', options: [] },
-      { id: 'b21', category: 'בשר', name: 'עצמות מח',                  storageType: 'fresh', options: [] },
-      { id: 'b22', category: 'בשר', name: 'פלאנקען',                   storageType: 'fresh', options: [] },
-      { id: 'b23', category: 'בשר', name: 'קוביות בשר מס 8',           storageType: 'fresh', options: [] },
-
-      { id: 't1b', category: 'הודו', name: 'שוקיים הודו', storageType: 'fresh', options: [] },
-      { id: 't1c', category: 'הודו', name: 'כנפיים הודו', storageType: 'fresh', options: [] },
-      { id: 't3', category: 'הודו', name: 'שווארמה', storageType: 'fresh', inline: true, options: ['קוביות שווארמה', 'רצועות שווארמה'] },
-      { id: 't4', category: 'הודו', name: 'גרון הודו', storageType: 'fresh', options: [] },
-      { id: 't5', category: 'הודו', name: 'חזה/שניצל הודו', storageType: 'fresh', inline: true, options: ['נתח חזה הודו', 'שניצל הודו פרוס'] },
-      { id: 't8', category: 'הודו', name: 'הודו אדום טחון', storageType: 'fresh', options: [] },
-
-      { id: 'd1', category: 'דגים', name: 'קרפיון', storageType: 'frozen', inline: true, options: ['קרפיון פרוס', 'קרפיון טחון', 'פרוסות קרפיון', 'ראש ועצמות'] },
-      { id: 'd2', category: 'דגים', name: 'סלמון', storageType: 'frozen', inline: true, options: ['מנות', 'בייבי'], checkboxOptions: ['6 במגש', '8 במגש'] },
-      { id: 'd3', category: 'דגים', name: 'פורל', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
-      { id: 'd4', category: 'דגים', name: 'אמנון', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
-      { id: 'd5', category: 'דגים', name: 'בורי', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
-      { id: 'd6', category: 'דגים', name: 'דניס', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
-      { id: 'd7', category: 'דגים', name: 'לברק', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
-      { id: 'd8', category: 'דגים', name: 'ברמונדי', storageType: 'frozen', inline: true, options: ['פילה', 'דג', 'דג שלם'] },
-      { id: 'd9', category: 'דגים', name: 'דג נילוס', storageType: 'frozen', inline: true, options: ['טחון', 'מנות'] }
     ];
 
     const CATEGORY_COLORS = {
@@ -1137,6 +1088,7 @@
       const [assignedButcher, setAssignedButcher] = useState('');
 
       const [expandedCategories, setExpandedCategories] = useState({
+        'מפורק': false,
         'עוף': false,
         'הודו': false,
         'בשר': false,
@@ -1222,6 +1174,10 @@
             } else {
               rebuilt[template.id].push(newRow);
             }
+          } else {
+            // פריט דינמי — לא בטמפלייט, נגזר מ-frozenProductsList
+            const name = item.cleanName || item.name;
+            rebuilt[`dyn_${name}`] = [{ qty: item.qty.toString(), notes: item.notes || '' }];
           }
         });
         // המרת פריטים עם אופציות לפורמט החדש
@@ -1299,11 +1255,23 @@
             }
           });
 
-        if (populatedItems.length === 0) {
+        // פריטים דינמיים — נגזרים ישירות מ-frozenProductsList
+        const dynItems = Object.entries(formItemsState)
+          .filter(([key]) => key.startsWith('dyn_'))
+          .flatMap(([key, rows]) => {
+            const name = key.slice(4);
+            if (!Array.isArray(rows)) return [];
+            return rows.filter(r => parseFloat(r.qty) > 0).map(r => ({
+              name, cleanName: name, qty: parseFloat(r.qty), notes: r.notes || '', kashrut
+            }));
+          });
+
+        const allItems = [...populatedItems, ...dynItems];
+
+        if (allItems.length === 0) {
           setFormErrorMessage('נא להזין כמות עבור לפחות מוצר אחד בטופס!');
           return;
         }
-
 
         const newOrder = {
           id: Math.floor(1000 + Math.random() * 9000),
@@ -1318,7 +1286,7 @@
           kashrut,
           assignedButcher,
           flags: { ...flags, chargeStatus },
-          items: populatedItems,
+          items: allItems,
           status: 'new'
         };
 
@@ -1362,10 +1330,11 @@
         printWindow.document.close();
       };
 
-      const renderItemCategory = (categoryName) => {
+      const renderItemCategory = (categoryName, overrideTitle, overrideToggleKey) => {
+        const toggleKey = overrideToggleKey || categoryName;
         const itemsInCategory = ORDER_FORM_TEMPLATE.filter(i => i.category === categoryName);
         if (itemsInCategory.length === 0) return null;
-        const isExpanded = expandedCategories[categoryName];
+        const isExpanded = expandedCategories[toggleKey];
 
         const cc = getCatColors(categoryName);
         const simpleItems = itemsInCategory.filter(i => i.options.length === 0);
@@ -1375,10 +1344,10 @@
           <div className={`mb-4 bg-white rounded-lg border overflow-hidden shadow-sm transition-all duration-200 ${cc.outer}`}>
             <button
               type="button"
-              onClick={() => toggleCategory(categoryName)}
+              onClick={() => toggleCategory(toggleKey)}
               className={`w-full font-bold px-4 py-3 border-b flex justify-between items-center transition-colors ${cc.headerBg} ${cc.headerHover} ${cc.headerText} ${cc.headerBorder}`}
             >
-              <span>{categoryName}</span>
+              <span>{overrideTitle || categoryName}</span>
               <Icons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
 
@@ -1695,6 +1664,64 @@
         );
       };
 
+      // רינדור קטגוריה דינמי — נגזר ישירות מ-frozenProductsList
+      const renderCategoryDynamic = (categoryName) => {
+        const seen = new Set();
+        const products = (frozenProductsList || [])
+          .filter(p => (p.category || getProductCategory(p.name)) === categoryName)
+          .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; });
+        if (!products.length) return null;
+        const cc = getCatColors(categoryName);
+        const isExpanded = expandedCategories[categoryName];
+        return (
+          <div className={`mb-4 bg-white rounded-lg border overflow-hidden shadow-sm transition-all duration-200 ${cc.outer}`}>
+            <button type="button"
+              onClick={() => toggleCategory(categoryName)}
+              className={`w-full font-bold px-4 py-3 border-b flex justify-between items-center transition-colors ${cc.headerBg} ${cc.headerHover} ${cc.headerText} ${cc.headerBorder}`}>
+              <span>{CAT_EMOJI[categoryName]} {categoryName}</span>
+              <Icons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {isExpanded && (
+              <div className={`divide-y animate-in slide-in-from-top-2 duration-200 ${cc.divider}`}>
+                {products.map(p => {
+                  const key = `dyn_${p.name}`;
+                  const rows = Array.isArray(formItemsState[key]) ? formItemsState[key] : [{ qty: '', notes: '' }];
+                  const val = rows[0];
+                  const sku = (frozenProductsList || []).find(fp => fp.name === p.name && fp.kashrut === kashrut)?.sku
+                          || (frozenProductsList || []).find(fp => fp.name === p.name && fp.kashrut === 'כללי')?.sku || '';
+                  return (
+                    <div key={p.name} className="p-3 flex items-start gap-3 hover:bg-gray-50">
+                      <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
+                        {p.name}
+                        {sku && <span className="block text-[10px] text-gray-400 font-normal">{sku}</span>}
+                      </div>
+                      <div className="flex-1 flex gap-2 flex-wrap sm:flex-nowrap">
+                        <input type="number" min="0" step="0.5" placeholder="כמות..."
+                          value={val.qty}
+                          onChange={e => setFormItemsState(prev => {
+                            const cur = (Array.isArray(prev[key]) ? prev[key] : [{ qty: '', notes: '' }])[0];
+                            return { ...prev, [key]: [{ ...cur, qty: e.target.value }] };
+                          })}
+                          className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
+                        />
+                        <input type="text" placeholder="הערה"
+                          value={val.notes}
+                          onChange={e => setFormItemsState(prev => {
+                            const cur = (Array.isArray(prev[key]) ? prev[key] : [{ qty: '', notes: '' }])[0];
+                            return { ...prev, [key]: [{ ...cur, notes: e.target.value }] };
+                          })}
+                          className="flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      };
+
       const [draggingId, setDraggingId] = useState(null);
       const [isDragOver, setIsDragOver] = useState(false);
       const [packagingModal, setPackagingModal] = useState(null); // orderId
@@ -1750,7 +1777,11 @@
               const isExpanded = dimmed || expandedOrders.has(order.id);
               const regularItems = order.items.filter(i => i.qty !== '-');
               const packingItem = order.items.find(i => i.qty === '-');
-              const cats = new Set(regularItems.map(i => ORDER_FORM_TEMPLATE.find(t => t.name === (i.cleanName || i.name))?.category).filter(Boolean));
+              const cats = new Set(regularItems.map(i => {
+                const name = i.cleanName || i.name;
+                const p = (frozenProductsList || []).find(fp => fp.name === name);
+                return p?.category || getProductCategory(name) || ORDER_FORM_TEMPLATE.find(t => t.name === name)?.category;
+              }).filter(Boolean));
               return (
               <div key={order.id}
                 draggable={draggable}
@@ -2132,10 +2163,11 @@
                   <div className="pt-4 border-t border-gray-200">
                     <h3 className="font-extrabold text-lg text-gray-800 mb-4">רשימת מוצרים והוראות (הזן כמות במוצרים הרצויים)</h3>
                     
-                    {renderItemCategory('עוף')}
-                    {renderItemCategory('הודו')}
-                    {renderItemCategory('בשר')}
-                    {renderItemCategory('דגים')}
+                    {renderItemCategory('עוף', 'עוף מפורק', 'מפורק')}
+                    {renderCategoryDynamic('עוף')}
+                    {renderCategoryDynamic('הודו')}
+                    {renderCategoryDynamic('בשר')}
+                    {renderCategoryDynamic('דגים')}
                   </div>
 
                   <div className="pt-4 flex gap-3 sticky bottom-0 bg-gray-50/95 p-4 -mx-5 -mb-5 border-t border-gray-200 backdrop-blur-sm">
@@ -2287,7 +2319,11 @@
                       });
                       return groups;
                     };
-                    const isFish = item => ORDER_FORM_TEMPLATE.find(t => t.name === (item.cleanName || item.name))?.category === 'דגים';
+                    const isFish = item => {
+                      const name = item.cleanName || item.name;
+                      const p = (frozenProductsList || []).find(fp => fp.name === name);
+                      return (p?.category || getProductCategory(name)) === 'דגים';
+                    };
                     const fishGroups   = buildGroups(allRegular.filter(isFish));
                     const generalGroups = buildGroups(allRegular.filter(i => !isFish(i)));
 
