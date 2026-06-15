@@ -3683,77 +3683,6 @@
       );
     };
 
-    const OrderFormSkuEditor = ({ orderFormSkuMap, setOrderFormSkuMap, kashrutList }) => {
-      const [openCat, setOpenCat] = useState(null);
-      const catColors = { 'עוף': 'yellow', 'הודו': 'green', 'בשר': 'red', 'דגים': 'blue' };
-      const setSku = (itemId, kashrutName, val) =>
-        setOrderFormSkuMap(prev => ({
-          ...prev,
-          [itemId]: { ...(prev[itemId] || {}), [kashrutName]: val }
-        }));
-      return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
-            <span className="font-extrabold text-gray-800">מקטי טופס הזמנה</span>
-            <span className="text-xs text-gray-400">מקט לפי כשרות לכל פריט בטופס</span>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {PRODUCT_CATEGORIES.map(cat => {
-              const items = ORDER_FORM_TEMPLATE.filter(i => i.category === cat);
-              const c = catColors[cat] || 'gray';
-              const isOpen = openCat === cat;
-              return (
-                <div key={cat}>
-                  <button type="button" onClick={() => setOpenCat(isOpen ? null : cat)}
-                    className={`w-full px-4 py-2.5 flex justify-between items-center font-bold text-sm text-${c}-800 bg-${c}-50 hover:bg-${c}-100 transition-colors`}>
-                    <span>{CAT_EMOJI[cat]} {cat}</span>
-                    <span className="text-gray-400 text-xs">{isOpen ? '▲' : '▼'}</span>
-                  </button>
-                  {isOpen && (
-                    <div className="divide-y divide-gray-50">
-                      {/* כותרת עמודות כשרות */}
-                      <div className="flex items-center gap-2 px-4 py-1.5 bg-gray-50">
-                        <span className="flex-1" />
-                        {kashrutList.map(k => (
-                          <span key={k.id} style={{ color: k.color }} className="w-24 text-center text-[11px] font-extrabold truncate">{k.name}</span>
-                        ))}
-                      </div>
-                      {items.map(item => {
-                        const rows = item.options.length > 0 ? item.options : [null];
-                        return rows.map(opt => {
-                          const key = opt ? `${item.id}|${opt}` : item.id;
-                          return (
-                            <div key={key} className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">
-                              <span className="flex-1 text-sm text-gray-800">
-                                {opt
-                                  ? <><span className="text-gray-400 text-xs ml-1">{item.name} ›</span><span className="font-bold">{opt}</span></>
-                                  : <span className="font-bold">{item.name}</span>
-                                }
-                              </span>
-                              {kashrutList.map(k => (
-                                <input
-                                  key={k.id}
-                                  type="text"
-                                  placeholder="מקט"
-                                  value={(orderFormSkuMap[key] || {})[k.name] || ''}
-                                  onChange={e => setSku(key, k.name, e.target.value)}
-                                  style={{ borderColor: k.color + '60' }}
-                                  className="w-24 p-1.5 text-xs border rounded-lg text-center font-mono outline-none focus:ring-2"
-                                />
-                              ))}
-                            </div>
-                          );
-                        });
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    };
 
     const ListsManagementView = ({ productsList, setProductsList, couriersList, setCouriersList, kashrutList, setKashrutList, butchersList, setButchersList, frozenProductsList, setFrozenProductsList, neighborhoodData, setNeighborhoodData, orderFormSkuMap, setOrderFormSkuMap }) => {
       return (
@@ -3764,7 +3693,6 @@
           </div>
 
           <div className="flex flex-col gap-6">
-            <OrderFormSkuEditor orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} kashrutList={kashrutList} />
             <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} kashrutList={kashrutList} />
             <NeighborhoodEditor neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />
             <ListEditor title="קצבים" items={butchersList} setItems={setButchersList} placeholder="הזן שם קצב חדש..." />
