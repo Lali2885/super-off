@@ -327,8 +327,9 @@
     const FROZEN_KASHRUT = ['קהילות', 'לנדא'];
 
     const NEW_PRODUCTS_TEMPLATE = [
-      // עוף חסר
-      { name: 'עוף שלם', storageTypes: ['fresh'], category: 'עוף' },
+      // עוף
+      { name: 'עוף מפורק', storageTypes: ['fresh'], category: 'עוף' },
+      { name: 'עוף שלם',   storageTypes: ['fresh'], category: 'עוף' },
       // הודו
       { name: 'שוקיים הודו',        storageTypes: ['fresh'], category: 'הודו' },
       { name: 'כנפיים הודו',        storageTypes: ['fresh'], category: 'הודו' },
@@ -1371,7 +1372,13 @@
                       <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                         <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-1 text-sm">
                           {item.name}
-                          {item.options.length === 0 && getSku(item.id, kashrut) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id, kashrut)}</span>}
+                          {(() => {
+                            const _fl = frozenProductsList || [];
+                            const sk = getSku(item.id, kashrut)
+                              || _fl.find(fp => fp.name === item.name && fp.kashrut === kashrut)?.sku
+                              || _fl.find(fp => fp.name === item.name && fp.sku)?.sku || '';
+                            return sk ? <span className="block text-[10px] text-gray-400 font-normal">{sk}</span> : null;
+                          })()}
                         </div>
                         <div className="flex-1 flex flex-col gap-2">
                           {/* כמות — כשאין אופציות, או כשיש showTotalQty */}
@@ -1676,9 +1683,11 @@
 
       // רינדור קטגוריה דינמי — נגזר ישירות מ-frozenProductsList
       const renderCategoryDynamic = (categoryName) => {
+        const templateNames = new Set(ORDER_FORM_TEMPLATE.map(t => t.name));
         const seen = new Set();
         const products = (frozenProductsList || [])
           .filter(p => (p.category || getProductCategory(p.name)) === categoryName)
+          .filter(p => !templateNames.has(p.name))
           .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; })
           .sort((a, b) => getDynProductPriority(a.name, categoryName) - getDynProductPriority(b.name, categoryName));
         if (!products.length) return null;
@@ -2178,7 +2187,7 @@
                   <div className="pt-4 border-t border-gray-200">
                     <h3 className="font-extrabold text-lg text-gray-800 mb-4">רשימת מוצרים והוראות (הזן כמות במוצרים הרצויים)</h3>
                     
-                    {renderItemCategory('עוף', 'עוף מפורק', 'מפורק')}
+                    {renderItemCategory('עוף', '🐔 עוף מפורק', 'מפורק')}
                     {renderCategoryDynamic('עוף')}
                     {renderCategoryDynamic('הודו')}
                     {renderCategoryDynamic('בשר')}
