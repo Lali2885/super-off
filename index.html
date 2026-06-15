@@ -632,6 +632,13 @@
         setStock(prev => ({ ...prev, [`${product}|${kashrut}`]: Math.max(0, num) }));
       };
 
+      const getFreshSku = (name) => {
+        const _fp = frozenProductsList || [];
+        return _fp.find(fp => fp.name === name && fp.kashrut === activeKashrut)?.sku
+            || _fp.find(fp => fp.name === name && fp.sku)?.sku
+            || '';
+      };
+
       const activeKashrutObj = kashrutList.find(k => k.name === activeKashrut) || {};
       const activeColor = activeKashrutObj.color || '#6366f1';
 
@@ -682,7 +689,10 @@
                     const isLow = qty < 10;
                     return (
                       <tr key={item.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                        <td className="p-2.5 font-bold text-gray-900">{item.name}</td>
+                        <td className="p-2.5 font-bold text-gray-900">
+                          {item.name}
+                          {getFreshSku(item.name) && <span className="block text-xs text-gray-400 font-normal">{getFreshSku(item.name)}</span>}
+                        </td>
                         <td className="p-2.5 text-center text-xs text-gray-400">{CAT_EMOJI[item.category] || ''} {item.category}</td>
                         <td className="p-1.5 text-center">
                           <input type="number" min="0" step="0.5"
@@ -723,8 +733,8 @@
         setFrozenStock(prev => ({ ...prev, [`${product}|${kashrut}`]: Math.max(0, num * TRAYS_PER_CARTON) }));
       };
 
-      const fishProducts = frozenProductsList.filter(p => p.kashrut === 'כללי');
-      const activeProducts = frozenProductsList.filter(p => (p.kashrut || '') === activeKashrut && p.kashrut !== 'כללי');
+      const fishProducts = frozenProductsList.filter(p => p.kashrut === 'כללי' && p.storageTypes?.includes('frozen'));
+      const activeProducts = frozenProductsList.filter(p => (p.kashrut || '') === activeKashrut && p.kashrut !== 'כללי' && p.storageTypes?.includes('frozen'));
       const kashrutTrays = activeProducts.reduce((sum, p) => sum + (frozenStock[`${p.name}|${activeKashrut}`] || 0), 0);
       const kashrutCartons = Math.floor(kashrutTrays / TRAYS_PER_CARTON);
       const kashrutRemainder = kashrutTrays % TRAYS_PER_CARTON;
@@ -790,7 +800,10 @@
                     const rowBg = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
                     return (
                       <tr key={product} style={{ backgroundColor: rowBg }}>
-                        <td className="p-2.5 font-bold text-gray-900">{product}</td>
+                        <td className="p-2.5 font-bold text-gray-900">
+                          {product}
+                          {p.sku && <span className="block text-xs text-gray-400 font-normal">{p.sku}</span>}
+                        </td>
                         <td className="p-1.5 text-center">
                           <input
                             type="number" min="0" step="1"
@@ -846,7 +859,10 @@
                       const rowBg = idx % 2 === 0 ? '#ffffff' : '#eff6ff';
                       return (
                         <tr key={p.name} style={{ backgroundColor: rowBg }}>
-                          <td className="p-2.5 font-bold text-gray-900">{p.name}</td>
+                          <td className="p-2.5 font-bold text-gray-900">
+                            {p.name}
+                            {p.sku && <span className="block text-xs text-gray-400 font-normal">{p.sku}</span>}
+                          </td>
                           <td className="p-1.5 text-center">
                             <input
                               type="number" min="0" step="1"
