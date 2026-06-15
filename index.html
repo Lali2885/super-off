@@ -1698,8 +1698,12 @@
                   const key = `dyn_${p.name}`;
                   const rows = Array.isArray(formItemsState[key]) ? formItemsState[key] : [{ qty: '', notes: '' }];
                   const val = rows[0];
-                  const sku = (frozenProductsList || []).find(fp => fp.name === p.name && fp.kashrut === kashrut)?.sku
-                          || (frozenProductsList || []).find(fp => fp.name === p.name && fp.kashrut === 'כללי')?.sku || '';
+                  const _fpList = frozenProductsList || [];
+                  const sku = _fpList.find(fp => fp.name === p.name && fp.kashrut === kashrut)?.sku
+                           || _fpList.find(fp => fp.name === p.name && fp.kashrut === 'כללי')?.sku
+                           || _fpList.find(fp => fp.name === p.name && fp.sku)?.sku
+                           || getSku(p.name, kashrut)
+                           || '';
                   return (
                     <div key={p.name} className="p-3 flex items-start gap-3 hover:bg-gray-50">
                       <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
