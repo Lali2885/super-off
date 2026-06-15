@@ -753,7 +753,8 @@
         setFrozenStock(prev => ({ ...prev, [`${product}|${kashrut}`]: Math.max(0, num * TRAYS_PER_CARTON) }));
       };
 
-      const activeProducts = frozenProductsList.filter(p => (p.kashrut || '') === activeKashrut);
+      const fishProducts = frozenProductsList.filter(p => p.kashrut === 'כללי');
+      const activeProducts = frozenProductsList.filter(p => (p.kashrut || '') === activeKashrut && p.kashrut !== 'כללי');
       const kashrutTrays = activeProducts.reduce((sum, p) => sum + (frozenStock[`${p.name}|${activeKashrut}`] || 0), 0);
       const kashrutCartons = Math.floor(kashrutTrays / TRAYS_PER_CARTON);
       const kashrutRemainder = kashrutTrays % TRAYS_PER_CARTON;
@@ -851,6 +852,60 @@
             </div>
           </div>
           <p className="text-xs text-gray-400 text-center">* קרטון = {TRAYS_PER_CARTON} מגשים</p>
+
+          {/* סקשן דגים — ללא חלוקה לכשרות */}
+          {fishProducts.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-blue-200 overflow-hidden mt-2">
+              <div className="py-2 px-4 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
+                <span className="text-blue-600 font-extrabold text-sm">🐟 דגים — כללי</span>
+              </div>
+              <div className="overflow-x-auto max-h-[360px] overflow-y-auto custom-scrollbar">
+                <table className="w-full text-right text-sm">
+                  <thead className="sticky top-0 z-10 bg-blue-400 text-white text-xs">
+                    <tr>
+                      <th className="p-3 font-bold text-right">מוצר</th>
+                      <th className="p-3 font-bold text-center">מגשים</th>
+                      <th className="p-3 font-bold text-center">קרטונים</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {fishProducts.map((p, idx) => {
+                      const trays = frozenStock[`${p.name}|כללי`] || 0;
+                      const cartons = Math.floor(trays / TRAYS_PER_CARTON);
+                      const remainder = trays % TRAYS_PER_CARTON;
+                      const rowBg = idx % 2 === 0 ? '#ffffff' : '#eff6ff';
+                      return (
+                        <tr key={p.name} style={{ backgroundColor: rowBg }}>
+                          <td className="p-2.5 font-bold text-gray-900">{p.name}</td>
+                          <td className="p-1.5 text-center">
+                            <input
+                              type="number" min="0" step="1"
+                              value={trays || ''}
+                              placeholder="0"
+                              onChange={e => { const num = parseInt(e.target.value) || 0; setFrozenStock(prev => ({ ...prev, [`${p.name}|כללי`]: Math.max(0, num) })); }}
+                              className="w-20 p-1.5 text-center text-sm font-bold border border-blue-200 rounded-lg bg-white focus:ring-2 outline-none"
+                            />
+                          </td>
+                          <td className="p-1.5 text-center">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <input
+                                type="number" min="0" step="1"
+                                value={cartons || ''}
+                                placeholder="0"
+                                onChange={e => { const num = parseInt(e.target.value) || 0; setFrozenStock(prev => ({ ...prev, [`${p.name}|כללי`]: Math.max(0, num * TRAYS_PER_CARTON) })); }}
+                                className="w-20 p-1.5 text-center text-sm font-black border border-blue-200 text-blue-600 rounded-lg bg-white focus:ring-2 outline-none"
+                              />
+                              {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder} מגשים</div>}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       );
     };
@@ -881,8 +936,10 @@
       const doExcelExport = (date) => {
         const wb = window.XLSX.utils.book_new();
         if (exportSections.frozen) {
+          const nonFishProducts = frozenProductsList.filter(p => p.kashrut !== 'כללי');
+          const fishExportProducts = frozenProductsList.filter(p => p.kashrut === 'כללי');
           const header = ['מוצר', ...selectedKashrut.flatMap(k => [`${k.name} - מגשים`, `${k.name} - קרטונים`])];
-          const rows = frozenProductsList.map(p => {
+          const rows = nonFishProducts.map(p => {
             const row = [p.name];
             selectedKashrut.forEach(k => {
               const t = frozenStock[`${p.name}|${k.name}`] || 0;
@@ -890,6 +947,16 @@
             });
             return row;
           });
+          if (fishExportProducts.length) {
+            const emptyKashrut = selectedKashrut.flatMap(() => ['', '']);
+            rows.push(['🐟 דגים (כללי)', ...emptyKashrut]);
+            fishExportProducts.forEach(p => {
+              const t = frozenStock[`${p.name}|כללי`] || 0;
+              const row = [p.name, t || 0, Math.floor(t / TRAYS_PER_CARTON)];
+              selectedKashrut.slice(1).forEach(() => row.push('', ''));
+              rows.push(row);
+            });
+          }
           window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([header, ...rows]), 'מלאי קפוא');
         }
         if (exportSections.fresh) {
@@ -3243,11 +3310,11 @@
       const confirmAddProduct = () => {
         if (!newProduct.name.trim()) return;
         const newId = `p_${Date.now()}`;
-        setItems(prev => [...prev, ...kashrutList.map((k, j) => ({
-          id: `${newId}_${j}`, name: newProduct.name.trim(),
-          sku: newProduct.sku, storageTypes: newProduct.storageTypes,
-          kashrut: k.name, category: newProduct.category,
-        }))]);
+        const isFish = newProduct.category === 'דגים';
+        setItems(prev => [...prev, ...(isFish
+          ? [{ id: `${newId}_0`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: 'כללי', category: 'דגים' }]
+          : kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: k.name, category: newProduct.category }))
+        )]);
         setShowAddModal(false);
       };
 
@@ -4034,7 +4101,9 @@
           FROZEN_KASHRUT.map((kashrut, j) => ({ id: `${i + 1}_${j + 1}`, name, sku: '', storageTypes: ['frozen'], kashrut }))
         ),
         ...NEW_PRODUCTS_TEMPLATE.flatMap((p, i) =>
-          FROZEN_KASHRUT.map((kashrut, j) => ({ id: `new_${i + 1}_${j + 1}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut }))
+          p.category === 'דגים'
+            ? [{ id: `new_${i + 1}_1`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut: 'כללי', category: 'דגים' }]
+            : FROZEN_KASHRUT.map((kashrut, j) => ({ id: `new_${i + 1}_${j + 1}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut }))
         ),
       ]);
       const [frozenStock, setFrozenStock] = useState(initFrozenStock);
@@ -4153,15 +4222,33 @@
                   let loaded = needsMigration
                     ? raw.flatMap((p, i) => FROZEN_KASHRUT.map((k, j) => ({ ...p, id: `${p.id}_${j + 1}`, kashrut: k })))
                     : raw;
+                  // מיגרציה לדגים: מחיקת כפולות לפי כשרות, שמירה כ-'כללי'
+                  const fishNames = new Set(NEW_PRODUCTS_TEMPLATE.filter(p => p.category === 'דגים').map(p => p.name));
+                  const seenFish = new Set();
+                  loaded = loaded.filter(p => {
+                    if (!fishNames.has(p.name)) return true;
+                    if (seenFish.has(p.name)) return false;
+                    seenFish.add(p.name);
+                    p.kashrut = 'כללי';
+                    p.category = 'דגים';
+                    return true;
+                  });
+
                   const existingNames = new Set(loaded.map(p => p.name));
                   const missing = NEW_PRODUCTS_TEMPLATE.filter(p => !existingNames.has(p.name));
                   if (missing.length > 0) {
                     const kNames = (settingsRes.data.find(r => r.id === 'kashrutList')?.data || []).map(k => k.name);
                     const kList = kNames.length ? kNames : FROZEN_KASHRUT;
                     const base = Date.now();
-                    missing.forEach((p, i) => kList.forEach((kashrut, j) => {
-                      loaded.push({ id: `np_${base + i * 100 + j}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut });
-                    }));
+                    missing.forEach((p, i) => {
+                      if (p.category === 'דגים') {
+                        loaded.push({ id: `np_${base + i * 100}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut: 'כללי', category: 'דגים' });
+                      } else {
+                        kList.forEach((kashrut, j) => {
+                          loaded.push({ id: `np_${base + i * 100 + j}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut });
+                        });
+                      }
+                    });
                   }
                   setFrozenProductsList(loaded);
                 }
