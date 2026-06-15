@@ -2352,28 +2352,28 @@
                     const generalGroups = buildGroups(allRegular.filter(i => !isFish(i)));
 
                     const renderTable = (groups, extraRow) => (
-                      <table className="w-full text-right text-sm border-collapse border border-black mt-3">
+                      <table className="w-full text-right text-base border-collapse border border-black mt-3">
                         <thead>
                           <tr className="bg-black text-white font-bold">
-                            <th className="p-2 border border-black w-16 text-center text-sm">כמות</th>
-                            <th className="p-2 border border-black text-sm">פריט</th>
+                            <th className="p-2 border border-black w-16 text-center text-base">כמות</th>
+                            <th className="p-2 border border-black text-base">פריט</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-black font-bold">
                           {groups.map((group, gIdx) => (
                             <tr key={gIdx} className={gIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="p-2 border border-black text-center text-base font-extrabold bg-gray-100">
+                              <td className="p-2 border border-black text-center text-xl font-extrabold bg-gray-100">
                                 {group.items.length > 1 ? group.total : group.items[0].qty}
                               </td>
                               <td className="p-2 border border-black">
-                                <span className="block font-extrabold text-sm">{group.key}</span>
+                                <span className="block font-extrabold text-base">{group.key}</span>
                                 {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className="mt-1 mr-1 space-y-0.5 border-r-2 border-gray-400 pr-1.5">
                                     {group.items.map((item, iIdx) => {
                                       const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name;
                                       return (
-                                        <div key={iIdx} className="flex gap-1.5 text-xs text-gray-700 font-bold">
-                                          <span className="min-w-[20px] text-center font-extrabold">{item.qty}</span>
+                                        <div key={iIdx} className="flex gap-1.5 text-sm text-gray-700 font-bold">
+                                          <span className="min-w-[22px] text-center font-extrabold">{item.qty}</span>
                                           <span>{opt}</span>
                                         </div>
                                       );
@@ -2381,11 +2381,11 @@
                                   </div>
                                 )}
                                 {group.items.length === 1 && group.items[0].notes && (
-                                  <span className="block text-xs text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
+                                  <span className="block text-sm text-red-600 font-bold mt-0.5">✂️ {group.items[0].notes}</span>
                                 )}
                                 {group.items[0]?.checks?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-0.5">
-                                    {group.items[0].checks.map(c => <span key={c} className="text-xs px-1 py-0.5 border border-gray-300 rounded font-bold">✓ {c}</span>)}
+                                    {group.items[0].checks.map(c => <span key={c} className="text-sm px-1 py-0.5 border border-gray-300 rounded font-bold">✓ {c}</span>)}
                                   </div>
                                 )}
                               </td>
@@ -2398,8 +2398,8 @@
 
                     const slipCustomer = (
                       <div className="border-b-2 border-black pb-2 mb-2">
-                        <div className="text-xl font-extrabold">{activePrintOrder.customer}</div>
-                        <div className="text-base font-bold text-gray-700">{activePrintOrder.phone}{activePrintOrder.mobile ? ` | ${activePrintOrder.mobile}` : ''}</div>
+                        <div className="text-2xl font-extrabold">{activePrintOrder.customer}</div>
+                        <div className="text-lg font-bold text-gray-700">{activePrintOrder.phone}{activePrintOrder.mobile ? ` | ${activePrintOrder.mobile}` : ''}</div>
                       </div>
                     );
 
@@ -2409,7 +2409,7 @@
                       <div id="physical-print-slip-area-fish"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
-                        <div className="text-center font-extrabold text-lg mb-2 text-blue-800">🐟 בון דייג</div>
+                        <div className="text-center font-extrabold text-2xl mb-2 text-blue-800">🐟 בון דייג</div>
                         {slipCustomer}
                         {renderTable(fishGroups, null)}
                       </div>
@@ -2417,7 +2417,7 @@
                       <div id="physical-print-slip-area-general"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: 'Assistant, sans-serif' }}>
-                        <div className="text-center font-extrabold text-lg mb-2">בון הזמנה</div>
+                        <div className="text-center font-extrabold text-2xl mb-2">בון הזמנה</div>
                         {slipCustomer}
                         {renderTable(generalGroups, packingItem && (
                           <tr className="bg-gray-50">
