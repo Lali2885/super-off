@@ -1078,17 +1078,23 @@
       const bonHeaderRef = useRef(null);
       const bonTableRef  = useRef(null);
       const [tableScale, setTableScale] = useState(1);
+      const bonMeasuredRef = useRef(false);
       useEffect(() => {
-        if (!activePrintOrder) { setTableScale(1); return; }
+        setTableScale(1);
+        bonMeasuredRef.current = false;
+      }, [activePrintOrder?.id, printMode]);
+      useEffect(() => {
+        if (!activePrintOrder || bonMeasuredRef.current) return;
         const id = setTimeout(() => {
           if (!bonHeaderRef.current || !bonTableRef.current) return;
+          bonMeasuredRef.current = true;
           const A5_CONTENT_H = Math.round(200 * 3.7795); // 200mm at 96dpi ≈ 756px
           const BON_PADDING   = 40;                       // p-5 top+bottom
           const headerH  = bonHeaderRef.current.offsetHeight;
           const naturalH = bonTableRef.current.scrollHeight;
           const available = A5_CONTENT_H - BON_PADDING - headerH;
           setTableScale(Math.min(1, available / naturalH));
-        }, 60);
+        }, 80);
         return () => clearTimeout(id);
       }, [activePrintOrder, printMode]);
       const [orderType, setOrderType] = useState('delivery');
@@ -2459,14 +2465,7 @@
 
                     const areaId = printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general';
 
-                    const tableWrapStyle = {
-                      transform: `scale(${tableScale})`,
-                      transformOrigin: 'top right',
-                      height: bonTableRef.current
-                        ? Math.round(bonTableRef.current.scrollHeight * tableScale) + 'px'
-                        : 'auto',
-                      overflow: 'hidden',
-                    };
+                    const tableWrapStyle = tableScale < 1 ? { zoom: tableScale } : {};
 
                     return printMode === 'fish' ? (
                       <div id="physical-print-slip-area-fish"
