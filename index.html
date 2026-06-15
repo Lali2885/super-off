@@ -1067,7 +1067,7 @@
     };
 
     // --- Orders View ---
-    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap }) => {
+    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap, logoImage }) => {
       const getSku = (itemId, k) => (orderFormSkuMap || {})[itemId]?.[k] || '';
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
@@ -2451,7 +2451,9 @@
                         style={{ fontFamily: BON_FONT }}>
                         <div className="flex items-center justify-between mb-2">
                           <div className="font-extrabold text-3xl text-blue-800">🐟 בון דגים</div>
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>
+                          {logoImage
+                            ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
+                            : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
                         </div>
                         {slipHeader}
                         {renderTable(fishGroups, null)}
@@ -2462,7 +2464,9 @@
                         style={{ fontFamily: BON_FONT }}>
                         <div className="flex items-center justify-between mb-2">
                           <div className="font-extrabold text-3xl">בון הזמנה</div>
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>
+                          {logoImage
+                            ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
+                            : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
                         </div>
                         {slipHeader}
                         {renderTable(generalGroups, packingItem && (
@@ -3739,6 +3743,52 @@
     };
 
 
+    const SettingsView = ({ logoImage, setLogoImage }) => {
+      const handleLogoUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => setLogoImage(ev.target.result);
+        reader.readAsDataURL(file);
+      };
+      return (
+        <div className="animate-in fade-in duration-300 max-w-xl">
+          <div className="mb-6">
+            <h1 className="text-3xl font-extrabold text-gray-900">הגדרות</h1>
+            <p className="text-gray-500 mt-1">התאמה אישית של המערכת</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+              <h2 className="font-extrabold text-gray-800">לוגו עסק</h2>
+              <p className="text-sm text-gray-500 mt-0.5">הלוגו יופיע בפינה הימנית העליונה של הבון</p>
+            </div>
+            <div className="p-5 flex flex-col items-center gap-5">
+              <div className="w-40 h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 overflow-hidden">
+                {logoImage
+                  ? <img src={logoImage} alt="לוגו" className="w-full h-full object-contain p-2" />
+                  : <span className="text-gray-300 font-bold text-sm">אין לוגו</span>}
+              </div>
+              <div className="flex gap-3">
+                <label className="cursor-pointer">
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  <div className="px-5 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-colors text-sm">
+                    {logoImage ? 'החלף לוגו' : 'העלה לוגו'}
+                  </div>
+                </label>
+                {logoImage && (
+                  <button onClick={() => setLogoImage('')}
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm">
+                    הסר לוגו
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400">מומלץ: תמונה מרובעת, PNG עם רקע שקוף</p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     const ListsManagementView = ({ productsList, setProductsList, couriersList, setCouriersList, kashrutList, setKashrutList, butchersList, setButchersList, frozenProductsList, setFrozenProductsList, neighborhoodData, setNeighborhoodData, orderFormSkuMap, setOrderFormSkuMap }) => {
       return (
         <div className="animate-in fade-in duration-300 space-y-6">
@@ -4266,6 +4316,7 @@
       const [neighborhoodData, setNeighborhoodData] = useState(INITIAL_NEIGHBORHOODS);
       const [contactsList, setContactsList] = useState([]);
       const [orderFormSkuMap, setOrderFormSkuMap] = useState({});
+      const [logoImage, setLogoImage] = useState('');
 
       const [butchersList, setButchersList] = useState([
         { id: '1', name: 'משה' },
@@ -4384,6 +4435,7 @@
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
                 if (row.id === 'contactsList') setContactsList(row.data);
                 if (row.id === 'orderFormSkuMap') setOrderFormSkuMap(row.data);
+                if (row.id === 'appSettings' && row.data?.logoImage) setLogoImage(row.data.logoImage);
               });
             }
             if (logRes.data?.length) setInventoryLog(logRes.data.map(r => r.data));
@@ -4451,6 +4503,10 @@
       }, [orderFormSkuMap]);
       useEffect(() => {
         if (!dataLoadedRef.current || skipSaveRef.current) return;
+        db.from('settings').upsert({ id: 'appSettings', data: { logoImage } }).then();
+      }, [logoImage]);
+      useEffect(() => {
+        if (!dataLoadedRef.current || skipSaveRef.current) return;
         inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
       }, [inventoryLog]);
 
@@ -4462,6 +4518,7 @@
         { id: 'deliveries', label: 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'contacts', label: 'אנשי קשר', icon: Icons.User, badge: contactsList.length > 0 ? contactsList.length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'lists', label: 'ניהול רשימות', icon: Icons.List },
+        { id: 'settings', label: 'הגדרות', icon: Icons.Settings },
         { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'completed' || o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'completed' || o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
         { id: 'stats', label: 'דוחות ובקרה', icon: Icons.ClipboardList },
         { id: 'dashboard', label: 'לוח בקרה', icon: Icons.Home },
@@ -4474,7 +4531,7 @@
           case 'inventory':
             return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />;
           case 'orders':
-            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} />;
+            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
@@ -4487,6 +4544,8 @@
             return <ArchiveView orders={orders} setOrders={setOrders} kashrutList={kashrutList} />;
           case 'stats':
             return <StatsView orders={orders} stock={stock} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} butchersList={butchersList} couriersList={couriersList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
+          case 'settings':
+            return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} />;
           default:
             return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={setActiveTab} />;
         }
