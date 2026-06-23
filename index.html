@@ -4117,15 +4117,21 @@
 
       const exportShipmentExcel = (shipment) => {
         const pallet = shipment.pallets[0] || { number: '', products: [] };
-        const rows = [['תאריך יציאה','מספר משטח','מקט','שם מוצר','כשרות','כמות קרטונים','תאריך אחרון לשימוש','משקל (ק"ג)']];
-        pallet.products.forEach(pr => {
-          rows.push([fmtDate(shipment.date), pallet.number, pr.sku||'', pr.name||'', pr.kashrut||'', Number(pr.cartons)||0, (pr.expiryDate ? fmtDate(pr.expiryDate) : '') + (pr.dateType ? ' ('+pr.dateType+')' : ''), Number(pr.weight)||0]);
-        });
         const pC = pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0);
         const pW = pallet.products.reduce((s,p)=>s+Number(p.weight||0),0);
-        rows.push(['','סה"כ','','','',pC,'',pW.toFixed(1)]);
+        const rows = [
+          ['תעודת יציאה - קירור לירוי'],
+          [`תאריך: ${fmtDate(shipment.date)}${pallet.number ? '        משטח מספר: ' + pallet.number : ''}`],
+          [],
+          ['מקט','מוצר','קרטונים','משקל (ק"ג)','תאריך אחרון לשימוש','כשרות'],
+        ];
+        pallet.products.forEach(pr => {
+          rows.push([pr.sku||'', pr.name||'', Number(pr.cartons)||0, Number(pr.weight)||0, (pr.expiryDate ? fmtDate(pr.expiryDate) : '')+(pr.dateType ? ' ('+pr.dateType+')' : ''), pr.kashrut||'']);
+        });
+        rows.push(['', 'סה"כ', pC, pW.toFixed(1), '', '']);
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{wch:12},{wch:12},{wch:8},{wch:22},{wch:10},{wch:14},{wch:18},{wch:10}];
+        ws['!cols'] = [{wch:10},{wch:24},{wch:12},{wch:12},{wch:22},{wch:12}];
+        ws['!sheetViews'] = [{ rightToLeft: true }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'תעודת יציאה');
         XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.xlsx`);
