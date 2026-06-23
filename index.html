@@ -4159,17 +4159,15 @@
                   <div className="flex flex-wrap gap-4 mb-4">
                     <div><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
                       <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" /></div>
-                    <div><label className="text-sm font-semibold text-gray-600 block mb-1">כמות משטחים</label>
-                      <input type="number" min="1" value={exitPalletCount} onChange={e => setExitPalletCount(e.target.value)} placeholder="מספר משטחים" className="border-2 border-gray-200 rounded-xl p-2.5 w-36 focus:border-blue-400 outline-none" /></div>
+                    <div><label className="text-sm font-semibold text-gray-600 block mb-1">מספר משטח</label>
+                      <input type="number" min="1" value={exitPalletCount} onChange={e => setExitPalletCount(e.target.value)} placeholder="מס' משטח" className="border-2 border-gray-200 rounded-xl p-2.5 w-36 focus:border-blue-400 outline-none" /></div>
                   </div>
-                  {exitPallets.map(pallet => (
+                  {exitPallets.map((pallet, pIdx) => (
                     <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
-                      {exitPallets.length > 1 && (
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-bold text-gray-500">קבוצת מוצרים {exitPallets.indexOf(pallet) + 1}</span>
-                          <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>
-                        </div>
-                      )}
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold text-blue-700">משטח מספר {exitPalletCount || (pIdx + 1)}</span>
+                        {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
+                      </div>
                       <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
                           <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
