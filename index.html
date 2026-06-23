@@ -3506,7 +3506,6 @@
       const [showAddModal, setShowAddModal] = useState(false);
       const [newProduct, setNewProduct] = useState({ name: '', category: 'עוף', sku: '', storageTypes: ['frozen'] });
       const tableRef = useRef(null);
-      const mainScrollRef = useRef(null);
 
       useEffect(() => {
         if (!openFilter) return;
@@ -3890,7 +3889,7 @@
       );
     };
 
-    const BeitShemeshView = ({ frozenProductsList = [], companyVat = '' }) => {
+    const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {} }) => {
       const today = new Date().toISOString().split('T')[0];
       const [bsTab, setBsTab] = useState('exits');
       const [shipments, setShipments] = useState([]);
@@ -3971,7 +3970,7 @@
         setExitDate(shipment.date);
         setExitPallets(shipment.pallets && shipment.pallets.length ? shipment.pallets : [{ id: Date.now(), number: '', products: [] }]);
         setShowExitForm(true);
-        setTimeout(() => { if (mainScrollRef.current) mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, 50);
+        setTimeout(() => scrollToTop(), 50);
       };
 
       const saveExit = async () => {
@@ -4928,6 +4927,8 @@
       const dataLoadedRef = useRef(false);
       const skipSaveRef = useRef(false);
       const initialLoadDoneRef = useRef(false);
+      const mainScrollRef = useRef(null);
+      const scrollToTop = useCallback(() => { if (mainScrollRef.current) mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
 
       // 1. מלאי טרי — מפתח: 'מוצר|כשרות'
       const [stock, setStock] = useState({
@@ -5210,7 +5211,7 @@
           case 'stats':
             return <StatsView orders={orders} stock={stock} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} butchersList={butchersList} couriersList={couriersList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
           case 'beit-shemesh':
-            return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} />;
+            return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} />;
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
           default:
