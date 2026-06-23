@@ -4927,7 +4927,8 @@
 
     // --- Main App Component ---
     function App() {
-      const [activeTab, setActiveTab] = useState('orders');
+      const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'orders');
+      const navigateTo = useCallback((tabId) => { setActiveTab(tabId); localStorage.setItem('activeTab', tabId); }, []);
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
       const [authUser, setAuthUser] = useState(null);
       const [authLoading, setAuthLoading] = useState(true);
@@ -5201,7 +5202,7 @@
       const renderContent = () => {
         switch (activeTab) {
           case 'dashboard': 
-            return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={setActiveTab} />;
+            return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={navigateTo} />;
           case 'inventory':
             return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />;
           case 'orders':
@@ -5223,7 +5224,7 @@
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
           default:
-            return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={setActiveTab} />;
+            return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={navigateTo} />;
         }
       };
 
@@ -5280,7 +5281,7 @@
                 return (
                   <button 
                     key={item.id}
-                    onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }} 
+                    onClick={() => { navigateTo(item.id); setIsMobileMenuOpen(false); }} 
                     className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
                   >
                     <div className="flex items-center gap-3">
