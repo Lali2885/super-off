@@ -45,6 +45,8 @@
   <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- html2canvas for Hebrew PDF rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3887,15 +3889,15 @@
       const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
       const [pallets, setPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
       const [activePalletId, setActivePalletId] = useState(null);
-      const [productForm, setProductForm] = useState({ sku: '', name: '', cartons: '', expiryDate: '', weight: '' });
+      const [productForm, setProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
 
       const save = (data) => { setShipments(data); localStorage.setItem('bsShipments', JSON.stringify(data)); };
 
       const handleSkuChange = (sku) => {
-        setProductForm(p => ({ ...p, sku }));
+        setProductForm(p => ({ ...p, sku, name: '', kashrut: '' }));
         if (sku.length >= 1) {
           const found = frozenProductsList.find(p => p.sku && p.sku.toString() === sku.toString());
-          if (found) setProductForm(p => ({ ...p, sku, name: found.name }));
+          if (found) setProductForm(p => ({ ...p, sku, name: found.name, kashrut: found.kashrut || '' }));
         }
       };
 
@@ -3912,8 +3914,7 @@
           return;
         }
         setPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...productForm, id: Date.now() }] } : p));
-        setProductForm({ sku: '', name: '', cartons: '', expiryDate: '', weight: '' });
-        setActivePalletId(null);
+        setProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
       };
 
       const removeProductFromPallet = (palletId, productId) => {
@@ -3938,44 +3939,87 @@
 
       const exportPDF = () => {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-        doc.setFontSize(18);
-        doc.text('דוח יציאה - מלאי בית שמש', 105, 20, { align: 'center' });
-        doc.setFontSize(11);
-        doc.text('תאריך: ' + reportDate, 190, 30, { align: 'right' });
-        let y = 45;
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:32px;font-family:Arial,sans-serif;direction:rtl;';
+        let html = `<h2 style="text-align:center;margin-bottom:6px;font-size:20px;">דוח יציאה - מלאי בית שמש</h2>
+          <p style="text-align:right;margin-bottom:20px;color:#555;font-size:13px;">תאריך: ${reportDate}</p>`;
         reportShipments.forEach(shipment => {
           shipment.pallets.forEach(pallet => {
-            if (y > 255) { doc.addPage(); y = 20; }
-            doc.setFontSize(12); doc.setFont(undefined, 'bold');
-            doc.text('משטח ' + pallet.number, 190, y, { align: 'right' }); y += 7;
-            doc.setFontSize(9); doc.setFont(undefined, 'normal');
-            doc.text('מוצר', 190, y, { align: 'right' });
-            doc.text('מקט', 148, y, { align: 'right' });
-            doc.text('קרטונים', 118, y, { align: 'right' });
-            doc.text('תאריך אחרון', 88, y, { align: 'right' });
-            doc.text('משקל', 52, y, { align: 'right' });
-            y += 5; doc.line(10, y, 200, y); y += 4;
-            pallet.products.forEach(p => {
-              doc.text(p.name || '', 190, y, { align: 'right' });
-              doc.text(p.sku || '', 148, y, { align: 'right' });
-              doc.text(String(p.cartons || ''), 118, y, { align: 'right' });
-              doc.text(p.expiryDate || '', 88, y, { align: 'right' });
-              doc.text(p.weight ? p.weight + ' kg' : '', 52, y, { align: 'right' });
-              y += 6;
-            });
             const pC = pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0);
             const pW = pallet.products.reduce((s,p)=>s+Number(p.weight||0),0);
-            doc.line(10, y, 200, y); y += 4;
-            doc.setFont(undefined, 'bold');
-            doc.text('סה"כ: ' + pC + ' קרטונים | ' + pW.toFixed(1) + ' ק"ג', 190, y, { align: 'right' });
-            y += 10;
+            html += `<div style="margin-bottom:18px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
+              <div style="background:#1d4ed8;color:white;padding:8px 12px;font-weight:bold;font-size:14px;">משטח ${pallet.number}</div>
+              <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr style="background:#f3f4f6;">
+                  <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">מוצר</th>
+                  <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">כשרות</th>
+                  <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">מקט</th>
+                  <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">קרטונים</th>
+                  <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">תאריך אחרון לשימוש</th>
+                  <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">משקל</th>
+                </tr></thead>
+                <tbody>`;
+            pallet.products.forEach(p => {
+              html += `<tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:5px 10px;">${p.name||''}</td>
+                <td style="padding:5px 10px;color:#6b7280;">${p.kashrut||'-'}</td>
+                <td style="padding:5px 10px;color:#6b7280;">${p.sku||''}</td>
+                <td style="padding:5px 10px;font-weight:bold;">${p.cartons||''}</td>
+                <td style="padding:5px 10px;">${p.expiryDate||'-'}</td>
+                <td style="padding:5px 10px;">${p.weight ? p.weight+' ק"ג' : '-'}</td>
+              </tr>`;
+            });
+            html += `</tbody>
+                <tfoot><tr style="background:#eff6ff;font-weight:bold;">
+                  <td colspan="3" style="padding:6px 10px;">סה"כ משטח</td>
+                  <td style="padding:6px 10px;">${pC} קרטונים</td>
+                  <td></td>
+                  <td style="padding:6px 10px;">${pW.toFixed(1)} ק"ג</td>
+                </tr></tfoot>
+              </table></div>`;
           });
         });
-        doc.line(10, y, 200, y); y += 6;
-        doc.setFontSize(12);
-        doc.text('סה"כ כולל: ' + totalPallets + ' משטחים | ' + totalCartons + ' קרטונים | ' + totalWeight.toFixed(1) + ' ק"ג', 190, y, { align: 'right' });
-        doc.save('דוח-יציאה-' + reportDate + '.pdf');
+        html += `<div style="margin-top:12px;padding:12px 16px;background:#f3f4f6;border-radius:8px;font-weight:bold;font-size:14px;">
+          סה"כ כולל: ${totalPallets} משטחים | ${totalCartons} קרטונים | ${totalWeight.toFixed(1)} ק"ג</div>`;
+        container.innerHTML = html;
+        document.body.appendChild(container);
+        window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
+          document.body.removeChild(container);
+          const imgData = canvas.toDataURL('image/png');
+          const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+          const pageW = doc.internal.pageSize.getWidth();
+          const pageH = doc.internal.pageSize.getHeight();
+          const imgW = pageW;
+          const imgH = (canvas.height * imgW) / canvas.width;
+          let posY = 0;
+          while (posY < imgH) {
+            doc.addImage(imgData, 'PNG', 0, -posY, imgW, imgH);
+            posY += pageH;
+            if (posY < imgH) doc.addPage();
+          }
+          doc.save('דוח-יציאה-' + reportDate + '.pdf');
+        });
+      };
+
+      const exportExcel = () => {
+        const rows = [['תאריך יציאה','מספר משטח','מקט','שם מוצר','כשרות','כמות קרטונים','תאריך אחרון לשימוש','משקל (ק"ג)']];
+        reportShipments.forEach(s => {
+          s.pallets.forEach(p => {
+            p.products.forEach(pr => {
+              rows.push([s.date, p.number, pr.sku||'', pr.name||'', pr.kashrut||'', Number(pr.cartons)||0, pr.expiryDate||'', Number(pr.weight)||0]);
+            });
+            const pC = p.products.reduce((sum,pr)=>sum+Number(pr.cartons||0),0);
+            const pW = p.products.reduce((sum,pr)=>sum+Number(pr.weight||0),0);
+            rows.push(['','סה"כ משטח '+p.number,'','','',pC,'',pW.toFixed(1)]);
+            rows.push([]);
+          });
+        });
+        rows.push(['','סה"כ כולל','','','',totalCartons,'',totalWeight.toFixed(1)]);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{wch:12},{wch:12},{wch:8},{wch:22},{wch:10},{wch:14},{wch:18},{wch:10}];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'מלאי בית שמש');
+        XLSX.writeFile(wb, 'דוח-יציאה-' + reportDate + '.xlsx');
       };
 
       return (
@@ -4009,12 +4053,13 @@
                   {pallet.products.length > 0 && (
                     <table className="w-full text-sm mb-3">
                       <thead><tr className="text-xs text-gray-500">
-                        <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון</th><th className="text-right pb-1">משקל</th><th></th>
+                        <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">כשרות</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון</th><th className="text-right pb-1">משקל</th><th></th>
                       </tr></thead>
                       <tbody>{pallet.products.map(pr => (
                         <tr key={pr.id} className="border-t">
                           <td className="py-1 text-gray-400 text-xs">{pr.sku}</td>
                           <td className="py-1 font-semibold">{pr.name}</td>
+                          <td className="py-1 text-xs text-gray-500">{pr.kashrut || '-'}</td>
                           <td>{pr.cartons}</td>
                           <td>{pr.expiryDate || '-'}</td>
                           <td>{pr.weight ? pr.weight + ' ק"ג' : '-'}</td>
@@ -4022,7 +4067,7 @@
                         </tr>
                       ))}</tbody>
                       <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
-                        <td colSpan="2" className="py-1">סה"כ משטח</td>
+                        <td colSpan="3" className="py-1">סה"כ משטח</td>
                         <td>{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} / 50</td>
                         <td></td>
                         <td>{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td>
@@ -4037,16 +4082,20 @@
                           <label className="text-xs text-gray-400 block mb-0.5">מקט</label>
                           <input type="text" value={productForm.sku} onChange={e => handleSkuChange(e.target.value)} placeholder="מקט" className="border rounded p-1.5 w-16 text-xs focus:border-blue-400 outline-none" />
                         </div>
-                        <div className="flex-1" style={{minWidth:'120px'}}>
+                        <div style={{minWidth:'100px',maxWidth:'160px'}}>
                           <label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-                          <input type="text" value={productForm.name} onChange={e => setProductForm(p=>({...p,name:e.target.value}))} placeholder="ימולא אוטומטית" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
+                          <input type="text" value={productForm.name} onChange={e => setProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
+                        </div>
+                        <div style={{minWidth:'70px',maxWidth:'90px'}}>
+                          <label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                          <input type="text" value={productForm.kashrut} onChange={e => setProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
                         </div>
                         <div>
                           <label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
                           <input type="number" value={productForm.cartons} onChange={e => setProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-16 text-xs focus:border-blue-400 outline-none" />
                         </div>
                         <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון</label>
+                          <label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
                           <input type="date" value={productForm.expiryDate} onChange={e => setProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 text-xs focus:border-blue-400 outline-none" />
                         </div>
                         <div>
@@ -4058,7 +4107,7 @@
                       </div>
                     </div>
                   ) : (
-                    <button onClick={() => { setActivePalletId(pallet.id); setProductForm({sku:'',name:'',cartons:'',expiryDate:'',weight:''}); }} className="text-blue-600 text-sm font-bold hover:text-blue-800">+ הוסף מוצר למשטח</button>
+                    <button onClick={() => { setActivePalletId(pallet.id); setProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:''}); }} className="text-blue-600 text-sm font-bold hover:text-blue-800">+ הוסף מוצר למשטח</button>
                   )}
                 </div>
               ))}
@@ -4077,7 +4126,10 @@
                 <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-blue-400 outline-none" />
               </div>
               {reportShipments.length > 0 && (
-                <button onClick={exportPDF} className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 shadow">הורד PDF</button>
+                <div className="flex gap-2">
+                  <button onClick={exportExcel} className="bg-green-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-green-700 shadow">הורד Excel</button>
+                  <button onClick={exportPDF} className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 shadow">הורד PDF</button>
+                </div>
               )}
             </div>
             {reportShipments.length > 0 && (
@@ -4111,12 +4163,13 @@
                         <div className="font-bold text-blue-700 mb-2">משטח {pallet.number}</div>
                         <table className="w-full text-sm">
                           <thead><tr className="text-xs text-gray-500">
-                            <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון</th><th className="text-right pb-1">משקל</th>
+                            <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">כשרות</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון</th><th className="text-right pb-1">משקל</th>
                           </tr></thead>
                           <tbody>{pallet.products.map(p => (
                             <tr key={p.id} className="border-t">
                               <td className="py-1 text-gray-400 text-xs">{p.sku}</td>
                               <td className="py-1 font-semibold">{p.name}</td>
+                              <td className="py-1 text-xs text-gray-500">{p.kashrut || '-'}</td>
                               <td>{p.cartons}</td>
                               <td>{p.expiryDate || '-'}</td>
                               <td>{p.weight ? p.weight + ' ק"ג' : '-'}</td>
