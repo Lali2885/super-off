@@ -3889,6 +3889,7 @@
 
       // Exit form state
       const [showExitForm, setShowExitForm] = useState(false);
+      const [editingShipmentId, setEditingShipmentId] = useState(null);
       const [exitDate, setExitDate] = useState(today);
       const [exitPallets, setExitPallets] = useState([{ id: Date.now(), products: [] }]);
       const [exitPalletCount, setExitPalletCount] = useState('');
@@ -3947,14 +3948,35 @@
         setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
       };
 
+      const resetExitForm = () => {
+        setShowExitForm(false); setEditingShipmentId(null);
+        setExitDate(today); setExitPallets([{ id: Date.now(), products: [] }]); setExitPalletCount('');
+      };
+
+      const startEditShipment = (shipment) => {
+        setEditingShipmentId(shipment.id);
+        setExitDate(shipment.date);
+        setExitPallets(shipment.pallets && shipment.pallets.length ? shipment.pallets : [{ id: Date.now(), products: [] }]);
+        setExitPalletCount(shipment.pallet_count || '');
+        setShowExitForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
       const saveExit = async () => {
         if (!exitDate) { alert('נא למלא תאריך'); return; }
         setSaving(true);
-        const newItem = { id: Date.now(), date: exitDate, pallet_count: Number(exitPalletCount) || exitPallets.length, pallets: exitPallets };
-        const { data, error } = await db.from('beit_shemesh_shipments').insert([newItem]).select();
-        if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
-        if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
-        setExitDate(today); setExitPallets([{ id: Date.now(), products: [] }]); setExitPalletCount(''); setShowExitForm(false); setSaving(false);
+        const payload = { date: exitDate, pallet_count: Number(exitPalletCount) || exitPallets.length, pallets: exitPallets };
+        if (editingShipmentId) {
+          const { data, error } = await db.from('beit_shemesh_shipments').update(payload).eq('id', editingShipmentId).select();
+          if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+          if (data) setShipments(prev => prev.map(s => s.id === editingShipmentId ? data[0] : s));
+        } else {
+          const newItem = { id: Date.now(), ...payload };
+          const { data, error } = await db.from('beit_shemesh_shipments').insert([newItem]).select();
+          if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+          if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
+        }
+        resetExitForm(); setSaving(false);
       };
 
       const deleteExit = async (id) => {
@@ -4131,7 +4153,7 @@
               </div>
               {showExitForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
-                  <h2 className="font-bold text-xl mb-4 text-blue-800">תעודת יציאה — {exitDate}</h2>
+                  <h2 className="font-bold text-xl mb-4 text-blue-800">{editingShipmentId ? '✏️ עריכת תעודת יציאה' : 'תעודת יציאה'} — {exitDate}</h2>
                   <div className="flex flex-wrap gap-4 mb-4">
                     <div><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
                       <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" /></div>
@@ -4205,8 +4227,8 @@
                   ))}
                   <button onClick={addExitPallet} className="text-green-600 font-bold text-sm mb-4 block hover:text-green-800">+ הוסף משטח נוסף</button>
                   <div className="flex gap-3 mt-2">
-                    <button onClick={saveExit} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור יציאה'}</button>
-                    <button onClick={() => { setShowExitForm(false); setExitPallets([{id:Date.now(),products:[]}]); setExitPalletCount(''); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                    <button onClick={saveExit} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : editingShipmentId ? 'עדכן תעודה' : 'שמור יציאה'}</button>
+                    <button onClick={resetExitForm} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
                   </div>
                 </div>
               )}
@@ -4239,7 +4261,12 @@
                         <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
                           <div className="flex justify-between items-center mb-2">
                             <div className="font-bold text-blue-700">תעודת יציאה {shipment.date}{shipment.pallets.length > 1 ? ` (${pIdx+1})` : ''}</div>
-                            {pIdx === 0 && <button onClick={() => deleteExit(shipment.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>}
+                            {pIdx === 0 && (
+                              <div className="flex gap-1">
+                                <button onClick={() => startEditShipment(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight">✏️</button>
+                                <button onClick={() => deleteExit(shipment.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">🗑️</button>
+                              </div>
+                            )}
                           </div>
                           <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
                             <thead><tr className="text-xs text-gray-500">
