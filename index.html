@@ -3890,7 +3890,8 @@
       // Exit form state
       const [showExitForm, setShowExitForm] = useState(false);
       const [exitDate, setExitDate] = useState(today);
-      const [exitPallets, setExitPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
+      const [exitPallets, setExitPallets] = useState([{ id: Date.now(), products: [] }]);
+      const [exitPalletCount, setExitPalletCount] = useState('');
       const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
       const exitSkuRef = useRef(null);
       const [reportDate, setReportDate] = useState(today);
@@ -3929,9 +3930,8 @@
       };
 
       // ── Exit functions ──
-      const addExitPallet = () => setExitPallets(prev => [...prev, { id: Date.now(), number: '', products: [] }]);
+      const addExitPallet = () => setExitPallets(prev => [...prev, { id: Date.now(), products: [] }]);
       const removeExitPallet = (id) => setExitPallets(prev => prev.filter(p => p.id !== id));
-      const updateExitPalletNum = (id, number) => setExitPallets(prev => prev.map(p => p.id === id ? { ...p, number } : p));
 
       const addProductToExitPallet = (palletId) => {
         if (!exitProductForm.name || !exitProductForm.cartons) return;
@@ -3948,13 +3948,13 @@
       };
 
       const saveExit = async () => {
-        if (!exitDate || exitPallets.some(p => !p.number)) { alert('נא למלא תאריך ומספרי משטחים'); return; }
+        if (!exitDate) { alert('נא למלא תאריך'); return; }
         setSaving(true);
-        const newItem = { id: Date.now(), date: exitDate, pallets: exitPallets };
+        const newItem = { id: Date.now(), date: exitDate, palletCount: Number(exitPalletCount) || exitPallets.length, pallets: exitPallets };
         const { data, error } = await db.from('beit_shemesh_shipments').insert([newItem]).select();
         if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
         if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
-        setExitDate(today); setExitPallets([{ id: Date.now(), number: '', products: [] }]); setShowExitForm(false); setSaving(false);
+        setExitDate(today); setExitPallets([{ id: Date.now(), products: [] }]); setExitPalletCount(''); setShowExitForm(false); setSaving(false);
       };
 
       const deleteExit = async (id) => {
@@ -3993,7 +3993,7 @@
       const allProducts = reportShipments.flatMap(s => s.pallets.flatMap(p => p.products));
       const totalCartons = allProducts.reduce((sum, p) => sum + Number(p.cartons || 0), 0);
       const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
-      const totalPallets = reportShipments.reduce((sum, s) => sum + s.pallets.length, 0);
+      const totalPallets = reportShipments.reduce((sum, s) => sum + (Number(s.palletCount) || s.pallets.length), 0);
 
       const wdReportItems = withdrawals.filter(w => w.date === wdReportDate);
       const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
@@ -4131,18 +4131,21 @@
               </div>
               {showExitForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
-                  <h2 className="font-bold text-xl mb-4 text-blue-800">הזנת יציאה חדשה</h2>
-                  <div className="mb-4"><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
-                    <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" /></div>
+                  <h2 className="font-bold text-xl mb-4 text-blue-800">תעודת יציאה — {exitDate}</h2>
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
+                      <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" /></div>
+                    <div><label className="text-sm font-semibold text-gray-600 block mb-1">כמות משטחים</label>
+                      <input type="number" min="1" value={exitPalletCount} onChange={e => setExitPalletCount(e.target.value)} placeholder="מספר משטחים" className="border-2 border-gray-200 rounded-xl p-2.5 w-36 focus:border-blue-400 outline-none" /></div>
+                  </div>
                   {exitPallets.map(pallet => (
                     <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-gray-700">משטח מספר</span>
-                          <input type="text" value={pallet.number} onChange={e => updateExitPalletNum(pallet.id, e.target.value)} placeholder="מס'" className="border-2 border-gray-200 rounded-lg p-2 w-24 text-center font-bold focus:border-blue-400 outline-none" />
+                      {exitPallets.length > 1 && (
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-gray-500">קבוצת מוצרים {exitPallets.indexOf(pallet) + 1}</span>
+                          <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>
                         </div>
-                        {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר משטח</button>}
-                      </div>
+                      )}
                       <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
                           <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
@@ -4203,7 +4206,7 @@
                   <button onClick={addExitPallet} className="text-green-600 font-bold text-sm mb-4 block hover:text-green-800">+ הוסף משטח נוסף</button>
                   <div className="flex gap-3 mt-2">
                     <button onClick={saveExit} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור יציאה'}</button>
-                    <button onClick={() => { setShowExitForm(false); setExitPallets([{id:Date.now(),number:'',products:[]}]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                    <button onClick={() => { setShowExitForm(false); setExitPallets([{id:Date.now(),products:[]}]); setExitPalletCount(''); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
                   </div>
                 </div>
               )}
@@ -4232,13 +4235,12 @@
                 ) : (
                   <div className="space-y-4">{reportShipments.map(shipment => (
                     <div key={shipment.id}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-500">{shipment.date}</span>
-                        <button onClick={() => deleteExit(shipment.id)} className="text-red-400 text-xs hover:text-red-600">מחק יציאה</button>
-                      </div>
-                      {shipment.pallets.map(pallet => (
+                      {shipment.pallets.map((pallet, pIdx) => (
                         <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
-                          <div className="font-bold text-blue-700 mb-2">משטח {pallet.number}</div>
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="font-bold text-blue-700">תעודת יציאה {shipment.date}{shipment.pallets.length > 1 ? ` (${pIdx+1})` : ''}</div>
+                            {pIdx === 0 && <button onClick={() => deleteExit(shipment.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>}
+                          </div>
                           <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
                             <thead><tr className="text-xs text-gray-500">
                               <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th>
