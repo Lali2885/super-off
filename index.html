@@ -3880,10 +3880,9 @@
     };
 
     const BeitShemeshView = ({ frozenProductsList = [] }) => {
-      const [shipments, setShipments] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('bsShipments') || '[]'); }
-        catch { return []; }
-      });
+      const [shipments, setShipments] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
       const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
       const [showForm, setShowForm] = useState(false);
       const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
@@ -3891,7 +3890,12 @@
       const [activePalletId, setActivePalletId] = useState(null);
       const [productForm, setProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
 
-      const save = (data) => { setShipments(data); localStorage.setItem('bsShipments', JSON.stringify(data)); };
+      useEffect(() => {
+        db.from('beit_shemesh_shipments').select('*').order('date', { ascending: false }).then(({ data, error }) => {
+          if (!error && data) setShipments(data);
+          setLoading(false);
+        });
+      }, []);
 
       const handleSkuChange = (sku) => {
         setProductForm(p => ({ ...p, sku, name: '', kashrut: '' }));
@@ -3921,15 +3925,24 @@
         setPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
       };
 
-      const saveShipment = () => {
+      const saveShipment = async () => {
         if (!entryDate || pallets.some(p => !p.number)) { alert('נא למלא תאריך ומספרי משטחים'); return; }
-        save([{ id: Date.now(), date: entryDate, pallets }, ...shipments]);
+        setSaving(true);
+        const newShipment = { id: Date.now(), date: entryDate, pallets };
+        const { data, error } = await db.from('beit_shemesh_shipments').insert([newShipment]).select();
+        if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+        if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
         setEntryDate(new Date().toISOString().split('T')[0]);
         setPallets([{ id: Date.now(), number: '', products: [] }]);
         setShowForm(false);
+        setSaving(false);
       };
 
-      const deleteShipment = (id) => { if (window.confirm('למחוק יציאה זו?')) save(shipments.filter(s => s.id !== id)); };
+      const deleteShipment = async (id) => {
+        if (!window.confirm('למחוק יציאה זו?')) return;
+        const { error } = await db.from('beit_shemesh_shipments').delete().eq('id', id);
+        if (!error) setShipments(prev => prev.filter(s => s.id !== id));
+      };
 
       const reportShipments = shipments.filter(s => s.date === reportDate);
       const allProducts = reportShipments.flatMap(s => s.pallets.flatMap(p => p.products));
@@ -4022,6 +4035,8 @@
         XLSX.writeFile(wb, 'דוח-יציאה-' + reportDate + '.xlsx');
       };
 
+      if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
+
       return (
         <div className="animate-in fade-in duration-300 pb-10">
           <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
@@ -4109,7 +4124,7 @@
               ))}
               <button onClick={addPallet} className="text-green-600 font-bold text-sm mb-4 block hover:text-green-800">+ הוסף משטח נוסף</button>
               <div className="flex gap-3 mt-2">
-                <button onClick={saveShipment} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700">שמור יציאה</button>
+                <button onClick={saveShipment} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור יציאה'}</button>
                 <button onClick={() => { setShowForm(false); setPallets([{id:Date.now(),number:'',products:[]}]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
               </div>
             </div>
