@@ -3880,75 +3880,130 @@
     };
 
     const BeitShemeshView = ({ frozenProductsList = [] }) => {
+      const today = new Date().toISOString().split('T')[0];
+      const [bsTab, setBsTab] = useState('exits');
       const [shipments, setShipments] = useState([]);
+      const [withdrawals, setWithdrawals] = useState([]);
       const [loading, setLoading] = useState(true);
       const [saving, setSaving] = useState(false);
-      const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
-      const [showForm, setShowForm] = useState(false);
-      const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
-      const [pallets, setPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
-      const [activePalletId, setActivePalletId] = useState(null);
-      const [productForm, setProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
+
+      // Exit form state
+      const [showExitForm, setShowExitForm] = useState(false);
+      const [exitDate, setExitDate] = useState(today);
+      const [exitPallets, setExitPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
+      const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
+      const [reportDate, setReportDate] = useState(today);
+
+      // Withdrawal form state
+      const [showWdForm, setShowWdForm] = useState(false);
+      const [wdDate, setWdDate] = useState(today);
+      const [wdProducts, setWdProducts] = useState([]);
+      const [wdForm, setWdForm] = useState({ sku: '', name: '', kashrut: '', cartons: '' });
+      const [wdReportDate, setWdReportDate] = useState(today);
 
       useEffect(() => {
-        db.from('beit_shemesh_shipments').select('*').order('date', { ascending: false }).then(({ data, error }) => {
-          if (!error && data) setShipments(data);
+        Promise.all([
+          db.from('beit_shemesh_shipments').select('*').order('date', { ascending: false }),
+          db.from('beit_shemesh_withdrawals').select('*').order('date', { ascending: false })
+        ]).then(([exRes, wdRes]) => {
+          if (!exRes.error && exRes.data) setShipments(exRes.data);
+          if (!wdRes.error && wdRes.data) setWithdrawals(wdRes.data);
           setLoading(false);
         });
       }, []);
 
-      const handleSkuChange = (sku) => {
-        setProductForm(p => ({ ...p, sku, name: '', kashrut: '' }));
+      const skuLookup = (sku, setForm) => {
+        setForm(p => ({ ...p, sku, name: '', kashrut: '' }));
         if (sku.length >= 1) {
           const found = frozenProductsList.find(p => p.sku && p.sku.toString() === sku.toString());
-          if (found) setProductForm(p => ({ ...p, sku, name: found.name, kashrut: found.kashrut || '' }));
+          if (found) setForm(p => ({ ...p, sku, name: found.name, kashrut: found.kashrut || '' }));
         }
       };
 
-      const addPallet = () => setPallets(prev => [...prev, { id: Date.now(), number: '', products: [] }]);
-      const removePallet = (id) => setPallets(prev => prev.filter(p => p.id !== id));
-      const updatePalletNumber = (id, number) => setPallets(prev => prev.map(p => p.id === id ? { ...p, number } : p));
+      // ── Exit functions ──
+      const addExitPallet = () => setExitPallets(prev => [...prev, { id: Date.now(), number: '', products: [] }]);
+      const removeExitPallet = (id) => setExitPallets(prev => prev.filter(p => p.id !== id));
+      const updateExitPalletNum = (id, number) => setExitPallets(prev => prev.map(p => p.id === id ? { ...p, number } : p));
 
-      const addProductToPallet = (palletId) => {
-        if (!productForm.name || !productForm.cartons) return;
-        const currentPallet = pallets.find(p => p.id === palletId);
-        const currentTotal = currentPallet.products.reduce((s, p) => s + Number(p.cartons || 0), 0);
-        if (currentTotal + Number(productForm.cartons) > 50) {
-          alert('לא ניתן להוסיף - משטח מוגבל ל-50 קרטון (כרגע: ' + currentTotal + ' קרטונים)');
-          return;
-        }
-        setPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...productForm, id: Date.now() }] } : p));
-        setProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
+      const addProductToExitPallet = (palletId) => {
+        if (!exitProductForm.name || !exitProductForm.cartons) return;
+        const pallet = exitPallets.find(p => p.id === palletId);
+        const total = pallet.products.reduce((s,p) => s + Number(p.cartons||0), 0);
+        if (total + Number(exitProductForm.cartons) > 50) { alert('לא ניתן להוסיף - משטח מוגבל ל-50 קרטון (כרגע: ' + total + ' קרטונים)'); return; }
+        setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...exitProductForm, id: Date.now() }] } : p));
+        setExitProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', weight: '' });
       };
 
-      const removeProductFromPallet = (palletId, productId) => {
-        setPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
+      const removeExitProduct = (palletId, productId) => {
+        setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
       };
 
-      const saveShipment = async () => {
-        if (!entryDate || pallets.some(p => !p.number)) { alert('נא למלא תאריך ומספרי משטחים'); return; }
+      const saveExit = async () => {
+        if (!exitDate || exitPallets.some(p => !p.number)) { alert('נא למלא תאריך ומספרי משטחים'); return; }
         setSaving(true);
-        const newShipment = { id: Date.now(), date: entryDate, pallets };
-        const { data, error } = await db.from('beit_shemesh_shipments').insert([newShipment]).select();
+        const newItem = { id: Date.now(), date: exitDate, pallets: exitPallets };
+        const { data, error } = await db.from('beit_shemesh_shipments').insert([newItem]).select();
         if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
         if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
-        setEntryDate(new Date().toISOString().split('T')[0]);
-        setPallets([{ id: Date.now(), number: '', products: [] }]);
-        setShowForm(false);
-        setSaving(false);
+        setExitDate(today); setExitPallets([{ id: Date.now(), number: '', products: [] }]); setShowExitForm(false); setSaving(false);
       };
 
-      const deleteShipment = async (id) => {
+      const deleteExit = async (id) => {
         if (!window.confirm('למחוק יציאה זו?')) return;
         const { error } = await db.from('beit_shemesh_shipments').delete().eq('id', id);
         if (!error) setShipments(prev => prev.filter(s => s.id !== id));
       };
 
+      // ── Withdrawal functions ──
+      const addWdProduct = () => {
+        if (!wdForm.name || !wdForm.cartons) return;
+        setWdProducts(prev => [...prev, { ...wdForm, id: Date.now() }]);
+        setWdForm({ sku: '', name: '', kashrut: '', cartons: '' });
+      };
+
+      const removeWdProduct = (id) => setWdProducts(prev => prev.filter(p => p.id !== id));
+
+      const saveWithdrawal = async () => {
+        if (!wdDate || wdProducts.length === 0) { alert('נא למלא תאריך ולהוסיף לפחות מוצר אחד'); return; }
+        setSaving(true);
+        const newItem = { id: Date.now(), date: wdDate, products: wdProducts };
+        const { data, error } = await db.from('beit_shemesh_withdrawals').insert([newItem]).select();
+        if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+        if (data) setWithdrawals(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
+        setWdDate(today); setWdProducts([]); setShowWdForm(false); setSaving(false);
+      };
+
+      const deleteWithdrawal = async (id) => {
+        if (!window.confirm('למחוק משיכה זו?')) return;
+        const { error } = await db.from('beit_shemesh_withdrawals').delete().eq('id', id);
+        if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id));
+      };
+
+      // ── Report data ──
       const reportShipments = shipments.filter(s => s.date === reportDate);
       const allProducts = reportShipments.flatMap(s => s.pallets.flatMap(p => p.products));
       const totalCartons = allProducts.reduce((sum, p) => sum + Number(p.cartons || 0), 0);
       const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
       const totalPallets = reportShipments.reduce((sum, s) => sum + s.pallets.length, 0);
+
+      const wdReportItems = withdrawals.filter(w => w.date === wdReportDate);
+      const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
+
+      // ── Inventory calc ──
+      const inventoryMap = useMemo(() => {
+        const map = {};
+        shipments.forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+          const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '');
+          if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', totalIn: 0, totalOut: 0 };
+          map[key].totalIn += Number(pr.cartons||0);
+        })));
+        withdrawals.forEach(w => w.products.forEach(pr => {
+          const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '');
+          if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', totalIn: 0, totalOut: 0 };
+          map[key].totalOut += Number(pr.cartons||0);
+        }));
+        return Object.values(map).sort((a,b) => (b.totalIn-b.totalOut) - (a.totalIn-a.totalOut));
+      }, [shipments, withdrawals]);
 
       const exportPDF = () => {
         const { jsPDF } = window.jspdf;
@@ -4037,147 +4092,134 @@
 
       if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
 
+      const tabBtn = (id, label, color) => (
+        <button onClick={() => setBsTab(id)} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${bsTab === id ? color + ' text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button>
+      );
+
+      const ProductInputRow = ({ form, setForm, onAdd, onClear, maxCartons }) => (
+        <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
+            <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+              <input type="text" value={form.sku} onChange={e => skuLookup(e.target.value, setForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+            <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+              <input type="number" value={form.cartons} onChange={e => setForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max={maxCartons||999} className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+            <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+              <input type="text" value={form.name} onChange={e => setForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+            <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+              <input type="text" value={form.kashrut} onChange={e => setForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+            {form.weight !== undefined && <>
+              <div><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
+                <input type="number" value={form.weight} onChange={e => setForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+              <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
+                <input type="date" value={form.expiryDate} onChange={e => setForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+            </>}
+            <div className="col-span-2 flex gap-2 sm:col-span-1">
+              <button onClick={onAdd} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700">הוסף</button>
+              <button onClick={onClear} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+            </div>
+          </div>
+        </div>
+      );
+
       return (
         <div className="animate-in fade-in duration-300 pb-10">
-          <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-800">מלאי בית שמש</h1>
-              <p className="text-gray-500 mt-1">מעקב סחורה באחסון קירור חיצוני</p>
+          <div className="mb-5">
+            <h1 className="text-3xl font-extrabold text-gray-800 mb-4">מלאי בית שמש</h1>
+            <div className="flex gap-2 flex-wrap">
+              {tabBtn('exits', 'דוחות יציאה', 'bg-blue-600')}
+              {tabBtn('withdrawals', 'דוחות משיכה', 'bg-purple-600')}
+              {tabBtn('inventory', 'מצב מלאי', 'bg-green-600')}
             </div>
-            <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-700 transition-all">
-              + יציאה חדשה
-            </button>
           </div>
 
-          {showForm && (
-            <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
-              <h2 className="font-bold text-xl mb-4 text-blue-800">הזנת יציאה חדשה</h2>
-              <div className="mb-4">
-                <label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
-                <input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" />
+          {/* ══ TAB: דוחות יציאה ══ */}
+          {bsTab === 'exits' && (
+            <div>
+              <div className="flex justify-end mb-4">
+                <button onClick={() => setShowExitForm(!showExitForm)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-700">+ יציאה חדשה</button>
               </div>
-              {pallets.map((pallet) => (
-                <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-gray-700">משטח מספר</span>
-                      <input type="text" value={pallet.number} onChange={e => updatePalletNumber(pallet.id, e.target.value)} placeholder="מס'" className="border-2 border-gray-200 rounded-lg p-2 w-24 text-center font-bold focus:border-blue-400 outline-none" />
+              {showExitForm && (
+                <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
+                  <h2 className="font-bold text-xl mb-4 text-blue-800">הזנת יציאה חדשה</h2>
+                  <div className="mb-4"><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
+                    <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" /></div>
+                  {exitPallets.map(pallet => (
+                    <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-gray-700">משטח מספר</span>
+                          <input type="text" value={pallet.number} onChange={e => updateExitPalletNum(pallet.id, e.target.value)} placeholder="מס'" className="border-2 border-gray-200 rounded-lg p-2 w-24 text-center font-bold focus:border-blue-400 outline-none" />
+                        </div>
+                        {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר משטח</button>}
+                      </div>
+                      <ProductInputRow form={exitProductForm} setForm={setExitProductForm}
+                        onAdd={() => addProductToExitPallet(pallet.id)}
+                        onClear={() => setExitProductForm({ sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:'' })} />
+                      {pallet.products.length > 0 && (
+                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                          <thead><tr className="text-xs text-gray-500">
+                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th><th></th>
+                          </tr></thead>
+                          <tbody>{pallet.products.map(pr => (
+                            <tr key={pr.id} className="border-t">
+                              <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                              <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                              <td className="py-1 px-1">{pr.cartons}</td>
+                              <td className="py-1 px-1 whitespace-nowrap">{pr.expiryDate||'-'}</td>
+                              <td className="py-1 px-1 whitespace-nowrap">{pr.weight ? pr.weight+' ק"ג' : '-'}</td>
+                              <td className="py-1 px-1"><button onClick={() => removeExitProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                            </tr>
+                          ))}</tbody>
+                          <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
+                            <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                            <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} / 50</td>
+                            <td></td><td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td><td></td>
+                          </tr></tfoot>
+                        </table></div>
+                      )}
                     </div>
-                    {pallets.length > 1 && <button onClick={() => removePallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר משטח</button>}
+                  ))}
+                  <button onClick={addExitPallet} className="text-green-600 font-bold text-sm mb-4 block hover:text-green-800">+ הוסף משטח נוסף</button>
+                  <div className="flex gap-3 mt-2">
+                    <button onClick={saveExit} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור יציאה'}</button>
+                    <button onClick={() => { setShowExitForm(false); setExitPallets([{id:Date.now(),number:'',products:[]}]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
                   </div>
-                  <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
-                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
-                      <div>
-                        <label className="text-xs text-gray-400 block mb-0.5">מקט</label>
-                        <input type="text" value={productForm.sku} onChange={e => handleSkuChange(e.target.value)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                        <input type="number" value={productForm.cartons} onChange={e => setProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" />
-                      </div>
-                      <div className="col-span-2 sm:col-span-1">
-                        <label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-                        <input type="text" value={productForm.name} onChange={e => setProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
-                        <input type="text" value={productForm.kashrut} onChange={e => setProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
-                        <input type="number" value={productForm.weight} onChange={e => setProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" />
-                      </div>
-                      <div className="col-span-2 sm:col-span-1">
-                        <label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
-                        <input type="date" value={productForm.expiryDate} onChange={e => setProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" />
-                      </div>
-                      <div className="col-span-2 flex gap-2 sm:col-span-1">
-                        <button onClick={() => addProductToPallet(pallet.id)} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700">הוסף</button>
-                        <button onClick={() => setProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:''})} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
-                      </div>
-                    </div>
+                </div>
+              )}
+              <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-bold text-lg text-gray-800">דוחות יציאה</h2>
+                    <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-blue-400 outline-none" />
                   </div>
-                  {pallet.products.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm min-w-max">
-                        <thead><tr className="text-xs text-gray-500">
-                          <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th><th></th>
-                        </tr></thead>
-                        <tbody>{pallet.products.map(pr => (
-                          <tr key={pr.id} className="border-t">
-                            <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
-                            <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
-                            <td className="py-1 px-1 text-xs text-gray-500 whitespace-nowrap">{pr.kashrut || '-'}</td>
-                            <td className="py-1 px-1">{pr.cartons}</td>
-                            <td className="py-1 px-1 whitespace-nowrap">{pr.expiryDate || '-'}</td>
-                            <td className="py-1 px-1 whitespace-nowrap">{pr.weight ? pr.weight + ' ק"ג' : '-'}</td>
-                            <td className="py-1 px-1"><button onClick={() => removeProductFromPallet(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
-                          </tr>
-                        ))}</tbody>
-                        <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
-                          <td colSpan="3" className="py-1 px-1">סה"כ משטח</td>
-                          <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} / 50</td>
-                          <td></td>
-                          <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td>
-                          <td></td>
-                        </tr></tfoot>
-                      </table>
+                  {reportShipments.length > 0 && (
+                    <div className="flex gap-2">
+                      <button onClick={exportExcel} className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-700 shadow text-sm">Excel</button>
+                      <button onClick={exportPDF} className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-red-700 shadow text-sm">PDF</button>
                     </div>
                   )}
                 </div>
-              ))}
-              <button onClick={addPallet} className="text-green-600 font-bold text-sm mb-4 block hover:text-green-800">+ הוסף משטח נוסף</button>
-              <div className="flex gap-3 mt-2">
-                <button onClick={saveShipment} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור יציאה'}</button>
-                <button onClick={() => { setShowForm(false); setPallets([{id:Date.now(),number:'',products:[]}]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
-            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-              <div className="flex items-center gap-3">
-                <h2 className="font-bold text-lg text-gray-800">דוח יציאה</h2>
-                <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-blue-400 outline-none" />
-              </div>
-              {reportShipments.length > 0 && (
-                <div className="flex gap-2">
-                  <button onClick={exportExcel} className="bg-green-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-green-700 shadow">הורד Excel</button>
-                  <button onClick={exportPDF} className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 shadow">הורד PDF</button>
-                </div>
-              )}
-            </div>
-            {reportShipments.length > 0 && (
-              <div className="grid grid-cols-3 gap-3 mb-5">
-                <div className="bg-blue-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-extrabold text-blue-700">{totalPallets}</div>
-                  <div className="text-xs text-blue-600 font-semibold">משטחים</div>
-                </div>
-                <div className="bg-green-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-extrabold text-green-700">{totalCartons}</div>
-                  <div className="text-xs text-green-600 font-semibold">קרטונים</div>
-                </div>
-                <div className="bg-orange-50 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-extrabold text-orange-700">{totalWeight.toFixed(1)}</div>
-                  <div className="text-xs text-orange-600 font-semibold">ק"ג סה"כ</div>
-                </div>
-              </div>
-            )}
-            {reportShipments.length === 0 ? (
-              <div className="text-center text-gray-400 py-10">אין יציאות בתאריך {reportDate}</div>
-            ) : (
-              <div className="space-y-4">
-                {reportShipments.map(shipment => (
-                  <div key={shipment.id}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-500">{shipment.date}</span>
-                      <button onClick={() => deleteShipment(shipment.id)} className="text-red-400 text-xs hover:text-red-600">מחק יציאה</button>
-                    </div>
-                    {shipment.pallets.map(pallet => (
-                      <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
-                        <div className="font-bold text-blue-700 mb-2">משטח {pallet.number}</div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm min-w-max">
+                {reportShipments.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    <div className="bg-blue-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-blue-700">{totalPallets}</div><div className="text-xs text-blue-600 font-semibold">משטחים</div></div>
+                    <div className="bg-green-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-green-700">{totalCartons}</div><div className="text-xs text-green-600 font-semibold">קרטונים</div></div>
+                    <div className="bg-orange-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-orange-700">{totalWeight.toFixed(1)}</div><div className="text-xs text-orange-600 font-semibold">ק"ג סה"כ</div></div>
+                  </div>
+                )}
+                {reportShipments.length === 0 ? (
+                  <div className="text-center text-gray-400 py-10">אין יציאות בתאריך {reportDate}</div>
+                ) : (
+                  <div className="space-y-4">{reportShipments.map(shipment => (
+                    <div key={shipment.id}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-500">{shipment.date}</span>
+                        <button onClick={() => deleteExit(shipment.id)} className="text-red-400 text-xs hover:text-red-600">מחק יציאה</button>
+                      </div>
+                      {shipment.pallets.map(pallet => (
+                        <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
+                          <div className="font-bold text-blue-700 mb-2">משטח {pallet.number}</div>
+                          <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
                             <thead><tr className="text-xs text-gray-500">
                               <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th>
                             </tr></thead>
@@ -4185,27 +4227,162 @@
                               <tr key={p.id} className="border-t">
                                 <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
                                 <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
-                                <td className="py-1 px-1 text-xs text-gray-500 whitespace-nowrap">{p.kashrut || '-'}</td>
+                                <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
                                 <td className="py-1 px-1">{p.cartons}</td>
-                                <td className="py-1 px-1 whitespace-nowrap">{p.expiryDate || '-'}</td>
-                                <td className="py-1 px-1 whitespace-nowrap">{p.weight ? p.weight + ' ק"ג' : '-'}</td>
+                                <td className="py-1 px-1 whitespace-nowrap">{p.expiryDate||'-'}</td>
+                                <td className="py-1 px-1 whitespace-nowrap">{p.weight ? p.weight+' ק"ג' : '-'}</td>
                               </tr>
                             ))}</tbody>
                             <tfoot><tr className="border-t font-bold text-xs">
                               <td colSpan="2" className="pt-1 px-1">סה"כ משטח</td>
                               <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
-                              <td></td>
-                              <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td>
+                              <td></td><td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td>
                             </tr></tfoot>
-                          </table>
+                          </table></div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                      ))}
+                    </div>
+                  ))}</div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* ══ TAB: דוחות משיכה ══ */}
+          {bsTab === 'withdrawals' && (
+            <div>
+              <div className="flex justify-end mb-4">
+                <button onClick={() => setShowWdForm(!showWdForm)} className="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-purple-700">+ משיכה חדשה</button>
+              </div>
+              {showWdForm && (
+                <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-purple-100">
+                  <h2 className="font-bold text-xl mb-4 text-purple-800">הזנת משיכה חדשה</h2>
+                  <div className="mb-4"><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך משיכה</label>
+                    <input type="date" value={wdDate} onChange={e => setWdDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-purple-400 outline-none" /></div>
+                  <div className="bg-purple-50 rounded-lg p-2 border border-purple-200 mb-3">
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
+                      <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                        <input type="text" value={wdForm.sku} onChange={e => skuLookup(e.target.value, setWdForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-white" /></div>
+                      <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                        <input type="number" value={wdForm.cartons} onChange={e => setWdForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-white" /></div>
+                      <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                        <input type="text" value={wdForm.name} onChange={e => setWdForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-gray-50" /></div>
+                      <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                        <input type="text" value={wdForm.kashrut} onChange={e => setWdForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-gray-50" /></div>
+                      <div className="col-span-2 flex gap-2 sm:col-span-1">
+                        <button onClick={addWdProduct} className="flex-1 bg-purple-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-purple-700">הוסף</button>
+                        <button onClick={() => setWdForm({sku:'',name:'',kashrut:'',cartons:''})} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                      </div>
+                    </div>
+                  </div>
+                  {wdProducts.length > 0 && (
+                    <div className="overflow-x-auto mb-4"><table className="w-full text-sm min-w-max">
+                      <thead><tr className="text-xs text-gray-500">
+                        <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
+                      </tr></thead>
+                      <tbody>{wdProducts.map(pr => (
+                        <tr key={pr.id} className="border-t">
+                          <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                          <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                          <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                          <td className="py-1 px-1 font-bold text-purple-700">{pr.cartons}</td>
+                          <td className="py-1 px-1"><button onClick={() => removeWdProduct(pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                        </tr>
+                      ))}</tbody>
+                      <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
+                        <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                        <td className="py-1 px-1 text-purple-700">{wdProducts.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td><td></td>
+                      </tr></tfoot>
+                    </table></div>
+                  )}
+                  <div className="flex gap-3">
+                    <button onClick={saveWithdrawal} disabled={saving} className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-purple-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור משיכה'}</button>
+                    <button onClick={() => { setShowWdForm(false); setWdProducts([]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                  </div>
+                </div>
+              )}
+              <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="font-bold text-lg text-gray-800">דוחות משיכה</h2>
+                  <input type="date" value={wdReportDate} onChange={e => setWdReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-purple-400 outline-none" />
+                </div>
+                {wdReportItems.length === 0 ? (
+                  <div className="text-center text-gray-400 py-10">אין משיכות בתאריך {wdReportDate}</div>
+                ) : (
+                  <div>
+                    <div className="bg-purple-50 rounded-xl p-3 text-center mb-4 w-40">
+                      <div className="text-2xl font-extrabold text-purple-700">{wdTotalCartons}</div>
+                      <div className="text-xs text-purple-600 font-semibold">קרטונים נמשכו</div>
+                    </div>
+                    <div className="space-y-3">{wdReportItems.map(w => (
+                      <div key={w.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-600">{w.date}</span>
+                          <button onClick={() => deleteWithdrawal(w.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>
+                        </div>
+                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                          <thead><tr className="text-xs text-gray-500">
+                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
+                          </tr></thead>
+                          <tbody>{w.products.map(p => (
+                            <tr key={p.id} className="border-t">
+                              <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
+                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
+                              <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
+                              <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
+                            </tr>
+                          ))}</tbody>
+                        </table></div>
+                      </div>
+                    ))}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══ TAB: מצב מלאי ══ */}
+          {bsTab === 'inventory' && (
+            <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
+              <h2 className="font-bold text-xl mb-2 text-gray-800">מצב מלאי נוכחי</h2>
+              <p className="text-sm text-gray-400 mb-5">מחושב אוטומטית: יציאות פחות משיכות</p>
+              {inventoryMap.length === 0 ? (
+                <div className="text-center text-gray-400 py-10">אין נתוני מלאי עדיין</div>
+              ) : (
+                <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                  <thead><tr className="bg-gray-50 text-xs text-gray-500">
+                    <th className="text-right p-2 rounded-r-lg">מוצר</th>
+                    <th className="text-right p-2">כשרות</th>
+                    <th className="text-right p-2">מקט</th>
+                    <th className="text-right p-2">נכנס</th>
+                    <th className="text-right p-2">נמשך</th>
+                    <th className="text-right p-2 rounded-l-lg">יתרה</th>
+                  </tr></thead>
+                  <tbody>{inventoryMap.map((item, i) => {
+                    const balance = item.totalIn - item.totalOut;
+                    return (
+                      <tr key={i} className={`border-t ${balance === 0 ? 'opacity-40' : ''}`}>
+                        <td className="p-2 font-semibold whitespace-nowrap">{item.name}</td>
+                        <td className="p-2 text-xs text-gray-500">{item.kashrut||'-'}</td>
+                        <td className="p-2 text-xs text-gray-400">{item.sku||'-'}</td>
+                        <td className="p-2 text-blue-600 font-bold">{item.totalIn}</td>
+                        <td className="p-2 text-purple-600 font-bold">{item.totalOut}</td>
+                        <td className="p-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{balance}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}</tbody>
+                  <tfoot><tr className="border-t font-bold text-sm bg-gray-50">
+                    <td colSpan="3" className="p-2">סה"כ</td>
+                    <td className="p-2 text-blue-600">{inventoryMap.reduce((s,p)=>s+p.totalIn,0)}</td>
+                    <td className="p-2 text-purple-600">{inventoryMap.reduce((s,p)=>s+p.totalOut,0)}</td>
+                    <td className="p-2 text-green-700">{inventoryMap.reduce((s,p)=>s+(p.totalIn-p.totalOut),0)}</td>
+                  </tr></tfoot>
+                </table></div>
+              )}
+            </div>
+          )}
         </div>
       );
     };
