@@ -4096,30 +4096,6 @@
         <button onClick={() => setBsTab(id)} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${bsTab === id ? color + ' text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button>
       );
 
-      const ProductInputRow = ({ form, setForm, onAdd, onClear, maxCartons }) => (
-        <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
-            <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
-              <input type="text" value={form.sku} onChange={e => skuLookup(e.target.value, setForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-            <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-              <input type="number" value={form.cartons} onChange={e => setForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max={maxCartons||999} className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-            <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-              <input type="text" value={form.name} onChange={e => setForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
-            <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
-              <input type="text" value={form.kashrut} onChange={e => setForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
-            {form.weight !== undefined && <>
-              <div><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
-                <input type="number" value={form.weight} onChange={e => setForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-              <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
-                <input type="date" value={form.expiryDate} onChange={e => setForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-            </>}
-            <div className="col-span-2 flex gap-2 sm:col-span-1">
-              <button onClick={onAdd} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700">הוסף</button>
-              <button onClick={onClear} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
-            </div>
-          </div>
-        </div>
-      );
 
       return (
         <div className="animate-in fade-in duration-300 pb-10">
@@ -4152,9 +4128,26 @@
                         </div>
                         {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר משטח</button>}
                       </div>
-                      <ProductInputRow form={exitProductForm} setForm={setExitProductForm}
-                        onAdd={() => addProductToExitPallet(pallet.id)}
-                        onClear={() => setExitProductForm({ sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:'' })} />
+                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
+                          <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                            <input type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                            <input type="text" value={exitProductForm.name} onChange={e => setExitProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+                          <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                            <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+                          <div><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
+                            <input type="number" value={exitProductForm.weight} onChange={e => setExitProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
+                            <input type="date" value={exitProductForm.expiryDate} onChange={e => setExitProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div className="col-span-2 flex gap-2 sm:col-span-1">
+                            <button onClick={() => addProductToExitPallet(pallet.id)} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700">הוסף</button>
+                            <button onClick={() => setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:''})} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                          </div>
+                        </div>
+                      </div>
                       {pallet.products.length > 0 && (
                         <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
                           <thead><tr className="text-xs text-gray-500">
