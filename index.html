@@ -3833,7 +3833,7 @@
     };
 
 
-    const SettingsView = ({ logoImage, setLogoImage }) => {
+    const SettingsView = ({ logoImage, setLogoImage, companyVat, setCompanyVat }) => {
       const handleLogoUpload = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -3846,6 +3846,16 @@
           <div className="mb-6">
             <h1 className="text-3xl font-extrabold text-gray-900">הגדרות</h1>
             <p className="text-gray-500 mt-1">התאמה אישית של המערכת</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+            <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+              <h2 className="font-extrabold text-gray-800">פרטי חברה</h2>
+            </div>
+            <div className="p-5">
+              <label className="text-sm font-semibold text-gray-600 block mb-1">ח.פ. / ע.מ.</label>
+              <input type="text" value={companyVat} onChange={e => setCompanyVat(e.target.value)} placeholder="הכנס מספר ח.פ. או ע.מ." className="border-2 border-gray-200 rounded-xl p-2.5 w-64 focus:border-blue-400 outline-none text-sm" />
+              <p className="text-xs text-gray-400 mt-1">יופיע בפינה השמאלית העליונה של תעודת היציאה ב-PDF</p>
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
@@ -3879,7 +3889,7 @@
       );
     };
 
-    const BeitShemeshView = ({ frozenProductsList = [] }) => {
+    const BeitShemeshView = ({ frozenProductsList = [], companyVat = '' }) => {
       const today = new Date().toISOString().split('T')[0];
       const [bsTab, setBsTab] = useState('exits');
       const [shipments, setShipments] = useState([]);
@@ -4042,15 +4052,21 @@
       const exportShipmentPDF = (shipment) => {
         const { jsPDF } = window.jspdf;
         const container = document.createElement('div');
-        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:32px;font-family:Arial,sans-serif;direction:rtl;';
+        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:24px 32px;font-family:Arial,sans-serif;direction:rtl;';
         const pallet = shipment.pallets[0] || { number: '', products: [] };
         const pC = pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0);
         const pW = pallet.products.reduce((s,p)=>s+Number(p.weight||0),0);
-        let html = `<h2 style="text-align:center;margin-bottom:6px;font-size:20px;">תעודת יציאה - מלאי בית שמש</h2>
-          <div style="display:flex;justify-content:space-between;margin-bottom:16px;color:#555;font-size:13px;">
-            <span>תאריך: ${fmtDate(shipment.date)}</span>
-            ${pallet.number ? `<span>משטח מספר: ${pallet.number}</span>` : ''}
+        let html = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div style="direction:ltr;text-align:left;font-size:13px;color:#555;">
+              ${companyVat ? `<div style="font-weight:bold;">ח.פ. ${companyVat}</div>` : ''}
+            </div>
+            <div style="text-align:right;font-size:13px;color:#555;">
+              <div>תאריך: ${fmtDate(shipment.date)}</div>
+              ${pallet.number ? `<div>משטח מספר: ${pallet.number}</div>` : ''}
+            </div>
           </div>
+          <h2 style="text-align:center;margin-bottom:14px;font-size:18px;font-weight:bold;">תעודת יציאה - מלאי בית שמש</h2>
           <div style="margin-bottom:18px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
             <thead><tr style="background:#f3f4f6;">
@@ -4084,9 +4100,16 @@
           const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
           const pageW = doc.internal.pageSize.getWidth();
           const pageH = doc.internal.pageSize.getHeight();
-          const imgH = (canvas.height * pageW) / canvas.width;
+          const topMargin = 45, bottomMargin = 50;
+          const contentH = pageH - topMargin - bottomMargin;
+          const imgW = pageW;
+          const imgH = (canvas.height * imgW) / canvas.width;
           let posY = 0;
-          while (posY < imgH) { doc.addImage(imgData, 'PNG', 0, -posY, pageW, imgH); posY += pageH; if (posY < imgH) doc.addPage(); }
+          while (posY < imgH) {
+            doc.addImage(imgData, 'PNG', 0, topMargin - posY, imgW, imgH);
+            posY += contentH;
+            if (posY < imgH) doc.addPage();
+          }
           doc.save(`תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
         });
       };
@@ -4953,6 +4976,7 @@
       const [contactsList, setContactsList] = useState([]);
       const [orderFormSkuMap, setOrderFormSkuMap] = useState({});
       const [logoImage, setLogoImage] = useState('');
+      const [companyVat, setCompanyVat] = useState('');
 
       const [butchersList, setButchersList] = useState([
         { id: '1', name: 'משה' },
@@ -5071,7 +5095,10 @@
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
                 if (row.id === 'contactsList') setContactsList(row.data);
                 if (row.id === 'orderFormSkuMap') setOrderFormSkuMap(row.data);
-                if (row.id === 'appSettings' && row.data?.logoImage) setLogoImage(row.data.logoImage);
+                if (row.id === 'appSettings') {
+                  if (row.data?.logoImage) setLogoImage(row.data.logoImage);
+                  if (row.data?.companyVat) setCompanyVat(row.data.companyVat);
+                }
               });
             }
             if (logRes.data?.length) setInventoryLog(logRes.data.map(r => r.data));
@@ -5139,8 +5166,8 @@
       }, [orderFormSkuMap]);
       useEffect(() => {
         if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'appSettings', data: { logoImage } }).then();
-      }, [logoImage]);
+        db.from('settings').upsert({ id: 'appSettings', data: { logoImage, companyVat } }).then();
+      }, [logoImage, companyVat]);
       useEffect(() => {
         if (!dataLoadedRef.current || skipSaveRef.current) return;
         inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
@@ -5182,9 +5209,9 @@
           case 'stats':
             return <StatsView orders={orders} stock={stock} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} butchersList={butchersList} couriersList={couriersList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
           case 'beit-shemesh':
-            return <BeitShemeshView frozenProductsList={frozenProductsList} />;
+            return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} />;
           case 'settings':
-            return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} />;
+            return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
           default:
             return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={setActiveTab} />;
         }
