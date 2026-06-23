@@ -4131,9 +4131,10 @@
         rows.push(['', 'סה"כ', pC, pW.toFixed(1), '', '']);
         const ws = XLSX.utils.aoa_to_sheet(rows);
         ws['!cols'] = [{wch:10},{wch:24},{wch:12},{wch:12},{wch:22},{wch:12}];
-        ws['!sheetViews'] = [{ rightToLeft: true }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'תעודת יציאה');
+        wb.Sheets['תעודת יציאה']['!sheetViews'] = [{ rightToLeft: true }];
+        wb.Workbook = { Views: [{ RTL: true }] };
         XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.xlsx`);
       };
 
