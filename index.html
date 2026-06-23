@@ -3950,7 +3950,7 @@
       const saveExit = async () => {
         if (!exitDate) { alert('נא למלא תאריך'); return; }
         setSaving(true);
-        const newItem = { id: Date.now(), date: exitDate, palletCount: Number(exitPalletCount) || exitPallets.length, pallets: exitPallets };
+        const newItem = { id: Date.now(), date: exitDate, pallet_count: Number(exitPalletCount) || exitPallets.length, pallets: exitPallets };
         const { data, error } = await db.from('beit_shemesh_shipments').insert([newItem]).select();
         if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
         if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
@@ -3993,7 +3993,7 @@
       const allProducts = reportShipments.flatMap(s => s.pallets.flatMap(p => p.products));
       const totalCartons = allProducts.reduce((sum, p) => sum + Number(p.cartons || 0), 0);
       const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
-      const totalPallets = reportShipments.reduce((sum, s) => sum + (Number(s.palletCount) || s.pallets.length), 0);
+      const totalPallets = reportShipments.reduce((sum, s) => sum + (Number(s.pallet_count) || s.pallets.length), 0);
 
       const wdReportItems = withdrawals.filter(w => w.date === wdReportDate);
       const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
