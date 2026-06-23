@@ -4050,10 +4050,40 @@
                     </div>
                     {pallets.length > 1 && <button onClick={() => removePallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר משטח</button>}
                   </div>
+                  <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
+                    <div className="flex gap-1 items-end flex-wrap">
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                        <input type="text" value={productForm.sku} onChange={e => handleSkuChange(e.target.value)} placeholder="מקט" className="border rounded p-1.5 w-16 text-xs focus:border-blue-400 outline-none bg-white" />
+                      </div>
+                      <div style={{minWidth:'100px',maxWidth:'160px'}}>
+                        <label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                        <input type="text" value={productForm.name} onChange={e => setProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
+                      </div>
+                      <div style={{minWidth:'70px',maxWidth:'90px'}}>
+                        <label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                        <input type="text" value={productForm.kashrut} onChange={e => setProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                        <input type="number" value={productForm.cartons} onChange={e => setProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-16 text-xs focus:border-blue-400 outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
+                        <input type="date" value={productForm.expiryDate} onChange={e => setProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 text-xs focus:border-blue-400 outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
+                        <input type="number" value={productForm.weight} onChange={e => setProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-20 text-xs focus:border-blue-400 outline-none bg-white" />
+                      </div>
+                      <button onClick={() => addProductToPallet(pallet.id)} className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700">הוסף</button>
+                      <button onClick={() => setProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:''})} className="bg-gray-200 text-gray-600 px-3 py-1.5 rounded text-xs font-bold">נקה</button>
+                    </div>
+                  </div>
                   {pallet.products.length > 0 && (
-                    <table className="w-full text-sm mb-3">
+                    <table className="w-full text-sm">
                       <thead><tr className="text-xs text-gray-500">
-                        <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">כשרות</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון</th><th className="text-right pb-1">משקל</th><th></th>
+                        <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">כשרות</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון לשימוש</th><th className="text-right pb-1">משקל</th><th></th>
                       </tr></thead>
                       <tbody>{pallet.products.map(pr => (
                         <tr key={pr.id} className="border-t">
@@ -4074,40 +4104,6 @@
                         <td></td>
                       </tr></tfoot>
                     </table>
-                  )}
-                  {activePalletId === pallet.id ? (
-                    <div className="bg-white rounded-lg p-2 border border-blue-200">
-                      <div className="flex gap-1 items-end flex-wrap">
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">מקט</label>
-                          <input type="text" value={productForm.sku} onChange={e => handleSkuChange(e.target.value)} placeholder="מקט" className="border rounded p-1.5 w-16 text-xs focus:border-blue-400 outline-none" />
-                        </div>
-                        <div style={{minWidth:'100px',maxWidth:'160px'}}>
-                          <label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-                          <input type="text" value={productForm.name} onChange={e => setProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
-                        </div>
-                        <div style={{minWidth:'70px',maxWidth:'90px'}}>
-                          <label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
-                          <input type="text" value={productForm.kashrut} onChange={e => setProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                          <input type="number" value={productForm.cartons} onChange={e => setProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-16 text-xs focus:border-blue-400 outline-none" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
-                          <input type="date" value={productForm.expiryDate} onChange={e => setProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 text-xs focus:border-blue-400 outline-none" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
-                          <input type="number" value={productForm.weight} onChange={e => setProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-20 text-xs focus:border-blue-400 outline-none" />
-                        </div>
-                        <button onClick={() => addProductToPallet(pallet.id)} className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 mb-0">הוסף</button>
-                        <button onClick={() => { setActivePalletId(null); setProductForm({sku:'',name:'',cartons:'',expiryDate:'',weight:''}); }} className="bg-gray-200 text-gray-600 px-3 py-1.5 rounded text-xs font-bold">ביטול</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button onClick={() => { setActivePalletId(pallet.id); setProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',weight:''}); }} className="text-blue-600 text-sm font-bold hover:text-blue-800">+ הוסף מוצר למשטח</button>
                   )}
                 </div>
               ))}
@@ -4163,7 +4159,7 @@
                         <div className="font-bold text-blue-700 mb-2">משטח {pallet.number}</div>
                         <table className="w-full text-sm">
                           <thead><tr className="text-xs text-gray-500">
-                            <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">כשרות</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון</th><th className="text-right pb-1">משקל</th>
+                            <th className="text-right pb-1">מקט</th><th className="text-right pb-1">מוצר</th><th className="text-right pb-1">כשרות</th><th className="text-right pb-1">קרטונים</th><th className="text-right pb-1">תאריך אחרון לשימוש</th><th className="text-right pb-1">משקל</th>
                           </tr></thead>
                           <tbody>{pallet.products.map(p => (
                             <tr key={p.id} className="border-t">
