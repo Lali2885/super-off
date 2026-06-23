@@ -4048,7 +4048,7 @@
             });
             html += `</tbody>
                 <tfoot><tr style="background:#eff6ff;font-weight:bold;">
-                  <td colspan="3" style="padding:6px 10px;">סה"כ משטח</td>
+                  <td colspan="3" style="padding:6px 10px;">סה"כ במשטח</td>
                   <td style="padding:6px 10px;">${pC} קרטונים</td>
                   <td></td>
                   <td style="padding:6px 10px;">${pW.toFixed(1)} ק"ג</td>
@@ -4087,7 +4087,7 @@
             });
             const pC = p.products.reduce((sum,pr)=>sum+Number(pr.cartons||0),0);
             const pW = p.products.reduce((sum,pr)=>sum+Number(pr.weight||0),0);
-            rows.push(['','סה"כ משטח '+p.number,'','','',pC,'',pW.toFixed(1)]);
+            rows.push(['','סה"כ במשטח '+p.number,'','','',pC,'',pW.toFixed(1)]);
             rows.push([]);
           });
         });
@@ -4117,8 +4117,8 @@
               </button>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {tabBtn('exits', 'דוחות יציאה', 'bg-blue-600')}
-              {tabBtn('withdrawals', 'דוחות משיכה', 'bg-purple-600')}
+              {tabBtn('exits', 'תעודת יציאה', 'bg-blue-600')}
+              {tabBtn('withdrawals', 'תעודת משיכה', 'bg-purple-600')}
               {tabBtn('inventory', 'מצב מלאי', 'bg-green-600')}
             </div>
           </div>
@@ -4193,7 +4193,7 @@
                           ))}</tbody>
                           <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
                             <td colSpan="3" className="py-1 px-1">סה"כ</td>
-                            <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} / 50</td>
+                            <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
                             <td></td><td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td><td></td>
                           </tr></tfoot>
                         </table></div>
@@ -4210,7 +4210,7 @@
               <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
                 <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
                   <div className="flex items-center gap-3">
-                    <h2 className="font-bold text-lg text-gray-800">דוחות יציאה</h2>
+                    <h2 className="font-bold text-lg text-gray-800">תעודת יציאה</h2>
                     <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-blue-400 outline-none" />
                   </div>
                   {reportShipments.length > 0 && (
@@ -4254,7 +4254,7 @@
                               </tr>
                             ))}</tbody>
                             <tfoot><tr className="border-t font-bold text-xs">
-                              <td colSpan="2" className="pt-1 px-1">סה"כ משטח</td>
+                              <td colSpan="2" className="pt-1 px-1">סה"כ במשטח</td>
                               <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
                               <td></td><td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(1)} ק"ג</td>
                             </tr></tfoot>
@@ -4323,7 +4323,7 @@
               )}
               <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
                 <div className="flex items-center gap-3 mb-4">
-                  <h2 className="font-bold text-lg text-gray-800">דוחות משיכה</h2>
+                  <h2 className="font-bold text-lg text-gray-800">תעודת משיכה</h2>
                   <input type="date" value={wdReportDate} onChange={e => setWdReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-purple-400 outline-none" />
                 </div>
                 {wdReportItems.length === 0 ? (
