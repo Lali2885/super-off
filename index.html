@@ -3889,7 +3889,7 @@
       );
     };
 
-    const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {} }) => {
+    const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
       const today = new Date().toISOString().split('T')[0];
       const [bsTab, setBsTab] = useState('exits');
       const [shipments, setShipments] = useState([]);
@@ -4348,16 +4348,22 @@
                             <thead><tr className="text-xs text-gray-500">
                               <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th>
                             </tr></thead>
-                            <tbody>{pallet.products.map(p => (
-                              <tr key={p.id} className="border-t">
+                            <tbody>{pallet.products.map(p => {
+                              const kObj = kashrutList.find(k => k.name === p.kashrut);
+                              const kColor = kObj?.color || '#888';
+                              return (
+                              <tr key={p.id} className="border-t" style={{ backgroundColor: kColor + '12' }}>
                                 <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
                                 <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
-                                <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
+                                <td className="py-1 px-1">
+                                  {p.kashrut ? <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{p.kashrut}</span> : '-'}
+                                </td>
                                 <td className="py-1 px-1">{p.cartons}</td>
                                 <td className="py-1 px-1 whitespace-nowrap">{p.expiryDate ? <span>{fmtDate(p.expiryDate)}{p.dateType ? <span className="mr-1 text-blue-600 font-bold text-xs">({p.dateType})</span> : ''}</span> : '-'}</td>
                                 <td className="py-1 px-1 whitespace-nowrap">{p.weight ? p.weight+' ק"ג' : '-'}</td>
                               </tr>
-                            ))}</tbody>
+                              );
+                            })}</tbody>
                             <tfoot><tr className="border-t font-bold text-xs">
                               <td colSpan="3" className="pt-1 px-1">סה"כ במשטח</td>
                               <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td>
@@ -5281,7 +5287,7 @@
           case 'stats':
             return <StatsView orders={orders} stock={stock} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} butchersList={butchersList} couriersList={couriersList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
           case 'beit-shemesh':
-            return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} />;
+            return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
           default:
