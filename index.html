@@ -4311,8 +4311,8 @@
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="font-bold text-lg text-gray-800">תעודת יציאה</h2>
                     <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-bold">
-                      <button onClick={() => setShowAllExits(false)} className={`px-3 py-1.5 transition-colors ${!showAllExits ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי תאריך</button>
                       <button onClick={() => setShowAllExits(true)} className={`px-3 py-1.5 transition-colors ${showAllExits ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>הכל</button>
+                      <button onClick={() => setShowAllExits(false)} className={`px-3 py-1.5 transition-colors ${!showAllExits ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי תאריך</button>
                     </div>
                     {!showAllExits && <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-blue-400 outline-none" />}
                   </div>
