@@ -4115,8 +4115,8 @@
           labelHtml += `<div style="font-size:72px;font-weight:bold;text-align:center;margin-bottom:28px;line-height:1.1;border-bottom:3px solid #000;padding-bottom:24px;">משטח מספר ${pallet.number}</div>`;
         }
         pallet.products.forEach(p => {
-          labelHtml += `<div style="display:flex;font-size:32px;font-weight:bold;padding:14px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
-            <span style="font-size:26px;color:#444;white-space:nowrap;">${p.sku||''}</span>
+          labelHtml += `<div style="display:flex;font-size:36px;font-weight:bold;padding:16px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
+            <span style="white-space:nowrap;">${p.sku||''}</span>
             <span style="flex:1;">${p.name||''}</span>
           </div>`;
         });
