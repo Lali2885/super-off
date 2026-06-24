@@ -4148,7 +4148,11 @@
         // דף מספר משטח בלבד
         const numberContainer = document.createElement('div');
         numberContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;height:1123px;background:white;font-family:Arial,sans-serif;direction:rtl;display:flex;flex-direction:column;align-items:center;justify-content:center;';
-        numberContainer.innerHTML = `<div style="font-size:500px;font-weight:bold;line-height:1;text-align:center;">${pallet.number||''}</div>`;
+        numberContainer.innerHTML = `<svg width="794" height="1123" xmlns="http://www.w3.org/2000/svg">
+          <text x="397" y="620" text-anchor="middle" dominant-baseline="middle"
+            font-size="900" font-weight="bold" font-family="Arial"
+            textLength="740" lengthAdjust="spacingAndGlyphs">${pallet.number||''}</text>
+        </svg>`;
 
         labelContainer.innerHTML = labelHtml;
         document.body.appendChild(labelContainer);
