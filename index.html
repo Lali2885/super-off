@@ -5232,7 +5232,7 @@
         { id: 'deliveries', label: 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'contacts', label: 'אנשי קשר', icon: Icons.User, badge: contactsList.length > 0 ? contactsList.length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'lists', label: 'ניהול רשימות', icon: Icons.List },
-        { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'completed' || o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'completed' || o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
+        { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
         { id: 'stats', label: 'דוחות ובקרה', icon: Icons.ClipboardList },
         { id: 'dashboard', label: 'לוח בקרה', icon: Icons.Home },
         { id: 'settings', label: 'הגדרות', icon: Icons.Settings },
