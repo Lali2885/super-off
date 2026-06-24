@@ -3903,6 +3903,7 @@
       const [exitDate, setExitDate] = useState(today);
       const [exitPallets, setExitPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
       const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
+      const [editingExitProduct, setEditingExitProduct] = useState(null);
       const exitSkuRef = useRef(null);
       const [reportDate, setReportDate] = useState(today);
       const [showAllExits, setShowAllExits] = useState(false);
@@ -3948,11 +3949,24 @@
 
       const addProductToExitPallet = (palletId) => {
         if (!exitProductForm.name || !exitProductForm.cartons) return;
-        const pallet = exitPallets.find(p => p.id === palletId);
-        const total = pallet.products.reduce((s,p) => s + Number(p.cartons||0), 0);
-        if (total + Number(exitProductForm.cartons) > 50) { alert('לא ניתן להוסיף - משטח מוגבל ל-50 קרטון (כרגע: ' + total + ' קרטונים)'); return; }
-        setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...exitProductForm, id: Date.now() }] } : p));
+        if (editingExitProduct) {
+          setExitPallets(prev => prev.map(p => p.id === editingExitProduct.palletId
+            ? { ...p, products: p.products.map(pr => pr.id === editingExitProduct.productId ? { ...exitProductForm, id: pr.id } : pr) }
+            : p));
+          setEditingExitProduct(null);
+        } else {
+          const pallet = exitPallets.find(p => p.id === palletId);
+          const total = pallet.products.reduce((s,p) => s + Number(p.cartons||0), 0);
+          if (total + Number(exitProductForm.cartons) > 50) { alert('לא ניתן להוסיף - משטח מוגבל ל-50 קרטון (כרגע: ' + total + ' קרטונים)'); return; }
+          setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...exitProductForm, id: Date.now() }] } : p));
+        }
         setExitProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
+        setTimeout(() => exitSkuRef.current?.focus(), 30);
+      };
+
+      const startEditExitProduct = (palletId, product) => {
+        setEditingExitProduct({ palletId, productId: product.id });
+        setExitProductForm({ sku: product.sku||'', name: product.name||'', kashrut: product.kashrut||'', cartons: product.cartons||'', expiryDate: product.expiryDate||'', dateType: product.dateType||'', weight: product.weight||'' });
         setTimeout(() => exitSkuRef.current?.focus(), 30);
       };
 
@@ -4211,8 +4225,8 @@
                             </div>
                           </div>
                           <div className="col-span-2 flex gap-2 sm:col-span-1">
-                            <button onClick={() => addProductToExitPallet(pallet.id)} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-700">הוסף</button>
-                            <button onClick={() => setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''})} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                            <button onClick={() => addProductToExitPallet(pallet.id)} className={`flex-1 text-white px-3 py-2 rounded text-xs font-bold ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן מוצר' : 'הוסף'}</button>
+                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); }} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
                           </div>
                         </div>
                       </div>
@@ -4229,7 +4243,7 @@
                               <td className="py-1 px-1">{pr.cartons}</td>
                               <td className="py-1 px-1 whitespace-nowrap">{pr.expiryDate ? <span>{pr.expiryDate}{pr.dateType ? <span className="mr-1 text-blue-600 font-bold text-xs">({pr.dateType})</span> : ''}</span> : '-'}</td>
                               <td className="py-1 px-1 whitespace-nowrap">{pr.weight ? pr.weight+' ק"ג' : '-'}</td>
-                              <td className="py-1 px-1"><button onClick={() => removeExitProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                              <td className="py-1 px-1 flex gap-2"><button onClick={() => startEditExitProduct(pallet.id, pr)} className="text-blue-500 text-xs hover:text-blue-700 font-semibold">ערוך</button><button onClick={() => removeExitProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
                             </tr>
                           ))}</tbody>
                           <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
