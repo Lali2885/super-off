@@ -4145,17 +4145,28 @@
           </div>`;
         });
         labelHtml += `</div>`;
+        // דף מספר משטח בלבד
+        const numberContainer = document.createElement('div');
+        numberContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;height:1123px;background:white;font-family:Arial,sans-serif;direction:rtl;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+        numberContainer.innerHTML = `<div style="font-size:280px;font-weight:bold;line-height:1;text-align:center;">${pallet.number||''}</div>`;
+
         labelContainer.innerHTML = labelHtml;
         document.body.appendChild(labelContainer);
-        window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas => {
+        window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas1 => {
           document.body.removeChild(labelContainer);
-          const imgData = canvas.toDataURL('image/png');
-          const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-          const pageW = doc.internal.pageSize.getWidth();
-          const imgW = pageW;
-          const imgH = (canvas.height * imgW) / canvas.width;
-          doc.addImage(imgData, 'PNG', 0, 10, imgW, imgH);
-          doc.save(`תווית-משטח-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
+          document.body.appendChild(numberContainer);
+          window.html2canvas(numberContainer, { scale: 2, useCORS: true }).then(canvas2 => {
+            document.body.removeChild(numberContainer);
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            const imgW = pageW;
+            const imgH1 = (canvas1.height * imgW) / canvas1.width;
+            doc.addImage(canvas1.toDataURL('image/png'), 'PNG', 0, 10, imgW, imgH1);
+            doc.addPage();
+            doc.addImage(canvas2.toDataURL('image/png'), 'PNG', 0, 0, pageW, pageH);
+            doc.save(`תווית-משטח-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
+          });
         });
       };
 
