@@ -1131,12 +1131,14 @@
     // --- Orders View ---
     const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap, logoImage }) => {
       const getSku = (itemId, k) => (orderFormSkuMap || {})[itemId]?.[k] || '';
+      const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
       const [deleteConfirmOrder, setDeleteConfirmOrder] = useState(null);
-      const [printMode, setPrintMode] = useState('general'); // 'general' | 'fish'
-      const openPrint = (order, mode) => { setPrintMode(mode); setActivePrintOrder(order); };
+      const [printMode, setPrintMode] = useState('fresh'); // 'fresh' | 'frozen' | 'fish' | 'all'
+      const [printMenuOrderId, setPrintMenuOrderId] = useState(null);
+      const openPrint = (order, mode) => { setPrintMode(mode); setActivePrintOrder(order); setPrintMenuOrderId(null); };
       const bonHeaderRef = useRef(null);
       const bonTableRef  = useRef(null);
       const [tableScale, setTableScale] = useState(1);
@@ -1191,12 +1193,97 @@
       });
 
       const [openDropdown, setOpenDropdown] = useState(null);
+      const [orderSkuRow, setOrderSkuRow] = useState({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '', storageType: '', needsStorageToggle: false });
+      const [orderAddedItems, setOrderAddedItems] = useState([]);
+      const [complexState, setComplexState] = useState({ totalQty: '', rows: [], checks: [], notes: '' });
+      const [showComplex, setShowComplex] = useState(false);
+      const [nameSearch, setNameSearch] = useState('');
+      const [showNameDropdown, setShowNameDropdown] = useState(false);
+      const [editingItemId, setEditingItemId] = useState(null);
+      const [editItemState, setEditItemState] = useState({});
+      const orderSkuRef = React.useRef(null);
+      const nameSearchRef = React.useRef(null);
       const [expandedOrders, setExpandedOrders] = useState(new Set());
       const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
       const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
 
       const toggleCategory = (category) => {
         setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
+      };
+
+      const orderSkuLookup = (sku) => {
+        setOrderSkuRow(prev => ({ ...prev, sku, name: '', category: '', kashrut: '', storageType: '', needsStorageToggle: false }));
+        setShowComplex(false);
+        if (!sku) return;
+        const fpBySku = (frozenProductsList || []).find(p => p.sku && p.sku.toString() === sku.toString());
+        const getStorageInfo = (name) => {
+          const st = fpBySku?.storageTypes || (NEW_PRODUCTS_TEMPLATE || []).find(p => p.name === name)?.storageTypes || ['fresh'];
+          const needsStorageToggle = st.includes('fresh') && st.includes('frozen');
+          return { storageType: needsStorageToggle ? 'fresh' : (st[0] || 'fresh'), needsStorageToggle };
+        };
+        for (const template of ORDER_FORM_TEMPLATE) {
+          const sk = getSku(template.id, kashrut) || getSku(template.id, 'כללי') || getSku(template.id, '');
+          if (sk && String(sk) === String(sku)) {
+            setOrderSkuRow(prev => ({ ...prev, sku, name: template.name, category: template.category, kashrut: fpBySku?.kashrut || '', ...getStorageInfo(template.name) }));
+            setShowComplex(true);
+            setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+            return;
+          }
+        }
+        for (const [itemId, kashrutMap] of Object.entries(orderFormSkuMap || {})) {
+          for (const [kName, v] of Object.entries(kashrutMap || {})) {
+            if (String(v) === String(sku)) {
+              const template = ORDER_FORM_TEMPLATE.find(t => t.id === itemId);
+              if (template) {
+                setOrderSkuRow(prev => ({ ...prev, sku, name: template.name, category: template.category, kashrut: fpBySku?.kashrut || kName, ...getStorageInfo(template.name) }));
+                setShowComplex(true);
+                setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+                return;
+              }
+            }
+          }
+        }
+        if (fpBySku) {
+          const templateMatch = ORDER_FORM_TEMPLATE.find(t => t.name === fpBySku.name);
+          if (templateMatch) {
+            setOrderSkuRow(prev => ({ ...prev, sku, name: templateMatch.name, category: templateMatch.category, kashrut: fpBySku.kashrut || '', ...getStorageInfo(templateMatch.name) }));
+            setShowComplex(true);
+            setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+            return;
+          }
+          setOrderSkuRow(prev => ({ ...prev, sku, name: fpBySku.name, category: fpBySku.category || getProductCategory(fpBySku.name), kashrut: fpBySku.kashrut || '', ...getStorageInfo(fpBySku.name) }));
+        }
+      };
+
+      const addOrderItem = () => {
+        if (!orderSkuRow.name) return;
+        if (showComplex) {
+          const template = ORDER_FORM_TEMPLATE.find(t => t.name === orderSkuRow.name);
+          if (!template) return;
+          const rows = complexState.rows.filter(r => parseFloat(r.qty) > 0);
+          const totalQty = parseFloat(complexState.totalQty) || 0;
+          if (rows.length === 0 && totalQty === 0 && complexState.checks.length === 0) return;
+          setOrderAddedItems(prev => [...prev, {
+            id: Date.now(), sku: orderSkuRow.sku, name: orderSkuRow.name, category: orderSkuRow.category,
+            type: 'complex', template, kashrut: orderSkuRow.kashrut || kashrut,
+            storageType: orderSkuRow.storageType || 'fresh',
+            totalQty: complexState.totalQty,
+            rows: complexState.rows.filter(r => parseFloat(r.qty) > 0),
+            checks: complexState.checks, notes: complexState.notes
+          }]);
+          setShowComplex(false);
+          setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+        } else {
+          if (!parseFloat(orderSkuRow.qty)) return;
+          setOrderAddedItems(prev => [...prev, {
+            id: Date.now(), sku: orderSkuRow.sku, name: orderSkuRow.name, category: orderSkuRow.category,
+            type: 'simple', qty: orderSkuRow.qty, notes: orderSkuRow.notes,
+            kashrut: orderSkuRow.kashrut || kashrut,
+            storageType: orderSkuRow.storageType || 'fresh'
+          }]);
+        }
+        setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '', storageType: '', needsStorageToggle: false });
+        setTimeout(() => orderSkuRef.current?.focus(), 30);
       };
 
       // פריטים ללא אופציות — עדכון שורה רגילה
@@ -1285,6 +1372,25 @@
         });
         setFormItemsState(rebuilt);
         setPackingOption(rebuildPacking);
+        // בניית רשימת פריטים לממשק החדש
+        const rebuiltItems = [];
+        const processedTemplates = {};
+        order.items.forEach(item => {
+          if (item.qty === '-' && item.name === 'אריזת עופות') return;
+          const template = ORDER_FORM_TEMPLATE.find(t => t.name === (item.cleanName || item.name));
+          if (template) {
+            if (!processedTemplates[template.id]) {
+              processedTemplates[template.id] = { id: Date.now() + Math.random(), name: template.name, category: template.category, type: 'complex', template, totalQty: '', rows: [], checks: item.checks || [], notes: item.notes || '', sku: item.sku || '', kashrut: item.kashrut || '', storageType: item.storageType || 'fresh' };
+              rebuiltItems.push(processedTemplates[template.id]);
+            }
+            const match = item.name.match(/\((.+)\)$/);
+            if (match) { processedTemplates[template.id].rows.push({ option: match[1], qty: item.qty.toString() }); }
+            else { processedTemplates[template.id].totalQty = item.qty.toString(); }
+          } else {
+            rebuiltItems.push({ id: Date.now() + Math.random(), name: item.cleanName || item.name, category: (frozenProductsList || []).find(p => p.name === (item.cleanName || item.name))?.category || getProductCategory(item.cleanName || item.name) || '', type: 'simple', qty: item.qty.toString(), notes: item.notes || '', kashrut: item.kashrut || '', sku: item.sku || '' });
+          }
+        });
+        setOrderAddedItems(rebuiltItems);
         setIsModalOpen(true);
       };
 
@@ -1299,69 +1405,26 @@
         setAssignedButcher('');
         setFormItemsState({});
         setPackingOption('');
+        setOrderAddedItems([]); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setNameSearch(''); setShowNameDropdown(false);
       };
 
       const handleAddOrder = (e) => {
         e.preventDefault();
         setFormErrorMessage('');
 
-        if (!kashrut) {
-          setFormErrorMessage('חובה לבחור כשרות כללית עבור ההזמנה (בראש הטופס)!');
-          return;
-        }
-
-        const populatedItems = ORDER_FORM_TEMPLATE
-          .flatMap(template => {
-            if (template.options.length > 0) {
-              // פריטים עם אופציות — פורמט חדש
-              const s = formItemsState[template.id];
-              if (!s || Array.isArray(s)) return [];
-              const rows = s.rows || [];
-              if (template.inline) {
-                // inline: כל אופציה עם כמות עצמאית; fallback לכמות כללית
-                const checks = s.checks || [];
-                const withQty = rows.filter(r => parseFloat(r.qty) > 0)
-                  .map(r => ({ name: `${template.name} (${r.option})`, cleanName: template.name, qty: parseFloat(r.qty), notes: s.notes || '', checks, kashrut: kashrut }));
-                if (withQty.length > 0) return withQty;
-                const totalQty = parseFloat(s.totalQty) || 0;
-                if (totalQty > 0) return [{ name: template.name, cleanName: template.name, qty: totalQty, notes: s.notes || '', checks, kashrut: kashrut }];
-                if (checks.length > 0) return [{ name: template.name, cleanName: template.name, qty: 0, notes: s.notes || '', checks, kashrut: kashrut }];
-                return [];
-              }
-              const totalQty = parseFloat(s.totalQty) || 0;
-              if (totalQty <= 0) return [];
-              if (rows.length === 0) {
-                return [{ name: template.name, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
-              } else if (rows.length === 1) {
-                return [{ name: `${template.name} (${rows[0].option})`, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
-              } else {
-                const withQty = rows.filter(r => parseFloat(r.qty) > 0)
-                  .map(r => ({ name: `${template.name} (${r.option})`, cleanName: template.name, qty: parseFloat(r.qty), notes: s.notes || '', kashrut: s.kashrut || kashrut }));
-                return withQty.length > 0 ? withQty
-                  : [{ name: `${template.name} (${rows.map(r => r.option).join(', ')})`, cleanName: template.name, qty: totalQty, notes: s.notes || '', kashrut: s.kashrut || kashrut }];
-              }
-            } else {
-              // פריטים ללא אופציות — פורמט מערך רגיל
-              const rows = formItemsState[template.id];
-              if (!rows || !Array.isArray(rows)) return [];
-              return rows.filter(r => parseFloat(r.qty) > 0).map(r => ({
-                name: template.name, cleanName: template.name, qty: parseFloat(r.qty), notes: r.notes, kashrut: r.kashrut || kashrut
-              }));
-            }
-          });
-
-        // פריטים דינמיים — נגזרים ישירות מ-frozenProductsList
-        const dynItems = Object.entries(formItemsState)
-          .filter(([key]) => key.startsWith('dyn_'))
-          .flatMap(([key, rows]) => {
-            const name = key.slice(4);
-            if (!Array.isArray(rows)) return [];
-            return rows.filter(r => parseFloat(r.qty) > 0).map(r => ({
-              name, cleanName: name, qty: parseFloat(r.qty), notes: r.notes || '', kashrut
-            }));
-          });
-
-        const allItems = [...populatedItems, ...dynItems];
+        const allItems = orderAddedItems.flatMap(item => {
+          if (item.type === 'complex') {
+            const checks = item.checks || [];
+            const rows = item.rows.filter(r => parseFloat(r.qty) > 0);
+            const totalQty = parseFloat(item.totalQty) || 0;
+            const withQty = rows.map(r => ({ name: `${item.name} (${r.option})`, cleanName: item.name, qty: parseFloat(r.qty), notes: item.notes || '', checks, kashrut: item.kashrut || '', sku: item.sku || '', storageType: item.storageType || 'fresh' }));
+            if (withQty.length > 0) return withQty;
+            if (totalQty > 0) return [{ name: item.name, cleanName: item.name, qty: totalQty, notes: item.notes || '', checks, kashrut: item.kashrut || '', sku: item.sku || '', storageType: item.storageType || 'fresh' }];
+            if (checks.length > 0) return [{ name: item.name, cleanName: item.name, qty: 0, notes: item.notes || '', checks, kashrut: item.kashrut || '', sku: item.sku || '', storageType: item.storageType || 'fresh' }];
+            return [];
+          }
+          return [{ name: item.name, cleanName: item.name, qty: parseFloat(item.qty), notes: item.notes || '', kashrut: item.kashrut || '', sku: item.sku || '', storageType: item.storageType || 'fresh' }];
+        });
 
         if (allItems.length === 0) {
           setFormErrorMessage('נא להזין כמות עבור לפחות מוצר אחד בטופס!');
@@ -1378,7 +1441,7 @@
           neighborhood: orderType === 'delivery' ? neighborhood : '',
           subNeighborhood: orderType === 'delivery' ? subNeighborhood : '',
           timeString: orderType === 'delivery' ? deliveryDate : pickupTime,
-          kashrut,
+          kashrut: allItems.find(i => i.kashrut)?.kashrut || '',
           assignedButcher,
           flags: { ...flags, chargeStatus },
           items: allItems,
@@ -1883,13 +1946,30 @@
 
             const renderOrderCard = (order, dimmed = false, draggable = false) => {
               const isExpanded = dimmed || expandedOrders.has(order.id);
-              const regularItems = order.items.filter(i => i.qty !== '-');
-              const packingItem = order.items.find(i => i.qty === '-');
+              const regularItems = (order.items || []).filter(i => i.qty !== '-');
+              const packingItem = (order.items || []).find(i => i.qty === '-');
               const cats = new Set(regularItems.map(i => {
                 const name = i.cleanName || i.name;
                 const p = (frozenProductsList || []).find(fp => fp.name === name);
                 return p?.category || getProductCategory(name) || ORDER_FORM_TEMPLATE.find(t => t.name === name)?.category;
               }).filter(Boolean));
+              const hasFish = regularItems.some(i => {
+                const name = i.cleanName || i.name;
+                const p = (frozenProductsList || []).find(fp => fp.name === name);
+                return (p?.category || getProductCategory(name)) === 'דגים';
+              });
+              const hasFrozen = regularItems.some(i => {
+                const name = i.cleanName || i.name;
+                const p = (frozenProductsList || []).find(fp => fp.name === name);
+                if ((p?.category || getProductCategory(name)) === 'דגים') return false;
+                return i.storageType === 'frozen';
+              });
+              const hasFresh = regularItems.some(i => {
+                const name = i.cleanName || i.name;
+                const p = (frozenProductsList || []).find(fp => fp.name === name);
+                if ((p?.category || getProductCategory(name)) === 'דגים') return false;
+                return !i.storageType || i.storageType === 'fresh';
+              });
               return (
               <div key={order.id}
                 draggable={draggable}
@@ -1918,7 +1998,6 @@
                   </div>
 
                   <div className="flex flex-wrap gap-1 mb-2">
-                    <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-bold">{order.kashrut}</span>
                     {order.assignedButcher && <span className="text-[10px] bg-orange-100 text-orange-800 border border-orange-200 px-1.5 py-0.5 rounded font-bold">🔪 {order.assignedButcher}</span>}
                     {order.neighborhood && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold"><Icons.MapPin className="w-2.5 h-2.5 inline" /> {order.neighborhood}</span>}
                     {order.flags?.mustCoordinate && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">🚨 תאום</span>}
@@ -1940,16 +2019,45 @@
                 {/* כפתורי פעולה — תמיד גלויים */}
                 {!dimmed && (
                   <div className="px-3 pb-3 flex gap-1 flex-nowrap items-center" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => openPrint(order, 'general')}
-                      className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
-                      🖨️ כללי
-                    </button>
-                    {cats.has('דגים') && (
-                      <button onClick={() => openPrint(order, 'fish')}
-                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
-                        🖨️ דגים
+                    <div className="relative shrink-0">
+                      <button onClick={(e) => { e.stopPropagation(); setPrintMenuOrderId(prev => prev === order.id ? null : order.id); }}
+                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors leading-tight">
+                        🖨️
                       </button>
-                    )}
+                      {printMenuOrderId === order.id && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setPrintMenuOrderId(null)} />
+                          <div className="absolute bottom-full mb-1 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-1 min-w-[110px]" onClick={e => e.stopPropagation()}>
+                            {hasFresh && (
+                              <button type="button" onClick={() => openPrint(order, 'fresh')}
+                                className="w-full text-right px-3 py-2 text-sm font-bold hover:bg-green-50 text-green-700 flex items-center gap-2 whitespace-nowrap">
+                                🌿 בון טרי
+                              </button>
+                            )}
+                            {hasFrozen && (
+                              <button type="button" onClick={() => openPrint(order, 'frozen')}
+                                className="w-full text-right px-3 py-2 text-sm font-bold hover:bg-blue-50 text-blue-700 flex items-center gap-2 whitespace-nowrap">
+                                🧊 בון קפוא
+                              </button>
+                            )}
+                            {hasFish && (
+                              <button type="button" onClick={() => openPrint(order, 'fish')}
+                                className="w-full text-right px-3 py-2 text-sm font-bold hover:bg-blue-50 text-blue-800 flex items-center gap-2 whitespace-nowrap">
+                                🐟 בון דגים
+                              </button>
+                            )}
+                            {[hasFresh, hasFrozen, hasFish].filter(Boolean).length > 1 && (
+                              <div className="border-t border-gray-100 mt-1 pt-1">
+                                <button type="button" onClick={() => openPrint(order, 'all')}
+                                  className="w-full text-right px-3 py-2 text-sm font-bold hover:bg-gray-50 text-gray-700 flex items-center gap-2 whitespace-nowrap">
+                                  📋 כל הבונים
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                     <button onClick={() => openEditModal(order)}
                       className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight">
                       ✏️
@@ -2004,14 +2112,19 @@
                         <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3">
                           {groups.map((group, gIdx) => {
                             const tmpl = ORDER_FORM_TEMPLATE.find(t => t.name === group.key);
-                            const cc = getCatColors(tmpl?.category);
+                            const itemCat = (frozenProductsList || []).find(p => p.name === group.key)?.category || getProductCategory(group.key) || tmpl?.category;
+                            const cc = getCatColors(itemCat);
+                            const kc = group.items[0].kashrut ? getKashrutColor(group.items[0].kashrut) : null;
                             return (
                               <li key={gIdx} className="px-2 py-2 text-xs">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <span className={`font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 ${cc.qtyBg} ${cc.qtyText} ${cc.qtyBorder}`}>
                                     {group.items.length > 1 ? group.total : group.items[0].qty}
                                   </span>
                                   <span className="font-bold text-gray-800">{group.key}</span>
+                                  {kc && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'15', color: kc }}>{group.items[0].kashrut}</span>}
+                                  {group.items[0].sku && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-500 border border-gray-200">{group.items[0].sku}</span>}
+                                  {group.items[0].storageType === 'frozen' && <span className="text-[10px]">🧊</span>}
                                 </div>
                                 {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
@@ -2245,37 +2358,265 @@
                     )}
                   </div>
 
-                  {/* כשרות וסימונים */}
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 grid grid-cols-2 gap-4 shadow-sm">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase mb-2">כשרות כללית להזמנה</label>
-                      <select value={kashrut} onChange={e => setKashrut(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-purple-50 focus:ring-2 focus:ring-purple-400 outline-none font-bold text-purple-900">
-                        <option value="" disabled>-- בחר כשרות --</option>
-                        {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                       <label className="block text-xs font-bold text-gray-400 uppercase mb-2">סימונים למוכר</label>
-                       <div className="flex flex-col gap-2 text-sm text-gray-700">
-                         <div className="flex gap-3">
-                           <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="chargeStatus" value="charge" checked={chargeStatus === 'charge'} onChange={e => setChargeStatus(e.target.value)} className="accent-purple-600" /> לחייב</label>
-                           <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="chargeStatus" value="noCharge" checked={chargeStatus === 'noCharge'} onChange={e => setChargeStatus(e.target.value)} className="accent-purple-600" /> לא לחייב</label>
-                         </div>
-                         <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.mustCoordinate} onChange={e => setFlags({...flags, mustCoordinate: e.target.checked})} className="accent-purple-600" /> לתאם חובה</label>
-                         <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.notifyReady} onChange={e => setFlags({...flags, notifyReady: e.target.checked})} className="accent-purple-600" /> להודיע שמוכן</label>
-                       </div>
+                  {/* סימונים למוכר */}
+                  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">סימונים למוכר</label>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+                      <div className="flex gap-3">
+                        <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="chargeStatus" value="charge" checked={chargeStatus === 'charge'} onChange={e => setChargeStatus(e.target.value)} className="accent-purple-600" /> לחייב</label>
+                        <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="chargeStatus" value="noCharge" checked={chargeStatus === 'noCharge'} onChange={e => setChargeStatus(e.target.value)} className="accent-purple-600" /> לא לחייב</label>
+                      </div>
+                      <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.mustCoordinate} onChange={e => setFlags({...flags, mustCoordinate: e.target.checked})} className="accent-purple-600" /> לתאם חובה</label>
+                      <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.notifyReady} onChange={e => setFlags({...flags, notifyReady: e.target.checked})} className="accent-purple-600" /> להודיע שמוכן</label>
                     </div>
                   </div>
 
-                  {/* ----------------- טבלת המלאי המלאה ----------------- */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <h3 className="font-extrabold text-lg text-gray-800 mb-4">רשימת מוצרים והוראות (הזן כמות במוצרים הרצויים)</h3>
-                    
-                    {renderItemCategory('עוף', '🐔 עוף מפורק', 'מפורק')}
-                    {renderCategoryDynamic('עוף')}
-                    {renderCategoryDynamic('הודו')}
-                    {renderCategoryDynamic('בשר')}
-                    {renderCategoryDynamic('דגים')}
+                  {/* ----------------- הוספת פריט לפי מקט ----------------- */}
+                  <div className="pt-4 border-t border-gray-200 space-y-3">
+                    <h3 className="font-extrabold text-lg text-gray-800">הוספת מוצרים לפי מק"ט</h3>
+
+                    {/* שורת הוספה */}
+                    <div className="bg-white border-2 border-purple-200 rounded-xl p-3 space-y-2 shadow-sm">
+                      <div className="flex gap-2 flex-wrap sm:flex-nowrap items-end">
+                        <div className="w-24 shrink-0">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">מק"ט</label>
+                          <input
+                            ref={orderSkuRef}
+                            type="text" autoComplete="off"
+                            value={orderSkuRow.sku}
+                            onChange={e => orderSkuLookup(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (!showComplex && orderSkuRow.name) document.getElementById('orderQtyInput')?.focus(); } }}
+                            placeholder="סרוק..."
+                            className="w-full p-2.5 border-2 border-purple-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-purple-400 bg-purple-50"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-[120px] relative">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">שם מוצר</label>
+                          {orderSkuRow.name ? (
+                            <div className="h-[42px] p-2.5 border-2 rounded-lg text-sm font-bold flex items-center overflow-hidden"
+                              style={{ borderColor: getKashrutColor(orderSkuRow.kashrut) + '80', backgroundColor: getKashrutColor(orderSkuRow.kashrut) + '15', color: getKashrutColor(orderSkuRow.kashrut) }}>
+                              <span className="truncate">{orderSkuRow.name}</span>
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <input
+                                ref={nameSearchRef}
+                                type="text" autoComplete="off"
+                                placeholder="חיפוש לפי שם..."
+                                value={nameSearch}
+                                onChange={e => { setNameSearch(e.target.value); setShowNameDropdown(true); }}
+                                onFocus={() => setShowNameDropdown(true)}
+                                onBlur={() => setTimeout(() => setShowNameDropdown(false), 150)}
+                                className="w-full h-[42px] p-2.5 border-2 border-gray-200 bg-gray-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                              />
+                              {showNameDropdown && nameSearch && (() => {
+                                const results = (frozenProductsList || []).filter(p =>
+                                  p.name?.includes(nameSearch) || p.name?.toLowerCase().includes(nameSearch.toLowerCase())
+                                ).slice(0, 20);
+                                if (!results.length) return null;
+                                return (
+                                  <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-purple-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
+                                    {results.map((p, i) => (
+                                      <div key={i}
+                                        onMouseDown={() => { orderSkuLookup(p.sku); setNameSearch(''); setShowNameDropdown(false); }}
+                                        className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-purple-50 cursor-pointer">
+                                        <span className="font-bold text-gray-800 text-sm">{p.name}</span>
+                                        <div className="flex items-center gap-2 shrink-0 mr-2">
+                                          <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">{p.kashrut}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="w-24 shrink-0">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">כשרות</label>
+                          <div className="h-[42px] p-2.5 border-2 rounded-lg text-xs font-bold flex items-center"
+                            style={orderSkuRow.kashrut ? { borderColor: getKashrutColor(orderSkuRow.kashrut) + '80', backgroundColor: getKashrutColor(orderSkuRow.kashrut) + '15', color: getKashrutColor(orderSkuRow.kashrut) } : { borderColor: '#e5e7eb', backgroundColor: '#f9fafb', color: '#9ca3af' }}>
+                            {orderSkuRow.kashrut || '—'}
+                          </div>
+                        </div>
+                        <div className="w-20 shrink-0">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">כמות</label>
+                          <input id="orderQtyInput" type="number" min="0" step="0.5" placeholder="0"
+                            value={orderSkuRow.qty}
+                            onChange={e => setOrderSkuRow(prev => ({ ...prev, qty: e.target.value }))}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('orderNotesInput')?.focus(); } }}
+                            className="w-full h-[42px] p-2.5 border-2 border-gray-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-purple-400 text-center"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-[100px]">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">הערה</label>
+                          <input id="orderNotesInput" type="text" placeholder="הערה..."
+                            value={orderSkuRow.notes}
+                            onChange={e => setOrderSkuRow(prev => ({ ...prev, notes: e.target.value }))}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOrderItem(); } }}
+                            className="w-full p-2.5 border-2 border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                          />
+                        </div>
+                        {!showComplex && (
+                          <button type="button" onClick={addOrderItem}
+                            disabled={!orderSkuRow.name}
+                            className={`shrink-0 px-4 py-2.5 rounded-xl font-bold transition-colors text-sm self-end
+                              ${orderSkuRow.name ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                            + הוסף
+                          </button>
+                        )}
+                      </div>
+
+                      {/* עוף מפורק — אופציות */}
+                      {showComplex && (() => {
+                        const template = ORDER_FORM_TEMPLATE.find(t => t.name === orderSkuRow.name);
+                        if (!template) return null;
+                        const cc = getCatColors(template.category);
+                        return (
+                          <div className={`border-t-2 border-dashed pt-3 space-y-3 ${cc.headerBorder}`}>
+                            {template.options.length === 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-gray-600">כמות כוללת:</span>
+                                <input type="number" min="0" step="0.5" placeholder="0"
+                                  value={complexState.totalQty}
+                                  onChange={e => setComplexState(prev => ({ ...prev, totalQty: e.target.value }))}
+                                  className={`w-24 p-2 text-base border-2 border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold`}
+                                />
+                              </div>
+                            )}
+                            {template.options.length > 0 && (
+                              <div className="grid grid-cols-2 gap-2">
+                                {template.options.map(opt => {
+                                  const row = complexState.rows.find(r => r.option === opt);
+                                  const qty = row?.qty || '';
+                                  const isActive = parseFloat(qty) > 0;
+                                  return (
+                                    <div key={opt}
+                                      onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
+                                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border-2 cursor-pointer transition-all ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                      <span className={`text-xs font-bold flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                      <input type="number" min="0" step="0.5" placeholder="כמות"
+                                        value={qty}
+                                        onChange={e => { const v = e.target.value; setComplexState(prev => { const exists = prev.rows.some(r => r.option === opt); return { ...prev, rows: exists ? prev.rows.map(r => r.option === opt ? { ...r, qty: v } : r) : [...prev.rows, { option: opt, qty: v }] }; }); }}
+                                        className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50'}`}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {template.checkboxOptions && template.checkboxOptions.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 border-t border-dashed border-gray-200 pt-2">
+                                {template.checkboxOptions.map(opt => {
+                                  const isChecked = complexState.checks.includes(opt);
+                                  return (
+                                    <div key={opt}
+                                      onClick={() => setComplexState(prev => ({ ...prev, checks: isChecked ? prev.checks.filter(c => c !== opt) : [...prev.checks, opt] }))}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer select-none transition-all ${isChecked ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                      <span className={`text-[11px] font-black ${isChecked ? cc.cardActiveText : 'text-gray-300'}`}>{isChecked ? '✓' : '○'}</span>
+                                      <span className={`text-[11px] font-bold ${isChecked ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <input type="text" placeholder="הערה"
+                              value={complexState.notes}
+                              onChange={e => setComplexState(prev => ({ ...prev, notes: e.target.value }))}
+                              className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+                            />
+                            <button type="button" onClick={addOrderItem}
+                              className="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors">
+                              + הוסף לרשימה
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* רשימת פריטים שנוספו — מסגרת לפי קטגוריה */}
+                    {orderAddedItems.length > 0 && (() => {
+                      const byCategory = {};
+                      orderAddedItems.forEach(item => { const cat = item.category || 'אחר'; if (!byCategory[cat]) byCategory[cat] = []; byCategory[cat].push(item); });
+                      return (
+                        <div className="space-y-3">
+                          <h4 className="font-extrabold text-gray-700 text-sm">✓ פריטים שנוספו להזמנה</h4>
+                          {Object.entries(byCategory).map(([cat, items]) => {
+                            const cc = getCatColors(cat);
+                            return (
+                              <div key={cat} className={`border-2 rounded-xl overflow-hidden ${cc.outer}`}>
+                                <div className={`px-3 py-2 font-extrabold text-sm ${cc.headerBg} ${cc.headerText} ${cc.headerBorder} border-b`}>
+                                  {CAT_EMOJI[cat]} {cat}
+                                </div>
+                                <div className="divide-y divide-gray-100">
+                                  {items.map(item => {
+                                    const isEditing = editingItemId === item.id;
+                                    const ikc = getKashrutColor(item.kashrut || '');
+                                    const saveItem = () => {
+                                      setOrderAddedItems(prev => prev.map(i => i.id === item.id ? { ...i,
+                                        qty: item.type === 'simple' ? (editItemState.qty ?? i.qty) : i.qty,
+                                        notes: editItemState.notes ?? i.notes,
+                                        rows: editItemState.rows ?? i.rows,
+                                        checks: editItemState.checks ?? i.checks,
+                                        totalQty: editItemState.totalQty ?? i.totalQty
+                                      } : i));
+                                      setEditingItemId(null); setEditItemState({});
+                                    };
+                                    return (
+                                    <div key={item.id} className={`px-3 py-2 text-xs ${isEditing ? 'bg-blue-50/40' : ''}`}>
+                                      {/* שורה קומפקטית */}
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono text-[11px] text-gray-400 w-12 shrink-0">{item.sku || '—'}</span>
+                                        <span className="flex-1 font-bold text-sm truncate" style={{ color: ikc }}>{item.name}</span>
+                                        {item.kashrut && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0" style={{ borderColor: ikc+'80', backgroundColor: ikc+'15', color: ikc }}>{item.kashrut}</span>}
+                                        {item.storageType === 'frozen' && <span className="text-[11px] shrink-0">🧊</span>}
+                                        {item.type === 'simple' && !isEditing && <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{item.qty}</span>}
+                                        {item.type === 'complex' && !isEditing && (() => { const tot = (item.rows||[]).reduce((s,r)=>s+(parseFloat(r.qty)||0),0)||(parseFloat(item.totalQty)||0); return tot>0 ? <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{tot}</span> : null; })()}
+                                        {item.type === 'simple' && isEditing && <input type="number" min="0" step="0.5" value={editItemState.qty ?? item.qty} onChange={e => setEditItemState(prev => ({...prev, qty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none shrink-0" />}
+                                        {!isEditing && item.notes && <span className="text-gray-400 text-[11px] truncate max-w-[100px]">{item.notes}</span>}
+                                        {isEditing && <input type="text" value={editItemState.notes ?? item.notes ?? ''} onChange={e => setEditItemState(prev => ({...prev, notes: e.target.value}))} className="flex-1 p-1 border border-blue-200 rounded text-xs outline-none bg-white min-w-0" placeholder="הערה..." />}
+                                        <div className="flex gap-1 shrink-0">
+                                          {isEditing ? (<>
+                                            <button type="button" onClick={saveItem} className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">✓</button>
+                                            <button type="button" onClick={() => { setEditingItemId(null); setEditItemState({}); }} className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 transition-colors leading-tight">✕</button>
+                                          </>) : (<>
+                                            <button type="button" onClick={() => { setEditingItemId(item.id); setEditItemState({ qty: item.qty, notes: item.notes || '', rows: item.rows ? [...item.rows] : [], checks: item.checks ? [...item.checks] : [], totalQty: item.totalQty || '' }); }} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight">✏️</button>
+                                            <button type="button" onClick={() => setOrderAddedItems(prev => prev.filter(i => i.id !== item.id))} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight">🗑️</button>
+                                          </>)}
+                                        </div>
+                                      </div>
+                                      {/* עוף מפורק — תצוגה/עריכה */}
+                                      {item.type === 'complex' && !isEditing && (
+                                        <div className={`border-t border-dashed pt-1.5 mt-1.5 space-y-1 ${cc.headerBorder}`}>
+                                          {(item.rows||[]).length > 0 && <span className="flex flex-wrap gap-1.5">{item.rows.map(r => <span key={r.option} className={`px-2 py-0.5 rounded-full font-bold ${cc.cardActive} ${cc.cardActiveText}`}>{r.option}: {r.qty}</span>)}</span>}
+                                          {(item.checks||[]).length > 0 && <span className="flex flex-wrap gap-1.5">{item.checks.map(c => <span key={c} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-bold">✓ {c}</span>)}</span>}
+                                          {item.notes && <div className="text-gray-500 italic">{item.notes}</div>}
+                                        </div>
+                                      )}
+                                      {item.type === 'complex' && isEditing && (() => {
+                                        const tmpl = item.template || ORDER_FORM_TEMPLATE.find(t => t.name === item.name);
+                                        if (!tmpl) return null;
+                                        const eRows = editItemState.rows || [];
+                                        const eChecks = editItemState.checks || [];
+                                        return (
+                                          <div className={`border-t-2 border-dashed pt-2 mt-2 space-y-2 ${cc.headerBorder}`}>
+                                            {tmpl.options.length > 0 && <div className="grid grid-cols-2 gap-1.5">{tmpl.options.map(opt => { const qty = (eRows.find(r=>r.option===opt)||{}).qty||''; const isActive=parseFloat(qty)>0; return (<div key={opt} onClick={e=>{if(e.target.tagName!=='INPUT')e.currentTarget.querySelector('input').focus();}} className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border cursor-pointer ${isActive?cc.cardActive:'bg-white border-gray-200'}`}><span className={`text-xs font-bold flex-1 ${isActive?cc.cardActiveText:'text-gray-600'}`}>{opt}</span><input type="number" min="0" step="0.5" placeholder="כמות" value={qty} onChange={e=>{const v=e.target.value;setEditItemState(prev=>{const rows=prev.rows||[];const exists=rows.some(r=>r.option===opt);return{...prev,rows:exists?rows.map(r=>r.option===opt?{...r,qty:v}:r):[...rows,{option:opt,qty:v}]};});}} className={`w-14 p-1 text-xs border rounded text-center font-bold outline-none ${isActive?'border-current bg-white':'border-gray-200 bg-gray-50'}`}/></div>);})}</div>}
+                                            {tmpl.checkboxOptions&&tmpl.checkboxOptions.length>0&&<div className="flex flex-wrap gap-1">{tmpl.checkboxOptions.map(opt=>{const isChecked=eChecks.includes(opt);return(<div key={opt} onClick={()=>setEditItemState(prev=>{const checks=prev.checks||[];return{...prev,checks:isChecked?checks.filter(c=>c!==opt):[...checks,opt]};})} className={`flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer select-none text-[11px] font-bold ${isChecked?cc.cardActive+' '+cc.cardActiveText:'bg-white border-gray-200 text-gray-600'}`}>{isChecked?'✓':'○'} {opt}</div>);})}</div>}
+                                            <input type="text" value={editItemState.notes??''} onChange={e=>setEditItemState(prev=>({...prev,notes:e.target.value}))} placeholder="הערה..." className="w-full p-1.5 border border-gray-200 rounded text-xs outline-none"/>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="pt-4 flex gap-3 sticky bottom-0 bg-gray-50/95 p-4 -mx-5 -mb-5 border-t border-gray-200 backdrop-blur-sm">
@@ -2427,13 +2768,16 @@
                       });
                       return groups;
                     };
-                    const isFish = item => {
+                    const getItemStorage = (item) => {
                       const name = item.cleanName || item.name;
                       const p = (frozenProductsList || []).find(fp => fp.name === name);
-                      return (p?.category || getProductCategory(name)) === 'דגים';
+                      if ((p?.category || getProductCategory(name)) === 'דגים') return 'fish';
+                      if (item.storageType === 'frozen') return 'frozen';
+                      return 'fresh';
                     };
-                    const fishGroups   = buildGroups(allRegular.filter(isFish));
-                    const generalGroups = buildGroups(allRegular.filter(i => !isFish(i)));
+                    const freshGroups  = buildGroups(allRegular.filter(i => getItemStorage(i) === 'fresh'));
+                    const frozenGroups = buildGroups(allRegular.filter(i => getItemStorage(i) === 'frozen'));
+                    const fishGroups   = buildGroups(allRegular.filter(i => getItemStorage(i) === 'fish'));
 
                     const renderTable = (groups, extraRow) => (
                       <table className="w-full text-right border-collapse border border-black mt-3">
@@ -2525,20 +2869,68 @@
                       </div>
                     );
 
-                    const areaId = printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general';
-
                     const tableWrapStyle = tableScale < 1 ? { zoom: tableScale } : {};
 
-                    return printMode === 'fish' ? (
+                    const bonLogo = logoImage
+                      ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
+                      : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>;
+
+                    const freshBonContent = (withRefs) => (
+                      <div id="physical-print-slip-area-fresh"
+                        className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
+                        style={{ fontFamily: BON_FONT }}>
+                        <div ref={withRefs ? bonHeaderRef : null}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-extrabold text-3xl text-green-800">🌿 בון טרי</div>
+                            {bonLogo}
+                          </div>
+                          {slipHeader}
+                        </div>
+                        <div ref={withRefs ? bonTableRef : null} style={withRefs ? tableWrapStyle : {}}>
+                          {renderTable(freshGroups, packingItem && (
+                            <tr className="bg-gray-50">
+                              <td className="p-2 border border-black text-center bg-gray-100 text-2xl">📦</td>
+                              <td className="p-2 border border-black font-bold text-2xl text-gray-700">{packingItem.notes}</td>
+                            </tr>
+                          ))}
+                          {(frozenGroups.length > 0 || fishGroups.length > 0) && withRefs && (
+                            <div className="mt-4 border-2 border-blue-400 rounded p-2 bg-blue-50 text-center">
+                              <span className="text-blue-700 font-extrabold text-xl">
+                                {frozenGroups.length > 0 && fishGroups.length > 0 ? '🧊🐟 שים לב — יש גם בון קפוא ובון דגים!' :
+                                 frozenGroups.length > 0 ? '🧊 שים לב — יש גם בון קפוא!' :
+                                 '🐟 שים לב — יש גם בון דגים!'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+
+                    if (printMode === 'frozen') return (
+                      <div id="physical-print-slip-area-frozen"
+                        className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
+                        style={{ fontFamily: BON_FONT }}>
+                        <div ref={bonHeaderRef}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-extrabold text-3xl text-blue-800">🧊 בון קפוא</div>
+                            {bonLogo}
+                          </div>
+                          {slipHeader}
+                        </div>
+                        <div ref={bonTableRef} style={tableWrapStyle}>
+                          {renderTable(frozenGroups, null)}
+                        </div>
+                      </div>
+                    );
+
+                    if (printMode === 'fish') return (
                       <div id="physical-print-slip-area-fish"
                         className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
                         style={{ fontFamily: BON_FONT }}>
                         <div ref={bonHeaderRef}>
                           <div className="flex items-center justify-between mb-2">
                             <div className="font-extrabold text-3xl text-blue-800">🐟 בון דגים</div>
-                            {logoImage
-                              ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
-                              : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
+                            {bonLogo}
                           </div>
                           {slipHeader}
                         </div>
@@ -2546,41 +2938,49 @@
                           {renderTable(fishGroups, null)}
                         </div>
                       </div>
-                    ) : (
-                      <div id="physical-print-slip-area-general"
-                        className="bg-white p-5 rounded-lg border-2 border-dashed border-gray-400 max-w-[148mm] w-full shadow-2xl text-black"
-                        style={{ fontFamily: BON_FONT }}>
-                        <div ref={bonHeaderRef}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-extrabold text-3xl">בון הזמנה</div>
-                            {logoImage
-                              ? <img src={logoImage} alt="לוגו" style={{width:'64px',height:'64px',objectFit:'contain'}} />
-                              : <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-300 font-bold" style={{width:'64px',height:'64px'}}>לוגו</div>}
-                          </div>
-                          {slipHeader}
-                        </div>
-                        <div ref={bonTableRef} style={tableWrapStyle}>
-                          {renderTable(generalGroups, packingItem && (
-                            <tr className="bg-gray-50">
-                              <td className="p-2 border border-black text-center bg-gray-100 text-2xl">📦</td>
-                              <td className="p-2 border border-black font-bold text-2xl text-gray-700">{packingItem.notes}</td>
-                            </tr>
-                          ))}
-                          {fishGroups.length > 0 && (
-                            <div className="mt-16 border-2 border-red-600 rounded p-2 bg-red-50 text-center">
-                              <span className="text-red-700 font-extrabold text-2xl">🐟 שים לב — יש גם הזמנת דגים!</span>
+                    );
+
+                    if (printMode === 'all') return (
+                      <div id="physical-print-slip-area-all" className="space-y-6 max-w-[148mm] w-full">
+                        {freshGroups.length > 0 && freshBonContent(false)}
+                        {frozenGroups.length > 0 && (
+                          <div className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
+                            style={{ fontFamily: BON_FONT }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-extrabold text-3xl text-blue-800">🧊 בון קפוא</div>
+                              {bonLogo}
                             </div>
-                          )}
-                        </div>
+                            {slipHeader}
+                            {renderTable(frozenGroups, null)}
+                          </div>
+                        )}
+                        {fishGroups.length > 0 && (
+                          <div className="bg-white p-5 rounded-lg border-2 border-dashed border-blue-400 max-w-[148mm] w-full shadow-2xl text-black"
+                            style={{ fontFamily: BON_FONT }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-extrabold text-3xl text-blue-800">🐟 בון דגים</div>
+                              {bonLogo}
+                            </div>
+                            {slipHeader}
+                            {renderTable(fishGroups, null)}
+                          </div>
+                        )}
                       </div>
                     );
+
+                    return freshBonContent(true);
                   })()}
                 </div>
 
                 <div className="p-4 bg-gray-100 border-t border-gray-200 flex gap-2 shrink-0">
                   <Button variant="outline" className="flex-1" onClick={() => setActivePrintOrder(null)}>סגור</Button>
                   <Button variant="purple" icon={Icons.Printer} className="flex-1 font-bold py-2"
-                    onClick={() => triggerPhysicalPrint(printMode === 'fish' ? 'physical-print-slip-area-fish' : 'physical-print-slip-area-general')}>
+                    onClick={() => triggerPhysicalPrint(
+                      printMode === 'frozen' ? 'physical-print-slip-area-frozen' :
+                      printMode === 'fish' ? 'physical-print-slip-area-fish' :
+                      printMode === 'all' ? 'physical-print-slip-area-all' :
+                      'physical-print-slip-area-fresh'
+                    )}>
                     הדפס
                   </Button>
                 </div>
