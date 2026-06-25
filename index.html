@@ -414,6 +414,7 @@
     // עוף מפורק בלבד — שאר המוצרים נגזרים ישירות מ-frozenProductsList
     const ORDER_FORM_TEMPLATE = [
       { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'] },
+      { id: 'c3', category: 'עוף', name: 'כרעיים', storageType: 'fresh', inline: true, showTotalQty: true, options: [], checkboxOptions: ['לחלק כרעיים', 'להוריד עור'] },
     ];
 
     const CATEGORY_COLORS = {
@@ -1177,7 +1178,7 @@
       const [entrance, setEntrance] = useState('');
       const [floor, setFloor] = useState('');
       const [apt, setApt] = useState('');
-      const [deliveryDate, setDeliveryDate] = useState('');
+      const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().split('T')[0]);
       const [pickupTime, setPickupTime] = useState('');
       const [kashrut, setKashrut] = useState('');
       const [flags, setFlags] = useState({ mustCoordinate: false, notifyReady: false });
@@ -1195,6 +1196,7 @@
       const [openDropdown, setOpenDropdown] = useState(null);
       const [orderSkuRow, setOrderSkuRow] = useState({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '', storageType: '', needsStorageToggle: false });
       const [orderAddedItems, setOrderAddedItems] = useState([]);
+      const [orderNotes, setOrderNotes] = useState('');
       const [complexState, setComplexState] = useState({ totalQty: '', rows: [], checks: [], notes: '' });
       const [showComplex, setShowComplex] = useState(false);
       const [nameSearch, setNameSearch] = useState('');
@@ -1270,6 +1272,10 @@
           const rows = complexState.rows.filter(r => parseFloat(r.qty) > 0);
           const totalQty = parseFloat(complexState.totalQty) || 0;
           if (rows.length === 0 && totalQty === 0 && complexState.checks.length === 0) return;
+          if (template.showTotalQty && template.options.length > 0 && totalQty > 0 && rows.length > 0) {
+            const rowsSum = rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+            if (Math.abs(rowsSum - totalQty) > 0.001) return;
+          }
           setOrderAddedItems(prev => [...prev, {
             id: Date.now(), sku: orderSkuRow.sku, name: orderSkuRow.name, category: orderSkuRow.category,
             type: 'complex', template, kashrut: orderSkuRow.kashrut || kashrut,
@@ -1415,7 +1421,7 @@
         setAssignedButcher('');
         setFormItemsState({});
         setPackingOption('');
-        setOrderAddedItems([]); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setNameSearch(''); setShowNameDropdown(false);
+        setOrderAddedItems([]); setOrderNotes(''); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setNameSearch(''); setShowNameDropdown(false);
       };
 
       const handleAddOrder = (e) => {
@@ -1455,6 +1461,7 @@
           assignedButcher,
           flags: { ...flags, chargeStatus },
           items: allItems,
+          orderNotes,
           status: 'new'
         };
 
@@ -2488,16 +2495,31 @@
                         const cc = getCatColors(template.category);
                         return (
                           <div className={`border-t-2 border-dashed pt-3 space-y-3 ${cc.headerBorder}`}>
-                            {template.options.length === 0 && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-gray-600">כמות כוללת:</span>
-                                <input type="number" min="0" step="0.5" placeholder="0"
-                                  value={complexState.totalQty}
-                                  onChange={e => setComplexState(prev => ({ ...prev, totalQty: e.target.value }))}
-                                  className={`w-24 p-2 text-base border-2 border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold`}
-                                />
-                              </div>
-                            )}
+                            {template.showTotalQty && (() => {
+                              const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+                              const totalVal = parseFloat(complexState.totalQty) || 0;
+                              const hasMismatch = template.options.length > 0 && totalVal > 0 && rowsSum > 0 && Math.abs(rowsSum - totalVal) > 0.001;
+                              return (
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-bold text-gray-600">כמות כוללת:</span>
+                                    <input type="number" min="0" step="0.5" placeholder="0"
+                                      value={complexState.totalQty}
+                                      onChange={e => setComplexState(prev => ({ ...prev, totalQty: e.target.value }))}
+                                      className={`w-24 p-2 text-base border-2 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold ${hasMismatch ? 'border-red-400' : 'border-gray-300'}`}
+                                    />
+                                    {template.options.length > 0 && totalVal > 0 && (
+                                      <span className={`text-sm font-bold px-2 py-1 rounded-lg ${hasMismatch ? 'bg-red-100 text-red-700' : rowsSum === totalVal ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                        הוקצה: {rowsSum} / {totalVal}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {hasMismatch && (
+                                    <p className="text-xs text-red-600 font-bold">סה"כ האפשרויות ({rowsSum}) חייב להיות שווה לכמות הכוללת ({totalVal})</p>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             {template.options.length > 0 && (
                               <div className="grid grid-cols-2 gap-2">
                                 {template.options.map(opt => {
@@ -2539,10 +2561,17 @@
                               onChange={e => setComplexState(prev => ({ ...prev, notes: e.target.value }))}
                               className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
                             />
-                            <button type="button" onClick={addOrderItem}
-                              className="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors">
-                              + הוסף לרשימה
-                            </button>
+                            {(() => {
+                              const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+                              const totalVal = parseFloat(complexState.totalQty) || 0;
+                              const hasMismatch = template.showTotalQty && template.options.length > 0 && totalVal > 0 && rowsSum > 0 && Math.abs(rowsSum - totalVal) > 0.001;
+                              return (
+                                <button type="button" onClick={addOrderItem} disabled={hasMismatch}
+                                  className={`w-full py-2.5 font-bold rounded-xl transition-colors text-white ${hasMismatch ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}>
+                                  + הוסף לרשימה
+                                </button>
+                              );
+                            })()}
                           </div>
                         );
                       })()}
@@ -2632,6 +2661,18 @@
                         </div>
                       );
                     })()}
+                  </div>
+
+                  {/* הערות / תוספות להזמנה */}
+                  <div className="mt-3 border border-gray-200 rounded-xl p-3 bg-white">
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5">📝 הערות / תוספות להזמנה</label>
+                    <textarea
+                      value={orderNotes}
+                      onChange={e => setOrderNotes(e.target.value)}
+                      placeholder="הוסף הערות כלליות לקצביה..."
+                      rows={3}
+                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+                    />
                   </div>
 
                   <div className="pt-4 flex gap-3 sticky bottom-0 bg-gray-50/95 p-4 -mx-5 -mb-5 border-t border-gray-200 backdrop-blur-sm">
@@ -3921,7 +3962,7 @@
       const [sortBy, setSortBy] = useState('');
       const [sortDir, setSortDir] = useState('asc');
       const [showAddModal, setShowAddModal] = useState(false);
-      const [newProduct, setNewProduct] = useState({ name: '', category: 'עוף', sku: '', storageTypes: ['frozen'] });
+      const [newProduct, setNewProduct] = useState({ name: '', category: 'עוף', sku: '', storageTypes: ['frozen'], kashrut: '' });
       const tableRef = useRef(null);
 
       useEffect(() => {
@@ -3941,7 +3982,7 @@
 
       const openAddModal = () => {
         const cat = activeCats.size === 1 ? [...activeCats][0] : 'עוף';
-        setNewProduct({ name: '', category: cat, sku: '', storageTypes: ['frozen'] });
+        setNewProduct({ name: '', category: cat, sku: '', storageTypes: ['frozen'], kashrut: '' });
         setShowAddModal(true);
       };
 
@@ -3949,10 +3990,15 @@
         if (!newProduct.name.trim()) return;
         const newId = `p_${Date.now()}`;
         const isFish = newProduct.category === 'דגים';
-        setItems(prev => [...prev, ...(isFish
-          ? [{ id: `${newId}_0`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: 'כללי', category: 'דגים' }]
-          : kashrutList.map((k, j) => ({ id: `${newId}_${j}`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: k.name, category: newProduct.category }))
-        )]);
+        const targetKashrutList = isFish
+          ? [{ name: 'כללי' }]
+          : (newProduct.kashrut ? [{ name: newProduct.kashrut }] : kashrutList);
+        const existingCombos = new Set(items.map(p => `${p.name}|${p.kashrut}`));
+        const newItems = targetKashrutList
+          .map((k, j) => ({ id: `${newId}_${j}`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: k.name, category: isFish ? 'דגים' : newProduct.category }))
+          .filter(item => !existingCombos.has(`${item.name}|${item.kashrut}`));
+        if (!newItems.length) { setShowAddModal(false); return; }
+        setItems(prev => [...prev, ...newItems]);
         setShowAddModal(false);
       };
 
@@ -4095,7 +4141,14 @@
                   <tr><td colSpan={6} className="p-8 text-center text-gray-400 text-sm">אין מוצרים התואמים לסינון הנבחר</td></tr>
                 )}
                 {visibleCats.map(cat => {
-                  const catItems = filtered.filter(p => p._cat === cat);
+                  const catItems = filtered.filter(p => p._cat === cat).sort((a, b) => {
+                    if (sortBy) return 0;
+                    const sa = a.sku || '', sb = b.sku || '';
+                    if (!sa && !sb) return 0;
+                    if (!sa) return 1;
+                    if (!sb) return -1;
+                    return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+                  });
                   if (!catItems.length) return null;
                   const s = CAT_STYLES[cat] || CAT_STYLES['עוף'];
                   return (
@@ -4213,6 +4266,25 @@
                     />
                   </div>
 
+                  {/* כשרות */}
+                  {newProduct.category !== 'דגים' && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-1">כשרות</label>
+                      <div className="flex gap-2 flex-wrap">
+                        <button type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: '' }))}
+                          className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${!newProduct.kashrut ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+                          כל הכשרויות
+                        </button>
+                        {kashrutList.map(k => (
+                          <button key={k.id || k.name} type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: k.name }))}
+                            className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.kashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+                            {k.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* סוג מלאי */}
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">סוג מלאי</label>
@@ -4229,7 +4301,11 @@
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-400">המוצר יתווסף לכל סוגי הכשרות ברשימה ({kashrutList.map(k => k.name).join(', ')})</p>
+                  <p className="text-xs text-gray-400">
+                    {newProduct.kashrut
+                      ? `המוצר יתווסף לכשרות: ${newProduct.kashrut}`
+                      : `המוצר יתווסף לכל סוגי הכשרות (${kashrutList.map(k => k.name).join(', ')})`}
+                  </p>
                 </div>
 
                 <div className="flex gap-3 pt-1">
