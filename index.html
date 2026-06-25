@@ -1203,6 +1203,7 @@
       const [editItemState, setEditItemState] = useState({});
       const orderSkuRef = React.useRef(null);
       const nameSearchRef = React.useRef(null);
+      const modalFormRef = React.useRef(null);
       const [expandedOrders, setExpandedOrders] = useState(new Set());
       const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
       const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
@@ -1283,7 +1284,10 @@
           }]);
         }
         setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '', storageType: '', needsStorageToggle: false });
-        setTimeout(() => orderSkuRef.current?.focus(), 30);
+        setTimeout(() => {
+          orderSkuRef.current?.focus();
+          if (modalFormRef.current) modalFormRef.current.scrollTop = modalFormRef.current.scrollHeight;
+        }, 80);
       };
 
       // פריטים ללא אופציות — עדכון שורה רגילה
@@ -2124,7 +2128,7 @@
                                   <span className="font-bold text-gray-800">{group.key}</span>
                                   {kc && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'15', color: kc }}>{group.items[0].kashrut}</span>}
                                   {group.items[0].sku && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-500 border border-gray-200">{group.items[0].sku}</span>}
-                                  {group.items[0].storageType === 'frozen' && <span className="text-[10px]">🧊</span>}
+                                  {group.items[0].storageType === 'frozen' ? <span className="text-[10px]">🧊</span> : <span className="text-[10px]">🥩</span>}
                                 </div>
                                 {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
@@ -2270,6 +2274,7 @@
                       if (idx !== -1 && idx < focusable.length - 1) focusable[idx + 1].focus();
                     }
                   }}
+                  ref={modalFormRef}
                   className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
                   
                   {formErrorMessage && (
@@ -2423,7 +2428,9 @@
                                         <span className="font-bold text-gray-800 text-sm">{p.name}</span>
                                         <div className="flex items-center gap-2 shrink-0 mr-2">
                                           <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
-                                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">{p.kashrut}</span>
+                                          {p.kashrut && (() => { const kc = getKashrutColor(p.kashrut); return (
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'20', color: kc }}>{p.kashrut}</span>
+                                          ); })()}
                                         </div>
                                       </div>
                                     ))}
@@ -2570,7 +2577,7 @@
                                         <span className="font-mono text-[11px] text-gray-400 w-12 shrink-0">{item.sku || '—'}</span>
                                         <span className="flex-1 font-bold text-sm truncate" style={{ color: ikc }}>{item.name}</span>
                                         {item.kashrut && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0" style={{ borderColor: ikc+'80', backgroundColor: ikc+'15', color: ikc }}>{item.kashrut}</span>}
-                                        {item.storageType === 'frozen' && <span className="text-[11px] shrink-0">🧊</span>}
+                                        {item.storageType === 'frozen' ? <span className="text-[11px] shrink-0">🧊</span> : <span className="text-[11px] shrink-0">🥩</span>}
                                         {item.type === 'simple' && !isEditing && <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{item.qty}</span>}
                                         {item.type === 'complex' && !isEditing && (() => { const tot = (item.rows||[]).reduce((s,r)=>s+(parseFloat(r.qty)||0),0)||(parseFloat(item.totalQty)||0); return tot>0 ? <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{tot}</span> : null; })()}
                                         {item.type === 'simple' && isEditing && <input type="number" min="0" step="0.5" value={editItemState.qty ?? item.qty} onChange={e => setEditItemState(prev => ({...prev, qty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none shrink-0" />}
@@ -2601,6 +2608,7 @@
                                         const eChecks = editItemState.checks || [];
                                         return (
                                           <div className={`border-t-2 border-dashed pt-2 mt-2 space-y-2 ${cc.headerBorder}`}>
+                                            {tmpl.showTotalQty && <div className="flex items-center gap-2"><span className="text-xs font-bold text-gray-600">כמות כוללת:</span><input type="number" min="0" step="0.5" placeholder="0" value={editItemState.totalQty??''} onChange={e=>setEditItemState(prev=>({...prev,totalQty:e.target.value}))} className={`w-24 p-1.5 text-sm border-2 border-gray-300 rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring}`}/></div>}
                                             {tmpl.options.length > 0 && <div className="grid grid-cols-2 gap-1.5">{tmpl.options.map(opt => { const qty = (eRows.find(r=>r.option===opt)||{}).qty||''; const isActive=parseFloat(qty)>0; return (<div key={opt} onClick={e=>{if(e.target.tagName!=='INPUT')e.currentTarget.querySelector('input').focus();}} className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border cursor-pointer ${isActive?cc.cardActive:'bg-white border-gray-200'}`}><span className={`text-xs font-bold flex-1 ${isActive?cc.cardActiveText:'text-gray-600'}`}>{opt}</span><input type="number" min="0" step="0.5" placeholder="כמות" value={qty} onChange={e=>{const v=e.target.value;setEditItemState(prev=>{const rows=prev.rows||[];const exists=rows.some(r=>r.option===opt);return{...prev,rows:exists?rows.map(r=>r.option===opt?{...r,qty:v}:r):[...rows,{option:opt,qty:v}]};});}} className={`w-14 p-1 text-xs border rounded text-center font-bold outline-none ${isActive?'border-current bg-white':'border-gray-200 bg-gray-50'}`}/></div>);})}</div>}
                                             {tmpl.checkboxOptions&&tmpl.checkboxOptions.length>0&&<div className="flex flex-wrap gap-1">{tmpl.checkboxOptions.map(opt=>{const isChecked=eChecks.includes(opt);return(<div key={opt} onClick={()=>setEditItemState(prev=>{const checks=prev.checks||[];return{...prev,checks:isChecked?checks.filter(c=>c!==opt):[...checks,opt]};})} className={`flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer select-none text-[11px] font-bold ${isChecked?cc.cardActive+' '+cc.cardActiveText:'bg-white border-gray-200 text-gray-600'}`}>{isChecked?'✓':'○'} {opt}</div>);})}</div>}
                                             <input type="text" value={editItemState.notes??''} onChange={e=>setEditItemState(prev=>({...prev,notes:e.target.value}))} placeholder="הערה..." className="w-full p-1.5 border border-gray-200 rounded text-xs outline-none"/>
