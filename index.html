@@ -1179,7 +1179,7 @@
       const [floor, setFloor] = useState('');
       const [apt, setApt] = useState('');
       const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().split('T')[0]);
-      const [pickupTime, setPickupTime] = useState('');
+      const [pickupTime, setPickupTime] = useState(() => new Date().toISOString().split('T')[0]);
       const [kashrut, setKashrut] = useState('');
       const [flags, setFlags] = useState({ mustCoordinate: false, notifyReady: false });
       const [chargeStatus, setChargeStatus] = useState('');
@@ -1270,17 +1270,18 @@
           const template = ORDER_FORM_TEMPLATE.find(t => t.name === orderSkuRow.name);
           if (!template) return;
           const rows = complexState.rows.filter(r => parseFloat(r.qty) > 0);
-          const totalQty = parseFloat(complexState.totalQty) || 0;
-          if (rows.length === 0 && totalQty === 0 && complexState.checks.length === 0) return;
-          if (template.showTotalQty && template.options.length > 0 && totalQty > 0 && rows.length > 0) {
+          const skuQty = parseFloat(orderSkuRow.qty) || 0;
+          if (rows.length === 0 && skuQty === 0 && complexState.checks.length === 0) return;
+          if (template.showTotalQty && template.options.length > 0 && skuQty > 0 && rows.length > 0) {
             const rowsSum = rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
-            if (Math.abs(rowsSum - totalQty) > 0.001) return;
+            if (Math.abs(rowsSum - skuQty) > 0.001) return;
           }
+          const savedTotal = skuQty > 0 ? orderSkuRow.qty : rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0).toString();
           setOrderAddedItems(prev => [...prev, {
             id: Date.now(), sku: orderSkuRow.sku, name: orderSkuRow.name, category: orderSkuRow.category,
             type: 'complex', template, kashrut: orderSkuRow.kashrut || kashrut,
             storageType: orderSkuRow.storageType || 'fresh',
-            totalQty: complexState.totalQty,
+            totalQty: savedTotal,
             rows: complexState.rows.filter(r => parseFloat(r.qty) > 0),
             checks: complexState.checks, notes: complexState.notes
           }]);
@@ -1415,7 +1416,7 @@
         setEditingOrder(null);
         setCustomerName(''); setCustomerPhone(''); setCustomerMobile('');
         setNeighborhood(''); setSubNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
-        setDeliveryDate(''); setPickupTime(''); setKashrut('');
+        setDeliveryDate(new Date().toISOString().split('T')[0]); setPickupTime(new Date().toISOString().split('T')[0]); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
         setAssignedButcher('');
@@ -2495,52 +2496,44 @@
                         const cc = getCatColors(template.category);
                         return (
                           <div className={`border-t-2 border-dashed pt-3 space-y-3 ${cc.headerBorder}`}>
-                            {template.showTotalQty && (() => {
+                            {template.options.length > 0 && (() => {
                               const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
-                              const totalVal = parseFloat(complexState.totalQty) || 0;
-                              const hasMismatch = template.options.length > 0 && totalVal > 0 && rowsSum > 0 && Math.abs(rowsSum - totalVal) > 0.001;
+                              const skuQtyVal = parseFloat(orderSkuRow.qty) || 0;
+                              const hasMismatch = skuQtyVal > 0 && rowsSum > 0 && Math.abs(rowsSum - skuQtyVal) > 0.001;
                               return (
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-sm font-bold text-gray-600">כמות כוללת:</span>
-                                    <input type="number" min="0" step="0.5" placeholder="0"
-                                      value={complexState.totalQty}
-                                      onChange={e => setComplexState(prev => ({ ...prev, totalQty: e.target.value }))}
-                                      className={`w-24 p-2 text-base border-2 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold ${hasMismatch ? 'border-red-400' : 'border-gray-300'}`}
-                                    />
-                                    {template.options.length > 0 && totalVal > 0 && (
-                                      <span className={`text-sm font-bold px-2 py-1 rounded-lg ${hasMismatch ? 'bg-red-100 text-red-700' : rowsSum === totalVal ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                        הוקצה: {rowsSum} / {totalVal}
-                                      </span>
-                                    )}
+                                <>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {template.options.map(opt => {
+                                      const row = complexState.rows.find(r => r.option === opt);
+                                      const qty = row?.qty || '';
+                                      const isActive = parseFloat(qty) > 0;
+                                      return (
+                                        <div key={opt}
+                                          onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
+                                          className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border-2 cursor-pointer transition-all ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
+                                          <span className={`text-xs font-bold flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                          <input type="number" min="0" step="0.5" placeholder="כמות"
+                                            value={qty}
+                                            onChange={e => { const v = e.target.value; setComplexState(prev => { const exists = prev.rows.some(r => r.option === opt); return { ...prev, rows: exists ? prev.rows.map(r => r.option === opt ? { ...r, qty: v } : r) : [...prev.rows, { option: opt, qty: v }] }; }); }}
+                                            className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50'}`}
+                                          />
+                                        </div>
+                                      );
+                                    })}
                                   </div>
-                                  {hasMismatch && (
-                                    <p className="text-xs text-red-600 font-bold">סה"כ האפשרויות ({rowsSum}) חייב להיות שווה לכמות הכוללת ({totalVal})</p>
+                                  {skuQtyVal > 0 && (
+                                    <div className="space-y-1">
+                                      <span className={`inline-flex text-sm font-bold px-2 py-1 rounded-lg ${hasMismatch ? 'bg-red-100 text-red-700' : rowsSum === skuQtyVal ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                        הוקצה: {rowsSum} / {skuQtyVal}
+                                      </span>
+                                      {hasMismatch && (
+                                        <p className="text-xs text-red-600 font-bold">סה"כ האפשרויות ({rowsSum}) חייב להיות שווה לכמות ({skuQtyVal})</p>
+                                      )}
+                                    </div>
                                   )}
-                                </div>
+                                </>
                               );
                             })()}
-                            {template.options.length > 0 && (
-                              <div className="grid grid-cols-2 gap-2">
-                                {template.options.map(opt => {
-                                  const row = complexState.rows.find(r => r.option === opt);
-                                  const qty = row?.qty || '';
-                                  const isActive = parseFloat(qty) > 0;
-                                  return (
-                                    <div key={opt}
-                                      onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
-                                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border-2 cursor-pointer transition-all ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
-                                      <span className={`text-xs font-bold flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
-                                      <input type="number" min="0" step="0.5" placeholder="כמות"
-                                        value={qty}
-                                        onChange={e => { const v = e.target.value; setComplexState(prev => { const exists = prev.rows.some(r => r.option === opt); return { ...prev, rows: exists ? prev.rows.map(r => r.option === opt ? { ...r, qty: v } : r) : [...prev.rows, { option: opt, qty: v }] }; }); }}
-                                        className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50'}`}
-                                      />
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
                             {template.checkboxOptions && template.checkboxOptions.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 border-t border-dashed border-gray-200 pt-2">
                                 {template.checkboxOptions.map(opt => {
@@ -2563,8 +2556,8 @@
                             />
                             {(() => {
                               const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
-                              const totalVal = parseFloat(complexState.totalQty) || 0;
-                              const hasMismatch = template.showTotalQty && template.options.length > 0 && totalVal > 0 && rowsSum > 0 && Math.abs(rowsSum - totalVal) > 0.001;
+                              const skuQtyVal = parseFloat(orderSkuRow.qty) || 0;
+                              const hasMismatch = template.showTotalQty && template.options.length > 0 && skuQtyVal > 0 && rowsSum > 0 && Math.abs(rowsSum - skuQtyVal) > 0.001;
                               return (
                                 <button type="button" onClick={addOrderItem} disabled={hasMismatch}
                                   className={`w-full py-2.5 font-bold rounded-xl transition-colors text-white ${hasMismatch ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}>
