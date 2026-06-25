@@ -1167,6 +1167,7 @@
       const [packingOption, setPackingOption] = useState('');
       const [categorySearch, setCategorySearch] = useState({});
       const [formErrorMessage, setFormErrorMessage] = useState('');
+      const [complexAddError, setComplexAddError] = useState('');
 
       // Client state fields
       const [customerName, setCustomerName] = useState('');
@@ -1212,6 +1213,19 @@
           setTimeout(() => editingItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
         }
       }, [editingItemId]);
+
+      useEffect(() => {
+        if (showComplex && modalFormRef.current) {
+          setTimeout(() => modalFormRef.current.scrollTo({ top: modalFormRef.current.scrollHeight, behavior: 'smooth' }), 120);
+        }
+      }, [showComplex]);
+
+      useEffect(() => {
+        if (orderAddedItems.length > 0 && modalFormRef.current) {
+          setTimeout(() => modalFormRef.current.scrollTo({ top: modalFormRef.current.scrollHeight, behavior: 'smooth' }), 120);
+        }
+      }, [orderAddedItems.length]);
+
       const [expandedOrders, setExpandedOrders] = useState(new Set());
       const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
       const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
@@ -1274,7 +1288,10 @@
           if (rows.length === 0 && skuQty === 0 && complexState.checks.length === 0) return;
           if (template.showTotalQty && template.options.length > 0 && skuQty > 0 && rows.length > 0) {
             const rowsSum = rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
-            if (Math.abs(rowsSum - skuQty) > 0.001) return;
+            if (rowsSum < skuQty - 0.001) {
+              setComplexAddError(`נותר להקצות עוד ${skuQty - rowsSum} — יש לחלק את כל הכמות (${skuQty})`);
+              return;
+            }
           }
           const savedTotal = skuQty > 0 ? orderSkuRow.qty : rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0).toString();
           setOrderAddedItems(prev => [...prev, {
@@ -1287,6 +1304,7 @@
           }]);
           setShowComplex(false);
           setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+          setComplexAddError('');
         } else {
           if (!parseFloat(orderSkuRow.qty)) return;
           setOrderAddedItems(prev => [...prev, {
@@ -2273,7 +2291,7 @@
           {/* מודאל הזמנה חדשה */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="bg-white rounded-2xl shadow-xl border border-purple-100 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="bg-white rounded-2xl shadow-xl border border-purple-100 w-full max-w-3xl max-h-[98vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="p-4 bg-purple-50 border-b border-purple-100 flex items-center justify-between shrink-0">
                   <h3 className="font-bold text-lg flex items-center gap-2 text-purple-800"><Icons.ClipboardList className="w-5 h-5" /> {editingOrder ? `עריכת הזמנה #${editingOrder.id}` : 'טופס הזמנה מלא (כמו בנייר)'}</h3>
                   <button onClick={closeModal} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
@@ -2514,7 +2532,19 @@
                                           <span className={`text-xs font-bold flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
                                           <input type="number" min="0" step="0.5" placeholder="כמות"
                                             value={qty}
-                                            onChange={e => { const v = e.target.value; setComplexState(prev => { const exists = prev.rows.some(r => r.option === opt); return { ...prev, rows: exists ? prev.rows.map(r => r.option === opt ? { ...r, qty: v } : r) : [...prev.rows, { option: opt, qty: v }] }; }); }}
+                                            onChange={e => {
+                                              const v = e.target.value;
+                                              setComplexAddError('');
+                                              setComplexState(prev => {
+                                                const skuQ = parseFloat(orderSkuRow.qty) || 0;
+                                                const otherSum = prev.rows.filter(r => r.option !== opt).reduce((s,r) => s+(parseFloat(r.qty)||0), 0);
+                                                const maxThis = skuQ > 0 ? Math.max(0, skuQ - otherSum) : Infinity;
+                                                const numV = parseFloat(v) || 0;
+                                                const finalV = (skuQ > 0 && numV > maxThis) ? maxThis.toString() : v;
+                                                const exists = prev.rows.some(r => r.option === opt);
+                                                return { ...prev, rows: exists ? prev.rows.map(r => r.option === opt ? { ...r, qty: finalV } : r) : [...prev.rows, { option: opt, qty: finalV }] };
+                                              });
+                                            }}
                                             className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50'}`}
                                           />
                                         </div>
@@ -2522,12 +2552,12 @@
                                     })}
                                   </div>
                                   {skuQtyVal > 0 && (
-                                    <div className="space-y-1">
-                                      <span className={`inline-flex text-sm font-bold px-2 py-1 rounded-lg ${hasMismatch ? 'bg-red-100 text-red-700' : rowsSum === skuQtyVal ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`inline-flex text-sm font-bold px-2 py-1 rounded-lg ${rowsSum > skuQtyVal ? 'bg-red-100 text-red-700' : rowsSum === skuQtyVal ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                                         הוקצה: {rowsSum} / {skuQtyVal}
                                       </span>
-                                      {hasMismatch && (
-                                        <p className="text-xs text-red-600 font-bold">סה"כ האפשרויות ({rowsSum}) חייב להיות שווה לכמות ({skuQtyVal})</p>
+                                      {rowsSum < skuQtyVal && rowsSum > 0 && (
+                                        <span className="text-xs text-orange-600 font-bold">נותר: {skuQtyVal - rowsSum}</span>
                                       )}
                                     </div>
                                   )}
@@ -2554,17 +2584,16 @@
                               onChange={e => setComplexState(prev => ({ ...prev, notes: e.target.value }))}
                               className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
                             />
-                            {(() => {
-                              const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
-                              const skuQtyVal = parseFloat(orderSkuRow.qty) || 0;
-                              const hasMismatch = template.showTotalQty && template.options.length > 0 && skuQtyVal > 0 && rowsSum > 0 && Math.abs(rowsSum - skuQtyVal) > 0.001;
-                              return (
-                                <button type="button" onClick={addOrderItem} disabled={hasMismatch}
-                                  className={`w-full py-2.5 font-bold rounded-xl transition-colors text-white ${hasMismatch ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}>
-                                  + הוסף לרשימה
-                                </button>
-                              );
-                            })()}
+                            {complexAddError && (
+                              <div className="flex items-start gap-2 bg-red-50 border border-red-300 rounded-xl p-3">
+                                <span className="text-red-500 text-base shrink-0">⚠️</span>
+                                <span className="text-xs text-red-700 font-bold">{complexAddError}</span>
+                              </div>
+                            )}
+                            <button type="button" onClick={addOrderItem}
+                              className="w-full py-2.5 font-bold rounded-xl transition-colors text-white bg-green-500 hover:bg-green-600">
+                              + הוסף לרשימה
+                            </button>
                           </div>
                         );
                       })()}
