@@ -1204,6 +1204,12 @@
       const orderSkuRef = React.useRef(null);
       const nameSearchRef = React.useRef(null);
       const modalFormRef = React.useRef(null);
+      const editingItemRef = React.useRef(null);
+      useEffect(() => {
+        if (editingItemId && editingItemRef.current && modalFormRef.current) {
+          setTimeout(() => editingItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+        }
+      }, [editingItemId]);
       const [expandedOrders, setExpandedOrders] = useState(new Set());
       const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
       const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
@@ -2561,17 +2567,18 @@
                                     const isEditing = editingItemId === item.id;
                                     const ikc = getKashrutColor(item.kashrut || '');
                                     const saveItem = () => {
+                                      const savedRows = (editItemState.rows ?? item.rows ?? []).filter(r => parseFloat(r.qty) > 0);
                                       setOrderAddedItems(prev => prev.map(i => i.id === item.id ? { ...i,
                                         qty: item.type === 'simple' ? (editItemState.qty ?? i.qty) : i.qty,
                                         notes: editItemState.notes ?? i.notes,
                                         rows: editItemState.rows ?? i.rows,
                                         checks: editItemState.checks ?? i.checks,
-                                        totalQty: editItemState.totalQty ?? i.totalQty
+                                        totalQty: savedRows.length > 0 ? '' : (editItemState.totalQty ?? i.totalQty)
                                       } : i));
                                       setEditingItemId(null); setEditItemState({});
                                     };
                                     return (
-                                    <div key={item.id} className={`px-3 py-2 text-xs ${isEditing ? 'bg-blue-50/40' : ''}`}>
+                                    <div key={item.id} ref={isEditing ? editingItemRef : null} className={`px-3 py-2 text-xs ${isEditing ? 'bg-blue-50/40' : ''}`}>
                                       {/* שורה קומפקטית */}
                                       <div className="flex items-center gap-2">
                                         <span className="font-mono text-[11px] text-gray-400 w-12 shrink-0">{item.sku || '—'}</span>
