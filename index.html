@@ -180,6 +180,19 @@
       </button>
     );
 
+    const StatCard = ({ label, value, sub, color = '#6366f1', icon }) => (
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: color + '20' }}>
+          <span className="text-2xl">{icon}</span>
+        </div>
+        <div>
+          <div className="text-2xl font-black text-gray-900">{value}</div>
+          <div className="text-sm font-bold text-gray-500">{label}</div>
+          {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
+        </div>
+      </div>
+    );
+
     // --- Address Autocomplete (data.gov.il) ---
     // רשימת ערים נטענת פעם אחת
     let _cityListCache = null;
@@ -5326,19 +5339,6 @@
         setInventoryLog(prev => [snapshot, ...prev]);
         setCheckNote('');
       };
-
-      const StatCard = ({ label, value, sub, color = '#6366f1', icon }) => (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: color + '20' }}>
-            <span className="text-2xl">{icon}</span>
-          </div>
-          <div>
-            <div className="text-2xl font-black text-gray-900">{value}</div>
-            <div className="text-sm font-bold text-gray-500">{label}</div>
-            {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
-          </div>
-        </div>
-      );
 
       return (
         <div className="animate-in fade-in duration-300 space-y-8">
