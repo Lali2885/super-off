@@ -1973,6 +1973,55 @@
             </Button>
           </div>
 
+          {/* סטטיסטיקות הזמנות */}
+          {(() => {
+            const _totalOrders = orders.length;
+            const _newOrders = orders.filter(o => o.status === 'new' && !o.assignedButcher).length;
+            const _assignedOrders = orders.filter(o => o.status === 'new' && o.assignedButcher).length;
+            const _completedOrders = orders.filter(o => o.status === 'completed' || o.status === 'delivered').length;
+            const _deliveryOrders = orders.filter(o => o.type === 'delivery').length;
+            const _pickupOrders = orders.filter(o => o.type === 'pickup').length;
+            const _ordersByKashrut = kashrutList.map(k => ({ ...k, count: orders.filter(o => o.kashrut === k.name).length }));
+            const _ordersByButcher = butchersList.map(b => ({ ...b, count: orders.filter(o => o.assignedButcher === b.name).length }));
+            return (
+              <div className="space-y-4 mb-6">
+                <div>
+                  <h2 className="text-lg font-extrabold text-gray-700 mb-3 flex items-center gap-2">🛒 הזמנות</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <StatCard label="סה״כ הזמנות" value={_totalOrders} icon="📦" color="#8b5cf6" />
+                    <StatCard label="ממתינות לטיפול" value={_newOrders} icon="🆕" color="#ef4444" />
+                    <StatCard label="משויכות לקצב" value={_assignedOrders} icon="🔪" color="#f97316" />
+                    <StatCard label="הושלמו" value={_completedOrders} icon="✅" color="#22c55e" />
+                    <StatCard label="משלוחים" value={_deliveryOrders} icon="🚚" color="#3b82f6" />
+                    <StatCard label="איסוף עצמי" value={_pickupOrders} icon="🏪" color="#6366f1" />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-gray-700 mb-3 flex items-center gap-2">✡️ הזמנות לפי כשרות</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {_ordersByKashrut.map(k => (
+                      <div key={k.id} className="bg-white rounded-xl border shadow-sm p-4 text-center" style={{ borderColor: (k.color || '#888') + '50' }}>
+                        <div className="w-3 h-3 rounded-full mx-auto mb-2" style={{ backgroundColor: k.color || '#888' }} />
+                        <div className="text-2xl font-black text-gray-900">{k.count}</div>
+                        <div className="text-sm font-bold mt-1" style={{ color: k.color || '#888' }}>{k.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {butchersList.length > 0 && (
+                  <div>
+                    <h2 className="text-lg font-extrabold text-gray-700 mb-3 flex items-center gap-2">🔪 עומס עבודה לפי קצב</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {_ordersByButcher.map(b => (
+                        <StatCard key={b.id} label={b.name} value={b.count} sub="הזמנות משויכות" icon="👨‍🍳" color="#f97316" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {(() => {
             const newOrders      = orders.filter(o => o.status === 'new' && !o.assignedButcher);
             const assignedOrders = orders.filter(o => o.status === 'new' && o.assignedButcher);
