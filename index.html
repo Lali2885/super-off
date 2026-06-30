@@ -873,7 +873,7 @@
               {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder}</div>}
             </td>
             <td className="p-2 text-center bg-indigo-50/40">
-              <span className="font-black text-indigo-700 text-base">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
+              <span className="font-black text-indigo-700 text-base">{cartons + (bsBalance[`${p.name}|${kashrut}`] || 0)}</span>
             </td>
           </tr>
         );
@@ -1124,11 +1124,6 @@
               className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'frozen' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-50'}`}>
               🧊 מלאי קפוא ({new Set(frozenItems.filter(p => p.storageTypes?.includes('frozen')).map(p => p.name)).size} פריטים)
             </button>
-            <button
-              onClick={() => setActiveTab('fresh')}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'fresh' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'}`}>
-              🥩 מלאי טרי ({freshItems.length} פריטים)
-            </button>
           </div>
 
           {/* מודאל ייצוא */}
@@ -1200,9 +1195,6 @@
             </div>
           )}
 
-          {activeTab === 'fresh' && (
-            <FreshStockPanel stock={stock} setStock={setStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />
-          )}
           {activeTab === 'frozen' && (
             <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />
           )}
