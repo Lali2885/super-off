@@ -1120,6 +1120,10 @@
                 className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
                 <span>⬇️</span> ייצוא מלאי
               </button>
+              <button onClick={() => { setActiveTab(activeTab === 'log' ? 'frozen' : 'log'); if (!logLoaded) loadLog(); }}
+                className={`flex items-center gap-2 px-4 py-2.5 font-bold text-sm rounded-xl shadow-sm transition-colors ${activeTab === 'log' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-amber-100 hover:bg-amber-200 text-amber-700'}`}>
+                <span>📋</span> יומן פעולות
+              </button>
               <button onClick={() => { setResetModal(true); setResetPassword(''); setResetError(''); }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
                 <span>🗑️</span> איפוס מלאי
@@ -1165,11 +1169,6 @@
               onClick={() => setActiveTab('frozen')}
               className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'frozen' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-50'}`}>
               🧊 מלאי קפוא ({new Set(frozenItems.filter(p => p.storageTypes?.includes('frozen')).map(p => p.name)).size} פריטים)
-            </button>
-            <button
-              onClick={() => { setActiveTab('log'); if (!logLoaded) loadLog(); }}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'log' ? 'bg-amber-500 text-white border-amber-500 shadow-md' : 'bg-white text-amber-600 border-amber-200 hover:bg-amber-50'}`}>
-              📋 יומן פעולות
             </button>
           </div>
 
