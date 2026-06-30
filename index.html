@@ -4476,6 +4476,9 @@
       const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
       const [editingExitProduct, setEditingExitProduct] = useState(null);
       const exitSkuRef = useRef(null);
+      const exitNameSearchRef = useRef(null);
+      const [exitNameSearch, setExitNameSearch] = useState('');
+      const [showExitNameDropdown, setShowExitNameDropdown] = useState(false);
       const [reportDate, setReportDate] = useState(today);
       const [showAllExits, setShowAllExits] = useState(true);
 
@@ -4532,12 +4535,14 @@
           setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...exitProductForm, id: Date.now() }] } : p));
         }
         setExitProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
+        setExitNameSearch(''); setShowExitNameDropdown(false);
         setTimeout(() => exitSkuRef.current?.focus(), 30);
       };
 
       const startEditExitProduct = (palletId, product) => {
         setEditingExitProduct({ palletId, productId: product.id });
         setExitProductForm({ sku: product.sku||'', name: product.name||'', kashrut: product.kashrut||'', cartons: product.cartons||'', expiryDate: product.expiryDate||'', dateType: product.dateType||'', weight: product.weight||'' });
+        setExitNameSearch(''); setShowExitNameDropdown(false);
         setTimeout(() => exitSkuRef.current?.focus(), 30);
       };
 
@@ -4818,6 +4823,31 @@
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
                           <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
                             <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div className="relative"><label className="text-xs text-gray-400 block mb-0.5">חיפוש לפי שם</label>
+                            <input ref={exitNameSearchRef} type="text" autoComplete="off" placeholder="הקלד שם מוצר..." value={exitNameSearch}
+                              onChange={e => { setExitNameSearch(e.target.value); setShowExitNameDropdown(true); }}
+                              onFocus={() => setShowExitNameDropdown(true)}
+                              onBlur={() => setTimeout(() => setShowExitNameDropdown(false), 150)}
+                              className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" />
+                            {showExitNameDropdown && exitNameSearch && (() => {
+                              const results = (frozenProductsList || []).filter(p =>
+                                p.name?.includes(exitNameSearch) || p.name?.toLowerCase().includes(exitNameSearch.toLowerCase())
+                              ).slice(0, 20);
+                              if (!results.length) return null;
+                              return (
+                                <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
+                                  {results.map((p, i) => (
+                                    <div key={i}
+                                      onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setExitNameSearch(''); setShowExitNameDropdown(false); }}
+                                      className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer">
+                                      <span className="font-bold text-gray-800 text-xs">{p.name}</span>
+                                      <span className="text-xs text-gray-400 font-mono shrink-0 mr-2">{p.sku}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </div>
                           <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
                             <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                           <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
@@ -4842,7 +4872,7 @@
                           </div>
                           <div className="col-span-2 flex gap-2 sm:col-span-1">
                             <button onClick={() => addProductToExitPallet(pallet.id)} className={`flex-1 text-white px-4 py-2 rounded text-xs font-bold whitespace-nowrap ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן מוצר' : 'הוסף'}</button>
-                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); }} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); setExitNameSearch(''); setShowExitNameDropdown(false); }} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
                           </div>
                         </div>
                       </div>
