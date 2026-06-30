@@ -790,19 +790,16 @@
         <thead className="text-xs border-b border-gray-100">
           <tr>
             <th className="p-2 font-bold text-right bg-gray-50" rowSpan={2}>מוצר</th>
-            <th className="p-2 font-bold text-center bg-blue-50 text-blue-700 border-r border-blue-100" colSpan={2}>מצב נתון</th>
-            <th className="p-2 font-bold text-center bg-green-50 text-green-700 border-r border-green-100" colSpan={3}>כניסה למלאי</th>
-            <th className="p-2 font-bold text-center bg-red-50 text-red-700" colSpan={3}>משיכה ממלאי</th>
+            <th className="p-2 font-bold text-center bg-green-50 text-green-700 border-r border-green-100" colSpan={2}>כניסה למלאי</th>
+            <th className="p-2 font-bold text-center bg-red-50 text-red-700 border-r border-red-100" colSpan={1}>משיכה ממלאי</th>
+            <th className="p-2 font-bold text-center bg-blue-50 text-blue-700" colSpan={2}>מצב נתון</th>
           </tr>
           <tr>
-            <th className="p-2 font-bold text-center bg-blue-50 text-blue-600">מגשים</th>
-            <th className="p-2 font-bold text-center bg-blue-50 text-blue-600 border-r border-blue-100">קרטונים</th>
             <th className="p-2 font-bold text-center bg-green-50 text-green-600">מגשים</th>
-            <th className="p-2 font-bold text-center bg-green-50 text-green-600">קרטונים</th>
-            <th className="p-1 bg-green-50 border-r border-green-100"></th>
-            <th className="p-2 font-bold text-center bg-red-50 text-red-600">מגשים</th>
-            <th className="p-2 font-bold text-center bg-red-50 text-red-600">קרטונים</th>
-            <th className="p-1 bg-red-50"></th>
+            <th className="p-2 font-bold text-center bg-green-50 text-green-600 border-r border-green-100">קרטונים</th>
+            <th className="p-2 font-bold text-center bg-red-50 text-red-600 border-r border-red-100">קרטונים</th>
+            <th className="p-2 font-bold text-center bg-blue-50 text-blue-600">מגשים</th>
+            <th className="p-2 font-bold text-center bg-blue-50 text-blue-600">קרטונים</th>
           </tr>
         </thead>
       );
@@ -820,20 +817,13 @@
               {p.name}
               {p.sku && <span className="block text-xs text-gray-400 font-normal">{p.sku}</span>}
             </td>
-            <td className="p-2 text-center bg-blue-50/40">
-              <span className="font-black text-blue-800 text-base">{trays}</span>
-            </td>
-            <td className="p-2 text-center bg-blue-50/40 border-r border-blue-100">
-              <span className="font-black text-blue-700 text-base">{cartons}</span>
-              {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder}</div>}
-            </td>
             <td className="p-1 text-center bg-green-50/30">
               <input type="number" min="0" step="1" value={eT||''} placeholder="0"
                 onChange={e => setEFromTrays(key, e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
                 className="w-14 p-1 text-center text-sm font-bold border border-green-200 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
             </td>
-            <td className="p-1 text-center bg-green-50/30">
+            <td className="p-1 text-center bg-green-50/30 border-r border-green-100">
               <div className="flex flex-col items-center">
                 <input type="number" min="0" step="1" value={eC||''} placeholder="0"
                   onChange={e => setEFromCartons(key, e.target.value)}
@@ -842,17 +832,7 @@
                 {eR > 0 && <div className="text-[10px] text-gray-400">+{eR}</div>}
               </div>
             </td>
-            <td className="p-1 bg-green-50/30 border-r border-green-100">
-              <button onClick={() => applyEntry(key)}
-                className="w-7 h-7 rounded-full bg-green-500 hover:bg-green-600 text-white font-bold text-sm flex items-center justify-center">+</button>
-            </td>
-            <td className="p-1 text-center bg-red-50/30">
-              <input type="number" min="0" step="1" value={wT||''} placeholder="0"
-                onChange={e => setWFromTrays(key, e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
-                className="w-14 p-1 text-center text-sm font-bold border border-red-200 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
-            </td>
-            <td className="p-1 text-center bg-red-50/30">
+            <td className="p-1 text-center bg-red-50/30 border-r border-red-100">
               <div className="flex flex-col items-center">
                 <input type="number" min="0" step="1" value={wC||''} placeholder="0"
                   onChange={e => setWFromCartons(key, e.target.value)}
@@ -861,9 +841,12 @@
                 {wR > 0 && <div className="text-[10px] text-gray-400">+{wR}</div>}
               </div>
             </td>
-            <td className="p-1 bg-red-50/30">
-              <button onClick={() => applyWithdraw(key)}
-                className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold text-sm flex items-center justify-center">−</button>
+            <td className="p-2 text-center bg-blue-50/40">
+              <span className="font-black text-blue-800 text-base">{trays}</span>
+            </td>
+            <td className="p-2 text-center bg-blue-50/40">
+              <span className="font-black text-blue-700 text-base">{cartons}</span>
+              {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder}</div>}
             </td>
           </tr>
         );
@@ -931,7 +914,7 @@
               );
             });
           })()}
-          <p className="text-xs text-gray-400 text-center">* קרטון = {TRAYS_PER_CARTON} מגשים | הקלד ולחץ + לכניסה, − למשיכה</p>
+          <p className="text-xs text-gray-400 text-center">* קרטון = {TRAYS_PER_CARTON} מגשים | הקלד וּלחץ Enter לביצוע</p>
 
           {/* סקשן דגים */}
           {fishProducts.length > 0 && (
