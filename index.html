@@ -1079,80 +1079,80 @@
         window.XLSX.writeFile(wb, `מלאי סופר עוף ${date}.xlsx`);
       };
 
-      const doPdfExport = (date) => {
+      const doPdfExport = async (date) => {
         const { jsPDF } = window.jspdf;
         const withStorage = exportMode === 'withStorage';
-        const title = withStorage ? `מלאי קפוא כולל אחסנה — ${date}` : `מלאי קפוא — מצב נתון — ${date}`;
+        const selectedNames = new Set(selectedKashrut.map(k => k.name));
+        const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'כולל אחסנה'] : ['מגשים', 'קרטונים'];
 
-        const nonFishProducts = frozenProductsList.filter(p => p.kashrut !== 'כללי' && p.storageTypes?.includes('frozen'));
-        const fishProducts = frozenProductsList.filter(p => p.kashrut === 'כללי' && p.storageTypes?.includes('frozen'));
+        const grouped = {};
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut)).forEach(p => {
+          const cat = p.category || getProductCategory(p.name);
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(p);
+        });
+        const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
 
-        const colHeaders = selectedKashrut.flatMap(k =>
-          withStorage ? [`${k.name}<br>מגשים`, `${k.name}<br>קרטונים`, `${k.name}<br>כולל אחסנה`]
-                      : [`${k.name}<br>מגשים`, `${k.name}<br>קרטונים`]
-        );
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        let first = true;
 
-        const buildCells = (name, kashrut) => {
-          const key = `${name}|${kashrut}`;
-          const t = frozenStock[key] || 0;
-          const c = Math.floor(t / TRAYS_PER_CARTON);
-          return withStorage
-            ? `<td style="padding:5px 8px;text-align:center;">${t}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;">${c}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;color:#4338ca;">${c + (bsBalance[key] || 0)}</td>`
-            : `<td style="padding:5px 8px;text-align:center;">${t}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;">${c}</td>`;
-        };
+        for (const cat of cats) {
+          const products = grouped[cat];
+          const emoji = CAT_EMOJI[cat] || '';
+          const rows = products.map((p, i) => {
+            const key = `${p.name}|${p.kashrut}`;
+            const t = frozenStock[key] || 0;
+            const c = Math.floor(t / TRAYS_PER_CARTON);
+            const cells = withStorage
+              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${c + (bsBalance[key] || 0)}</td>`
+              : `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td>`;
+            return `<tr style="background:${i%2===0?'#ffffff':'#f8fafc'};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:6px 10px;font-weight:bold;">${p.name}</td>
+              ${cells}
+            </tr>`;
+          }).join('');
 
-        let tableRows = nonFishProducts.map((p, i) =>
-          `<tr style="background:${i%2===0?'#fff':'#f8fafc'};">
-            <td style="padding:5px 8px;font-weight:bold;">${p.name}</td>
-            ${selectedKashrut.map(k => buildCells(p.name, k.name)).join('')}
-          </tr>`
-        ).join('');
+          const html = `
+            <div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:560px;">
+              <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #1e293b;">
+                <div style="font-size:22px;font-weight:bold;">${emoji} ${cat}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'כולל אחסנה' : 'מצב נתון'} — ${date} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:#1e293b;color:#ffffff;">
+                    <th style="padding:7px 10px;text-align:right;">מוצר</th>
+                    ${colHeaders.map(h=>`<th style="padding:7px 10px;text-align:center;">${h}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                  <tr style="background:#f1f5f9;font-weight:bold;border-top:2px solid #cbd5e1;">
+                    <td style="padding:6px 10px;">סה"כ</td>
+                    <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+(frozenStock[`${p.name}|${p.kashrut}`]||0),0)}</td>
+                    <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+Math.floor((frozenStock[`${p.name}|${p.kashrut}`]||0)/TRAYS_PER_CARTON),0)}</td>
+                    ${withStorage?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+Math.floor((frozenStock[key]||0)/TRAYS_PER_CARTON)+(bsBalance[key]||0);},0)}</td>`:''}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>`;
 
-        if (fishProducts.length) {
-          tableRows += `<tr style="background:#dbeafe;"><td colspan="${1 + colHeaders.length}" style="padding:5px 8px;font-weight:bold;color:#1d4ed8;">🐟 דגים — כללי</td></tr>`;
-          tableRows += fishProducts.map((p, i) =>
-            `<tr style="background:${i%2===0?'#eff6ff':'#dbeafe'};">
-              <td style="padding:5px 8px;font-weight:bold;">${p.name}</td>
-              ${buildCells(p.name, 'כללי')}
-              ${withStorage ? selectedKashrut.slice(1).map(() => '<td></td><td></td><td></td>').join('') : selectedKashrut.slice(1).map(() => '<td></td><td></td>').join('')}
-            </tr>`
-          ).join('');
+          const container = document.createElement('div');
+          container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+          container.innerHTML = html;
+          document.body.appendChild(container);
+          const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
+          document.body.removeChild(container);
+
+          if (!first) doc.addPage();
+          first = false;
+          const imgData = canvas.toDataURL('image/png');
+          const pageW = doc.internal.pageSize.getWidth();
+          const imgH = (canvas.height * pageW) / canvas.width;
+          doc.addImage(imgData, 'PNG', 0, 0, pageW, imgH);
         }
 
-        const html = `
-          <div style="font-family:Arial,sans-serif;direction:rtl;padding:20px;width:1000px;">
-            <h2 style="text-align:center;margin-bottom:16px;font-size:16px;">${title}</h2>
-            <table style="width:100%;border-collapse:collapse;font-size:11px;">
-              <thead>
-                <tr style="background:#1e293b;color:#fff;">
-                  <th style="padding:6px 8px;text-align:right;">מוצר</th>
-                  ${colHeaders.map(h => `<th style="padding:6px 8px;text-align:center;">${h}</th>`).join('')}
-                </tr>
-              </thead>
-              <tbody>${tableRows}</tbody>
-            </table>
-          </div>`;
-
-        const container = document.createElement('div');
-        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-        container.innerHTML = html;
-        document.body.appendChild(container);
-
-        window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
-          document.body.removeChild(container);
-          const imgData = canvas.toDataURL('image/png');
-          const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-          const pageW = doc.internal.pageSize.getWidth();
-          const pageH = doc.internal.pageSize.getHeight();
-          const imgH = (canvas.height * pageW) / canvas.width;
-          let posY = 0;
-          while (posY < imgH) {
-            doc.addImage(imgData, 'PNG', 0, -posY, pageW, imgH);
-            posY += pageH;
-            if (posY < imgH) doc.addPage();
-          }
-          doc.save(`מלאי-סופר-עוף-${date}.pdf`);
-        });
+        doc.save(`מלאי-סופר-עוף-${date}.pdf`);
       };
 
       return (
