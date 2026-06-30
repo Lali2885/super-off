@@ -822,14 +822,15 @@
           <tr>
             <th className="p-2.5 font-bold text-right bg-gray-50" rowSpan={2} style={{ borderBottom: '2px solid #6b7280' }}>מוצר</th>
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={2}>כניסה למלאי</th>}
-            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={1}>משיכה ממלאי</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={2}>משיכה ממלאי</th>}
             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }} colSpan={2}>מצב נתון</th>
             <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderBottom: '1px solid #c7d2fe' }} colSpan={1}>כולל אחסנה</th>
           </tr>
           <tr>
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>מגשים</th>
             <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>
             <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>
@@ -871,6 +872,14 @@
             )}
             {showWithdrawal && (
               <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
+                <input type="number" min="0" step="1" value={wT||''} placeholder="0"
+                  onChange={e => setWFromTrays(key, e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
+                  className="w-16 p-1.5 text-center text-base font-bold border border-red-200 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
+              </td>
+            )}
+            {showWithdrawal && (
+              <td className="p-1 text-center bg-red-50/30 border-r border-gray-300">
                 <div className="flex flex-col items-center">
                   <input type="number" min="0" step="1" value={wC||''} placeholder="0"
                     onChange={e => setWFromCartons(key, e.target.value)}
