@@ -812,11 +812,11 @@
             <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" colSpan={1}>כולל אחסנה</th>
           </tr>
           <tr>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600">מגשים</th>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r border-green-100">קרטונים</th>
-            <th className="p-2.5 font-bold text-center bg-red-50 text-red-600 border-r border-red-100">קרטונים</th>
-            <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400">מגשים</th>
-            <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-600 border-r border-blue-100">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r border-green-300">מגשים</th>
+            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r border-gray-300">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-red-50 text-red-600 border-r border-gray-300">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400 border-r border-green-300">מגשים</th>
+            <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-600 border-r border-gray-300">קרטונים</th>
             <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-600">קרטונים</th>
           </tr>
         </thead>
@@ -831,40 +831,40 @@
         const wT = getWTrays(key); const wC = Math.floor(wT / TRAYS_PER_CARTON); const wR = wT % TRAYS_PER_CARTON;
         return (
           <tr key={p.name} style={{ backgroundColor: idx % 2 === 0 ? rowEven : rowOdd }}>
-            <td className="p-2.5 font-bold text-gray-900 text-sm">
+            <td className="p-2.5 font-bold text-gray-900 text-sm border-r border-gray-300">
               {p.name}
               {p.sku && <span className="block text-xs text-gray-400 font-normal">{p.sku}</span>}
             </td>
-            <td className="p-1 text-center bg-green-50/30">
+            <td className="p-1 text-center bg-green-50/30 border-r border-green-300">
               <input type="number" min="0" step="1" value={eT||''} placeholder="0"
                 onChange={e => setEFromTrays(key, e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
                 className="w-16 p-1.5 text-center text-base font-bold border border-green-200 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
             </td>
-            <td className="p-1 text-center bg-green-50/30 border-r border-green-100">
+            <td className="p-1 text-center bg-green-50/30 border-r border-gray-300">
               <div className="flex flex-col items-center">
                 <input type="number" min="0" step="1" value={eC||''} placeholder="0"
                   onChange={e => setEFromCartons(key, e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
                   className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
-                {eR > 0 && <div className="text-xs text-gray-400">+{eR}</div>}
+                {eR > 0 && <div className="text-xs text-gray-900 font-bold">+{eR}</div>}
               </div>
             </td>
-            <td className="p-1 text-center bg-red-50/30 border-r border-red-100">
+            <td className="p-1 text-center bg-red-50/30 border-r border-gray-300">
               <div className="flex flex-col items-center">
                 <input type="number" min="0" step="1" value={wC||''} placeholder="0"
                   onChange={e => setWFromCartons(key, e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
                   className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
-                {wR > 0 && <div className="text-xs text-gray-400">+{wR}</div>}
+                {wR > 0 && <div className="text-xs text-gray-900 font-bold">+{wR}</div>}
               </div>
             </td>
-            <td className="p-2.5 text-center bg-gray-50/60">
+            <td className="p-2.5 text-center bg-gray-50/60 border-r border-green-300">
               <span className="font-bold text-gray-400 text-lg">{trays}</span>
             </td>
-            <td className="p-2.5 text-center bg-blue-50/40 border-r border-blue-100">
+            <td className="p-2.5 text-center bg-blue-50/40 border-r border-gray-300">
               <span className="font-black text-blue-700 text-lg">{cartons}</span>
-              {remainder > 0 && <div className="text-xs text-gray-400">+{remainder}</div>}
+              {remainder > 0 && <div className="text-xs text-gray-900 font-bold">+{remainder}</div>}
             </td>
             <td className="p-2.5 text-center bg-indigo-50/40">
               <span className="font-black text-indigo-700 text-lg">{cartons + (bsBalance[`${p.name}|${kashrut}`] || 0)}</span>
