@@ -753,32 +753,10 @@
     };
 
     // --- Frozen Stock Panel ---
-    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList }) => {
+    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {} }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
-      const [bsBalance, setBsBalance] = useState({});
-
-      useEffect(() => {
-        Promise.all([
-          db.from('beit_shemesh_shipments').select('*'),
-          db.from('beit_shemesh_withdrawals').select('*')
-        ]).then(([shRes, wdRes]) => {
-          const map = {};
-          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
-            const key = (pr.name || '') + '|' + (pr.kashrut || '');
-            if (!map[key]) map[key] = 0;
-            map[key] += Number(pr.cartons || 0);
-          })));
-          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
-            const key = (pr.name || '') + '|' + (pr.kashrut || '');
-            if (!map[key]) map[key] = 0;
-            map[key] -= Number(pr.cartons || 0);
-          }));
-          Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
-          setBsBalance(map);
-        });
-      }, []);
 
       const getETrays = (key) => entryTrays[key] || 0;
       const getWTrays = (key) => withdrawTrays[key] || 0;
@@ -992,9 +970,30 @@
       const [resetModal, setResetModal] = useState(false);
       const [resetPassword, setResetPassword] = useState('');
       const [resetError, setResetError] = useState('');
+      const [exportMode, setExportMode] = useState('current');
+      const [bsBalance, setBsBalance] = useState({});
       const [logEntries, setLogEntries] = useState([]);
       const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
       const [logLoaded, setLogLoaded] = useState(false);
+
+      useEffect(() => {
+        Promise.all([
+          db.from('beit_shemesh_shipments').select('*'),
+          db.from('beit_shemesh_withdrawals').select('*')
+        ]).then(([shRes, wdRes]) => {
+          const map = {};
+          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) + Number(pr.cartons || 0);
+          })));
+          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) - Number(pr.cartons || 0);
+          }));
+          Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
+          setBsBalance(map);
+        });
+      }, []);
 
       const loadLog = () => {
         db.from('frozen_stock_log').select('*').order('created_at', { ascending: false }).limit(500).then(({ data }) => {
@@ -1045,66 +1044,56 @@
 
       const doExcelExport = (date) => {
         const wb = window.XLSX.utils.book_new();
-        if (exportSections.frozen) {
-          const nonFishProducts = frozenProductsList.filter(p => p.kashrut !== 'כללי');
-          const fishExportProducts = frozenProductsList.filter(p => p.kashrut === 'כללי');
-          const header = ['מוצר', ...selectedKashrut.flatMap(k => [`${k.name} - מגשים`, `${k.name} - קרטונים`])];
-          const rows = nonFishProducts.map(p => {
-            const row = [p.name];
-            selectedKashrut.forEach(k => {
-              const t = frozenStock[`${p.name}|${k.name}`] || 0;
-              row.push(t || 0, Math.floor(t / TRAYS_PER_CARTON));
-            });
-            return row;
+        const withStorage = exportMode === 'withStorage';
+        const nonFishProducts = frozenProductsList.filter(p => p.kashrut !== 'כללי');
+        const fishExportProducts = frozenProductsList.filter(p => p.kashrut === 'כללי');
+        const extraHeaders = withStorage ? selectedKashrut.flatMap(k => [`${k.name} - מגשים`, `${k.name} - קרטונים`, `${k.name} - כולל אחסנה`]) : selectedKashrut.flatMap(k => [`${k.name} - מגשים`, `${k.name} - קרטונים`]);
+        const header = ['מוצר', ...extraHeaders];
+        const buildRow = (name, kashrut) => {
+          const key = `${name}|${kashrut}`;
+          const t = frozenStock[key] || 0;
+          const c = Math.floor(t / TRAYS_PER_CARTON);
+          return withStorage ? [t, c, c + (bsBalance[key] || 0)] : [t, c];
+        };
+        const rows = nonFishProducts.map(p => {
+          const row = [p.name];
+          selectedKashrut.forEach(k => row.push(...buildRow(p.name, k.name)));
+          return row;
+        });
+        if (fishExportProducts.length) {
+          const empty = withStorage ? ['', '', ''] : ['', ''];
+          rows.push(['🐟 דגים (כללי)', ...selectedKashrut.flatMap(() => empty)]);
+          fishExportProducts.forEach(p => {
+            const row = [p.name, ...buildRow(p.name, 'כללי')];
+            selectedKashrut.slice(1).forEach(() => row.push(...(withStorage ? ['', '', ''] : ['', ''])));
+            rows.push(row);
           });
-          if (fishExportProducts.length) {
-            const emptyKashrut = selectedKashrut.flatMap(() => ['', '']);
-            rows.push(['🐟 דגים (כללי)', ...emptyKashrut]);
-            fishExportProducts.forEach(p => {
-              const t = frozenStock[`${p.name}|כללי`] || 0;
-              const row = [p.name, t || 0, Math.floor(t / TRAYS_PER_CARTON)];
-              selectedKashrut.slice(1).forEach(() => row.push('', ''));
-              rows.push(row);
-            });
-          }
-          window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([header, ...rows]), 'מלאי קפוא');
         }
-        if (exportSections.fresh) {
-          const header = ['מוצר', 'קטגוריה', ...selectedKashrut.map(k => `${k.name} (ק"ג)`)];
-          const rows = freshItems.map(item => {
-            const row = [item.name, item.category];
-            selectedKashrut.forEach(k => row.push(stock[`${item.name}|${k.name}`] || 0));
-            return row;
-          });
-          window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([header, ...rows]), 'מלאי טרי');
-        }
+        window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([header, ...rows]), withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון');
+        wb.Sheets[withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון']['!sheetViews'] = [{ rightToLeft: true }];
         window.XLSX.writeFile(wb, `מלאי סופר עוף ${date}.xlsx`);
       };
 
       const doPdfExport = (date) => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-        let first = true;
-        if (exportSections.frozen) {
-          if (!first) doc.addPage(); first = false;
-          doc.setFontSize(13);
-          doc.text(`Super Oaf - Frozen Inventory | ${date}`, 14, 14);
-          const head = [['Product', ...selectedKashrut.flatMap(k => [`${k.name} Trays`, `${k.name} Cartons`])]];
-          const body = frozenProductsList.map(p => {
-            const row = [p.name];
-            selectedKashrut.forEach(k => { const t = frozenStock[`${p.name}|${k.name}`] || 0; row.push(t || '-', t ? Math.floor(t / TRAYS_PER_CARTON) : '-'); });
-            return row;
+        const withStorage = exportMode === 'withStorage';
+        const title = withStorage ? `מלאי קפוא כולל אחסנה | ${date}` : `מלאי קפוא — מצב נתון | ${date}`;
+        doc.setFontSize(13);
+        doc.text(title, 14, 14);
+        const head = [['מוצר', ...selectedKashrut.flatMap(k => withStorage ? [`${k.name} מגשים`, `${k.name} קרטונים`, `${k.name} כולל אחסנה`] : [`${k.name} מגשים`, `${k.name} קרטונים`])]];
+        const body = frozenProductsList.map(p => {
+          const row = [p.name];
+          selectedKashrut.forEach(k => {
+            const key = `${p.name}|${k.name}`;
+            const t = frozenStock[key] || 0;
+            const c = t ? Math.floor(t / TRAYS_PER_CARTON) : '-';
+            if (withStorage) row.push(t || '-', c, (Math.floor(t / TRAYS_PER_CARTON)) + (bsBalance[key] || 0));
+            else row.push(t || '-', c);
           });
-          doc.autoTable({ head, body, startY: 18, styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [30,30,30], textColor: 255 }, alternateRowStyles: { fillColor: [245,245,255] }, columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } } });
-        }
-        if (exportSections.fresh) {
-          if (!first) doc.addPage(); first = false;
-          doc.setFontSize(13);
-          doc.text(`Super Oaf - Fresh Inventory | ${date}`, 14, 14);
-          const head = [['Product', 'Category', ...selectedKashrut.map(k => `${k.name} (kg)`)]];
-          const body = freshItems.map(item => { const row = [item.name, item.category]; selectedKashrut.forEach(k => row.push(stock[`${item.name}|${k.name}`] || '-')); return row; });
-          doc.autoTable({ head, body, startY: 18, styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [30,30,30], textColor: 255 }, alternateRowStyles: { fillColor: [240,255,245] }, columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'left' } } });
-        }
+          return row;
+        });
+        doc.autoTable({ head, body, startY: 18, styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [30,30,30], textColor: 255 }, alternateRowStyles: { fillColor: [245,245,255] }, columnStyles: { 0: { halign: 'right', fontStyle: 'bold' } } });
         doc.save(`מלאי סופר עוף ${date}.pdf`);
       };
 
@@ -1195,14 +1184,13 @@
                     </div>
                   </div>
 
-                  {/* סוג מלאי */}
+                  {/* תצוגת ייצוא */}
                   <div>
-                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">סוג מלאי לייצוא</div>
+                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">תצוגת ייצוא</div>
                     <div className="flex gap-3">
-                      {[['frozen','🧊 קפוא'],['fresh','🥩 טרי']].map(([key, label]) => (
-                        <label key={key} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportSections[key] ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                          <input type="checkbox" className="hidden" checked={exportSections[key]}
-                            onChange={e => setExportSections(p => ({ ...p, [key]: e.target.checked }))} />
+                      {[['current','🧊 מצב נתון'],['withStorage','🏭 כולל אחסנה']].map(([val, label]) => (
+                        <label key={val} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportMode === val ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                          <input type="radio" className="hidden" checked={exportMode === val} onChange={() => setExportMode(val)} />
                           {label}
                         </label>
                       ))}
@@ -1232,7 +1220,7 @@
                 <div className="p-4 border-t border-gray-100 flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setExportModal(false)}>ביטול</Button>
                   <button onClick={runExport}
-                    disabled={!exportFormat || (!exportSections.frozen && !exportSections.fresh) || selectedKashrut.length === 0}
+                    disabled={!exportFormat || selectedKashrut.length === 0}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white bg-gray-800 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                     {exportFormat === 'excel' ? '📊' : '📄'} הורד קובץ
                   </button>
@@ -1242,7 +1230,7 @@
           )}
 
           {activeTab === 'frozen' && (
-            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />
+            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} />
           )}
 
           {activeTab === 'log' && (
