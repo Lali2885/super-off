@@ -1048,8 +1048,6 @@
       };
 
       const doExcelExport = (date) => {
-        const XLSX = window.XLSX;
-        const wb = XLSX.utils.book_new();
         const withStorage = exportMode === 'withStorage';
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
         const numCols = withStorage ? 5 : 4;
@@ -1065,56 +1063,67 @@
         });
         const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
 
-        const aoa = [];
-        const merges = [];
+        const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const cs = numCols;
 
-        // כותרת ראשית
-        aoa.push([`דוח מלאי סופר עוף — נכון לתאריך ${date}`, ...Array(numCols - 1).fill('')]);
-        merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } });
-        aoa.push([`${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`, ...Array(numCols - 1).fill('')]);
-        merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: numCols - 1 } });
-        aoa.push(Array(numCols).fill(''));
+        let htmlRows = '';
+        htmlRows += `<tr><td colspan="${cs}" style="font-size:14pt;font-weight:bold;background:#1e293b;color:#fff;padding:8px;">${esc(`דוח מלאי סופר עוף — נכון לתאריך ${date}`)}</td></tr>`;
+        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
+        htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
 
         cats.forEach(cat => {
           const products = grouped[cat];
           const emoji = CAT_EMOJI[cat] || '';
 
-          // כותרת קטגוריה
-          const catRowIdx = aoa.length;
-          aoa.push([`${emoji} ${cat}`, ...Array(numCols - 1).fill('')]);
-          merges.push({ s: { r: catRowIdx, c: 0 }, e: { r: catRowIdx, c: numCols - 1 } });
+          htmlRows += `<tr><td colspan="${cs}" style="font-size:13pt;font-weight:bold;background:#334155;color:#fff;padding:6px 8px;">${esc(`${emoji} ${cat}`)}</td></tr>`;
+          htmlRows += `<tr>${colHeaders.map(h => `<th style="background:#475569;color:#fff;font-weight:bold;padding:5px 8px;text-align:center;border:1px solid #334155;">${esc(h)}</th>`).join('')}</tr>`;
 
-          // כותרות עמודות
-          aoa.push(colHeaders);
-
-          // שורות מוצרים
-          products.forEach(p => {
+          products.forEach((p, i) => {
             const key = `${p.name}|${p.kashrut}`;
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
-            const row = [p.name, p.sku || '', t, c];
-            if (withStorage) row.push(c + (bsBalance[key] || 0));
-            aoa.push(row);
+            const cells = [p.name, p.sku || '', t, c];
+            if (withStorage) cells.push(c + (bsBalance[key] || 0));
+            const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+            htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
+              `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
+            ).join('')}</tr>`;
           });
 
-          // שורת סיכום
           const totalT = products.reduce((s, p) => s + (frozenStock[`${p.name}|${p.kashrut}`] || 0), 0);
           const totalC = products.reduce((s, p) => s + Math.floor((frozenStock[`${p.name}|${p.kashrut}`] || 0) / TRAYS_PER_CARTON), 0);
-          const totRow = ['סה"כ', '', totalT, totalC];
-          if (withStorage) totRow.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + Math.floor((frozenStock[key] || 0) / TRAYS_PER_CARTON) + (bsBalance[key] || 0); }, 0));
-          aoa.push(totRow);
+          const totCells = ['סה"כ', '', totalT, totalC];
+          if (withStorage) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + Math.floor((frozenStock[key]||0)/TRAYS_PER_CARTON) + (bsBalance[key]||0); }, 0));
+          htmlRows += `<tr style="background:#f1f5f9;font-weight:bold;">${totCells.map((v, ci) =>
+            `<td style="padding:5px 8px;border-top:2px solid #94a3b8;border:1px solid #cbd5e1;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
+          ).join('')}</tr>`;
 
-          aoa.push(Array(numCols).fill(''));
+          htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
         });
 
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        ws['!merges'] = merges;
-        ws['!sheetViews'] = [{ rightToLeft: true, workbookViewId: 0 }];
-        ws['!cols'] = [{ wch: 28 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, ...(withStorage ? [{ wch: 14 }] : [])];
-
         const sheetName = withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון';
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        XLSX.writeFile(wb, `מלאי סופר עוף ${date}.xlsx`);
+        const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml>
+<x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+<x:Name>${esc(sheetName)}</x:Name>
+<x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook>
+</xml><![endif]-->
+</head>
+<body><table dir="rtl" style="border-collapse:collapse;font-family:Arial,sans-serif;direction:rtl;">
+${htmlRows}
+</table></body></html>`;
+
+        const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `מלאי סופר עוף ${date}.xls`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       };
 
       const doPdfExport = async (date) => {
