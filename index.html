@@ -1056,7 +1056,7 @@
           : ['מוצר', 'מקט', 'מגשים', 'קרטונים'];
 
         const grouped = {};
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut)).forEach(p => {
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && (frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0).forEach(p => {
           const cat = p.category || getProductCategory(p.name);
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(p);
@@ -1133,7 +1133,7 @@ ${htmlRows}
         const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'כולל אחסנה'] : ['מגשים', 'קרטונים'];
 
         const grouped = {};
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut)).forEach(p => {
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && (frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0).forEach(p => {
           const cat = p.category || getProductCategory(p.name);
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(p);
