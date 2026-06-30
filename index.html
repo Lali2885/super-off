@@ -1109,7 +1109,7 @@
 
         const ws = XLSX.utils.aoa_to_sheet(aoa);
         ws['!merges'] = merges;
-        ws['!sheetViews'] = [{ rightToLeft: true }];
+        ws['!sheetViews'] = [{ rightToLeft: true, workbookViewId: 0 }];
         ws['!cols'] = [{ wch: 28 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, ...(withStorage ? [{ wch: 14 }] : [])];
 
         const sheetName = withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון';
