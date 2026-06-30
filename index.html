@@ -6430,6 +6430,38 @@ ${htmlRows}
         inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
       }, [inventoryLog]);
 
+      // --- Supabase Realtime ---
+      useEffect(() => {
+        if (!appUser) return;
+        const pause = () => { skipSaveRef.current = true; setTimeout(() => { skipSaveRef.current = false; }, 300); };
+
+        const channel = db.channel('realtime-sync')
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'frozen_stock', filter: 'id=eq.main' }, (payload) => {
+            if (payload.new?.data) { pause(); setFrozenStock(payload.new.data); }
+          })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fresh_stock', filter: 'id=eq.main' }, (payload) => {
+            if (payload.new?.data) { pause(); setStock(payload.new.data); }
+          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
+            const res = await db.from('orders').select('data').order('created_at', { ascending: false });
+            if (res.data?.length) { pause(); setOrders(res.data.map(r => r.data)); }
+          })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'settings' }, async (payload) => {
+            if (!payload.new?.id || !payload.new?.data) return;
+            pause();
+            const { id, data } = payload.new;
+            if (id === 'kashrutList') setKashrutList(data);
+            if (id === 'frozenProductsList') setFrozenProductsList(data);
+            if (id === 'couriersList') setCouriersList(data);
+            if (id === 'butchersList') setButchersList(data);
+            if (id === 'neighborhoodData') setNeighborhoodData(data);
+            if (id === 'contactsList') setContactsList(data);
+          })
+          .subscribe();
+
+        return () => { db.removeChannel(channel); };
+      }, [appUser]);
+
       const handleSignOut = () => {
         localStorage.removeItem('appUser');
         setAppUser(null);
