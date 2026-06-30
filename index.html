@@ -973,6 +973,18 @@
         kashrutList.forEach(k => { obj[k.name] = false; });
         return obj;
       });
+      const [resetModal, setResetModal] = useState(false);
+      const [resetPassword, setResetPassword] = useState('');
+      const [resetError, setResetError] = useState('');
+
+      const handleReset = () => {
+        if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
+        setFrozenStock({});
+        db.from('frozen_stock').upsert({ id: 'main', data: {}, updated_at: new Date().toISOString() }).then();
+        setResetModal(false);
+        setResetPassword('');
+        setResetError('');
+      };
 
       const seenFresh = new Set();
       const freshItems = (frozenProductsList || [])
@@ -1061,11 +1073,49 @@
               <h1 className="text-3xl font-extrabold text-gray-900">מלאי סחורה - כללי</h1>
               <p className="text-gray-500 mt-1">ניהול מלאי טרי וקפוא — קליטת בוקר ועדכון כמויות</p>
             </div>
-            <button onClick={() => setExportModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
-              <span>⬇️</span> ייצוא מלאי
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setExportModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
+                <span>⬇️</span> ייצוא מלאי
+              </button>
+              <button onClick={() => { setResetModal(true); setResetPassword(''); setResetError(''); }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
+                <span>🗑️</span> איפוס מלאי
+              </button>
+            </div>
           </div>
+
+          {/* מודאל איפוס */}
+          {resetModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-sm">
+                <div className="p-4 bg-red-50 border-b border-red-100 flex items-center justify-between rounded-t-2xl">
+                  <h3 className="font-bold text-lg text-red-800">איפוס מלאי קפוא</h3>
+                  <button onClick={() => setResetModal(false)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
+                </div>
+                <div className="p-5 space-y-4">
+                  <p className="text-sm text-gray-600">פעולה זו תאפס את כל המלאי הקפוא ל-0. <span className="font-bold text-red-600">לא ניתן לבטל.</span></p>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">סיסמא לאישור:</label>
+                    <input
+                      type="password"
+                      value={resetPassword}
+                      onChange={e => { setResetPassword(e.target.value); setResetError(''); }}
+                      onKeyDown={e => e.key === 'Enter' && handleReset()}
+                      placeholder="הכניסי סיסמא"
+                      className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400"
+                      autoFocus
+                    />
+                    {resetError && <p className="text-red-600 text-xs font-bold mt-1">{resetError}</p>}
+                  </div>
+                </div>
+                <div className="p-4 border-t border-gray-100 flex gap-3">
+                  <button onClick={() => setResetModal(false)} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                  <button onClick={handleReset} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm">אפס מלאי</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* טאבים */}
           <div className="flex gap-2 mb-6">
