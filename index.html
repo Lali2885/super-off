@@ -1048,35 +1048,73 @@
       };
 
       const doExcelExport = (date) => {
-        const wb = window.XLSX.utils.book_new();
+        const XLSX = window.XLSX;
+        const wb = XLSX.utils.book_new();
         const withStorage = exportMode === 'withStorage';
-        const nonFishProducts = frozenProductsList.filter(p => p.kashrut !== 'כללי');
-        const fishExportProducts = frozenProductsList.filter(p => p.kashrut === 'כללי');
-        const extraHeaders = withStorage ? selectedKashrut.flatMap(k => [`${k.name} - מגשים`, `${k.name} - קרטונים`, `${k.name} - כולל אחסנה`]) : selectedKashrut.flatMap(k => [`${k.name} - מגשים`, `${k.name} - קרטונים`]);
-        const header = ['מוצר', ...extraHeaders];
-        const buildRow = (name, kashrut) => {
-          const key = `${name}|${kashrut}`;
-          const t = frozenStock[key] || 0;
-          const c = Math.floor(t / TRAYS_PER_CARTON);
-          return withStorage ? [t, c, c + (bsBalance[key] || 0)] : [t, c];
-        };
-        const rows = nonFishProducts.map(p => {
-          const row = [p.name];
-          selectedKashrut.forEach(k => row.push(...buildRow(p.name, k.name)));
-          return row;
+        const selectedNames = new Set(selectedKashrut.map(k => k.name));
+        const numCols = withStorage ? 5 : 4;
+        const colHeaders = withStorage
+          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'כולל אחסנה']
+          : ['מוצר', 'מקט', 'מגשים', 'קרטונים'];
+
+        const grouped = {};
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut)).forEach(p => {
+          const cat = p.category || getProductCategory(p.name);
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(p);
         });
-        if (fishExportProducts.length) {
-          const empty = withStorage ? ['', '', ''] : ['', ''];
-          rows.push(['🐟 דגים (כללי)', ...selectedKashrut.flatMap(() => empty)]);
-          fishExportProducts.forEach(p => {
-            const row = [p.name, ...buildRow(p.name, 'כללי')];
-            selectedKashrut.slice(1).forEach(() => row.push(...(withStorage ? ['', '', ''] : ['', ''])));
-            rows.push(row);
+        const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
+
+        const aoa = [];
+        const merges = [];
+
+        // כותרת ראשית
+        aoa.push([`דוח מלאי סופר עוף — נכון לתאריך ${date}`, ...Array(numCols - 1).fill('')]);
+        merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } });
+        aoa.push([`${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`, ...Array(numCols - 1).fill('')]);
+        merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: numCols - 1 } });
+        aoa.push(Array(numCols).fill(''));
+
+        cats.forEach(cat => {
+          const products = grouped[cat];
+          const emoji = CAT_EMOJI[cat] || '';
+
+          // כותרת קטגוריה
+          const catRowIdx = aoa.length;
+          aoa.push([`${emoji} ${cat}`, ...Array(numCols - 1).fill('')]);
+          merges.push({ s: { r: catRowIdx, c: 0 }, e: { r: catRowIdx, c: numCols - 1 } });
+
+          // כותרות עמודות
+          aoa.push(colHeaders);
+
+          // שורות מוצרים
+          products.forEach(p => {
+            const key = `${p.name}|${p.kashrut}`;
+            const t = frozenStock[key] || 0;
+            const c = Math.floor(t / TRAYS_PER_CARTON);
+            const row = [p.name, p.sku || '', t, c];
+            if (withStorage) row.push(c + (bsBalance[key] || 0));
+            aoa.push(row);
           });
-        }
-        window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet([header, ...rows]), withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון');
-        wb.Sheets[withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון']['!sheetViews'] = [{ rightToLeft: true }];
-        window.XLSX.writeFile(wb, `מלאי סופר עוף ${date}.xlsx`);
+
+          // שורת סיכום
+          const totalT = products.reduce((s, p) => s + (frozenStock[`${p.name}|${p.kashrut}`] || 0), 0);
+          const totalC = products.reduce((s, p) => s + Math.floor((frozenStock[`${p.name}|${p.kashrut}`] || 0) / TRAYS_PER_CARTON), 0);
+          const totRow = ['סה"כ', '', totalT, totalC];
+          if (withStorage) totRow.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + Math.floor((frozenStock[key] || 0) / TRAYS_PER_CARTON) + (bsBalance[key] || 0); }, 0));
+          aoa.push(totRow);
+
+          aoa.push(Array(numCols).fill(''));
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!merges'] = merges;
+        ws['!sheetViews'] = [{ rightToLeft: true }];
+        ws['!cols'] = [{ wch: 28 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, ...(withStorage ? [{ wch: 14 }] : [])];
+
+        const sheetName = withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון';
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, `מלאי סופר עוף ${date}.xlsx`);
       };
 
       const doPdfExport = async (date) => {
