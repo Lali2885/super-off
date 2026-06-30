@@ -4462,6 +4462,7 @@
 
     const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
       const today = new Date().toISOString().split('T')[0];
+      const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       const [bsTab, setBsTab] = useState('exits');
       const [shipments, setShipments] = useState([]);
       const [withdrawals, setWithdrawals] = useState([]);
