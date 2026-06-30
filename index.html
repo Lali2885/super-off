@@ -6179,7 +6179,15 @@ ${htmlRows}
     // ===[APP]===
     // --- Main App Component ---
     function App() {
-      const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'orders');
+      const [activeTab, setActiveTab] = useState(() => {
+        const stored = localStorage.getItem('activeTab') || 'orders';
+        try {
+          const u = JSON.parse(localStorage.getItem('appUser'));
+          if (!u || u.is_admin) return stored;
+          const allowed = u.permissions?.pages || [];
+          return allowed.includes(stored) ? stored : (allowed[0] || 'dashboard');
+        } catch { return stored; }
+      });
       const navigateTo = useCallback((tabId) => { setActiveTab(tabId); localStorage.setItem('activeTab', tabId); }, []);
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
       const [appUser, setAppUser] = useState(() => { try { return JSON.parse(localStorage.getItem('appUser')); } catch { return null; } });
