@@ -753,7 +753,7 @@
     };
 
     // --- Frozen Stock Panel ---
-    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {} }) => {
+    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
@@ -806,15 +806,15 @@
         <thead className="text-sm">
           <tr>
             <th className="p-2.5 font-bold text-right bg-gray-50" rowSpan={2} style={{ borderBottom: '2px solid #6b7280' }}>מוצר</th>
-            <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={2}>כניסה למלאי</th>
-            <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={1}>משיכה ממלאי</th>
+            {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={2}>כניסה למלאי</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={1}>משיכה ממלאי</th>}
             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }} colSpan={2}>מצב נתון</th>
             <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderBottom: '1px solid #c7d2fe' }} colSpan={1}>כולל אחסנה</th>
           </tr>
           <tr>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>
-            <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>קרטונים</th>
+            {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
+            {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>מגשים</th>
             <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>
             <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>
@@ -835,30 +835,36 @@
               {p.name}
               {p.sku && <span className="block text-xs text-gray-400 font-normal">{p.sku}</span>}
             </td>
-            <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
-              <input type="number" min="0" step="1" value={eT||''} placeholder="0"
-                onChange={e => setEFromTrays(key, e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
-                className="w-16 p-1.5 text-center text-base font-bold border border-green-200 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
-            </td>
-            <td className="p-1 text-center bg-green-50/30 border-r border-gray-300">
-              <div className="flex flex-col items-center">
-                <input type="number" min="0" step="1" value={eC||''} placeholder="0"
-                  onChange={e => setEFromCartons(key, e.target.value)}
+            {showEntry && (
+              <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
+                <input type="number" min="0" step="1" value={eT||''} placeholder="0"
+                  onChange={e => setEFromTrays(key, e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
-                  className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
-                {eR > 0 && <div className="text-xs text-gray-900 font-bold">+{eR}</div>}
-              </div>
-            </td>
-            <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
-              <div className="flex flex-col items-center">
-                <input type="number" min="0" step="1" value={wC||''} placeholder="0"
-                  onChange={e => setWFromCartons(key, e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
-                  className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
-                {wR > 0 && <div className="text-xs text-gray-900 font-bold">+{wR}</div>}
-              </div>
-            </td>
+                  className="w-16 p-1.5 text-center text-base font-bold border border-green-200 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
+              </td>
+            )}
+            {showEntry && (
+              <td className="p-1 text-center bg-green-50/30 border-r border-gray-300">
+                <div className="flex flex-col items-center">
+                  <input type="number" min="0" step="1" value={eC||''} placeholder="0"
+                    onChange={e => setEFromCartons(key, e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
+                    className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
+                  {eR > 0 && <div className="text-xs text-gray-900 font-bold">+{eR}</div>}
+                </div>
+              </td>
+            )}
+            {showWithdrawal && (
+              <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
+                <div className="flex flex-col items-center">
+                  <input type="number" min="0" step="1" value={wC||''} placeholder="0"
+                    onChange={e => setWFromCartons(key, e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
+                    className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
+                  {wR > 0 && <div className="text-xs text-gray-900 font-bold">+{wR}</div>}
+                </div>
+              </td>
+            )}
             <td className="p-2.5 text-center bg-gray-50/60 border-r-2 border-blue-400">
               <span className="font-bold text-gray-400 text-lg">{trays}</span>
             </td>
@@ -940,7 +946,7 @@
       );
     };
 
-    const InventoryView = ({ stock, setStock, frozenStock, setFrozenStock, kashrutList, frozenProductsList }) => {
+    const InventoryView = ({ stock, setStock, frozenStock, setFrozenStock, kashrutList, frozenProductsList, appUser }) => {
       const [activeTab, setActiveTab] = useState('frozen');
       const [exportModal, setExportModal] = useState(false);
       const [exportFormat, setExportFormat] = useState('');
@@ -958,6 +964,13 @@
       const [logEntries, setLogEntries] = useState([]);
       const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
       const [logLoaded, setLogLoaded] = useState(false);
+
+      const hiddenFeatures = (!appUser || appUser.is_admin) ? [] : (appUser.permissions?.hiddenFeatures || []);
+      const showEntry      = !hiddenFeatures.includes('inventory.entry');
+      const showWithdrawal = !hiddenFeatures.includes('inventory.withdrawal');
+      const showExport     = !hiddenFeatures.includes('inventory.export');
+      const showLog        = !hiddenFeatures.includes('inventory.log');
+      const showReset      = !hiddenFeatures.includes('inventory.reset');
 
       useEffect(() => {
         Promise.all([
@@ -1196,18 +1209,24 @@ ${htmlRows}
               <p className="text-gray-500 mt-1">ניהול מלאי טרי וקפוא — קליטת בוקר ועדכון כמויות</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setExportModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
-                <span>⬇️</span> ייצוא מלאי
-              </button>
-              <button onClick={() => { setActiveTab(activeTab === 'log' ? 'frozen' : 'log'); if (!logLoaded) loadLog(); }}
-                className={`flex items-center gap-2 px-4 py-2.5 font-bold text-sm rounded-xl shadow-sm transition-colors ${activeTab === 'log' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-amber-100 hover:bg-amber-200 text-amber-700'}`}>
-                <span>📋</span> יומן פעולות
-              </button>
-              <button onClick={() => { setResetModal(true); setResetPassword(''); setResetError(''); }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
-                <span>🗑️</span> איפוס מלאי
-              </button>
+              {showExport && (
+                <button onClick={() => setExportModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
+                  <span>⬇️</span> ייצוא מלאי
+                </button>
+              )}
+              {showLog && (
+                <button onClick={() => { setActiveTab(activeTab === 'log' ? 'frozen' : 'log'); if (!logLoaded) loadLog(); }}
+                  className={`flex items-center gap-2 px-4 py-2.5 font-bold text-sm rounded-xl shadow-sm transition-colors ${activeTab === 'log' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-amber-100 hover:bg-amber-200 text-amber-700'}`}>
+                  <span>📋</span> יומן פעולות
+                </button>
+              )}
+              {showReset && (
+                <button onClick={() => { setResetModal(true); setResetPassword(''); setResetError(''); }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
+                  <span>🗑️</span> איפוס מלאי
+                </button>
+              )}
             </div>
           </div>
 
@@ -1321,7 +1340,7 @@ ${htmlRows}
           )}
 
           {activeTab === 'frozen' && (
-            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} />
+            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} showEntry={showEntry} showWithdrawal={showWithdrawal} />
           )}
 
           {activeTab === 'log' && (
@@ -5779,13 +5798,23 @@ ${htmlRows}
       { id: 'settings',     label: 'הגדרות' },
     ];
 
+    const PAGE_FEATURES = {
+      'inventory': [
+        { id: 'inventory.entry',      label: 'כניסה למלאי' },
+        { id: 'inventory.withdrawal', label: 'משיכה ממלאי' },
+        { id: 'inventory.export',     label: 'ייצוא מלאי' },
+        { id: 'inventory.log',        label: 'יומן פעולות' },
+        { id: 'inventory.reset',      label: 'איפוס מלאי' },
+      ],
+    };
+
     // --- Users Management View ---
     const UsersManagementView = () => {
       const [users, setUsers] = useState([]);
       const [loading, setLoading] = useState(true);
       const [showModal, setShowModal] = useState(false);
       const [editingUser, setEditingUser] = useState(null);
-      const [form, setForm] = useState({ username: '', password: '', is_admin: false, permissions: { pages: [], canEdit: [] } });
+      const [form, setForm] = useState({ username: '', password: '', is_admin: false, permissions: { pages: [], canEdit: [], hiddenFeatures: [] } });
       const [saving, setSaving] = useState(false);
       const [formError, setFormError] = useState('');
 
@@ -5798,13 +5827,20 @@ ${htmlRows}
 
       const openAdd = () => {
         setEditingUser(null);
-        setForm({ username: '', password: '', is_admin: false, permissions: { pages: [], canEdit: [] } });
+        setForm({ username: '', password: '', is_admin: false, permissions: { pages: [], canEdit: [], hiddenFeatures: [] } });
         setFormError('');
         setShowModal(true);
       };
       const openEdit = (user) => {
         setEditingUser(user);
-        setForm({ username: user.username, password: '', is_admin: user.is_admin, permissions: user.permissions || { pages: [], canEdit: [] } });
+        setForm({
+          username: user.username, password: '', is_admin: user.is_admin,
+          permissions: {
+            pages: user.permissions?.pages || [],
+            canEdit: user.permissions?.canEdit || [],
+            hiddenFeatures: user.permissions?.hiddenFeatures || [],
+          }
+        });
         setFormError('');
         setShowModal(true);
       };
@@ -5815,7 +5851,10 @@ ${htmlRows}
             ? f.permissions.pages.filter(p => p !== pageId)
             : [...f.permissions.pages, pageId];
           const canEdit = f.permissions.canEdit.filter(p => pages.includes(p));
-          return { ...f, permissions: { pages, canEdit } };
+          const hiddenFeatures = pages.includes(pageId)
+            ? (f.permissions.hiddenFeatures || [])
+            : (f.permissions.hiddenFeatures || []).filter(fid => !fid.startsWith(pageId + '.'));
+          return { ...f, permissions: { pages, canEdit, hiddenFeatures } };
         });
       };
       const toggleEdit = (pageId) => {
@@ -5827,11 +5866,20 @@ ${htmlRows}
           return { ...f, permissions: { ...f.permissions, canEdit } };
         });
       };
+      const toggleFeature = (featureId) => {
+        setForm(f => {
+          const hf = f.permissions.hiddenFeatures || [];
+          const hiddenFeatures = hf.includes(featureId)
+            ? hf.filter(id => id !== featureId)
+            : [...hf, featureId];
+          return { ...f, permissions: { ...f.permissions, hiddenFeatures } };
+        });
+      };
       const selectAllPages = () => {
-        setForm(f => ({ ...f, permissions: { pages: ALL_PAGES.map(p => p.id), canEdit: ALL_PAGES.map(p => p.id) } }));
+        setForm(f => ({ ...f, permissions: { pages: ALL_PAGES.map(p => p.id), canEdit: ALL_PAGES.map(p => p.id), hiddenFeatures: f.permissions.hiddenFeatures || [] } }));
       };
       const clearAllPages = () => {
-        setForm(f => ({ ...f, permissions: { pages: [], canEdit: [] } }));
+        setForm(f => ({ ...f, permissions: { pages: [], canEdit: [], hiddenFeatures: [] } }));
       };
 
       const handleSave = async () => {
@@ -5964,16 +6012,29 @@ ${htmlRows}
                           </thead>
                           <tbody>
                             {ALL_PAGES.map(page => (
-                              <tr key={page.id} className="border-t border-gray-100">
-                                <td className="p-2 text-gray-700">{page.label}</td>
-                                <td className="p-2 text-center">
-                                  <input type="checkbox" checked={form.permissions.pages.includes(page.id)} onChange={() => togglePage(page.id)} className="w-4 h-4 accent-blue-600" />
-                                </td>
-                                <td className="p-2 text-center">
-                                  <input type="checkbox" checked={form.permissions.canEdit.includes(page.id)} onChange={() => toggleEdit(page.id)}
-                                    disabled={!form.permissions.pages.includes(page.id)} className="w-4 h-4 accent-green-600 disabled:opacity-30" />
-                                </td>
-                              </tr>
+                              <React.Fragment key={page.id}>
+                                <tr className="border-t border-gray-100">
+                                  <td className="p-2 text-gray-700 font-medium">{page.label}</td>
+                                  <td className="p-2 text-center">
+                                    <input type="checkbox" checked={form.permissions.pages.includes(page.id)} onChange={() => togglePage(page.id)} className="w-4 h-4 accent-blue-600" />
+                                  </td>
+                                  <td className="p-2 text-center">
+                                    <input type="checkbox" checked={form.permissions.canEdit.includes(page.id)} onChange={() => toggleEdit(page.id)}
+                                      disabled={!form.permissions.pages.includes(page.id)} className="w-4 h-4 accent-green-600 disabled:opacity-30" />
+                                  </td>
+                                </tr>
+                                {PAGE_FEATURES[page.id] && form.permissions.pages.includes(page.id) && PAGE_FEATURES[page.id].map(feat => (
+                                  <tr key={feat.id} className="bg-gray-50/70 border-t border-gray-100/50">
+                                    <td className="p-1.5 pr-6 text-gray-400 text-xs">↳ {feat.label}</td>
+                                    <td className="p-1.5 text-center" colSpan={2}>
+                                      <input type="checkbox"
+                                        checked={!(form.permissions.hiddenFeatures || []).includes(feat.id)}
+                                        onChange={() => toggleFeature(feat.id)}
+                                        className="w-3.5 h-3.5 accent-blue-500" />
+                                    </td>
+                                  </tr>
+                                ))}
+                              </React.Fragment>
                             ))}
                           </tbody>
                         </table>
@@ -6343,7 +6404,7 @@ ${htmlRows}
           case 'dashboard': 
             return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={navigateTo} />;
           case 'inventory':
-            return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />;
+            return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} appUser={appUser} />;
           case 'orders':
             return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
           case 'shortages': 
