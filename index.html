@@ -1018,10 +1018,15 @@
         window.XLSX.writeFile(wb, `יומן-מלאי-${logDate}.xlsx`);
       };
 
-      const handleReset = () => {
+      const handleReset = async () => {
         if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
+        const today = new Date().toISOString().split('T')[0];
         setFrozenStock({});
-        db.from('frozen_stock').upsert({ id: 'main', data: {}, updated_at: new Date().toISOString() }).then();
+        setLogEntries(prev => prev.filter(e => e.date !== today));
+        await Promise.all([
+          db.from('frozen_stock').upsert({ id: 'main', data: {}, updated_at: new Date().toISOString() }),
+          db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today)
+        ]);
         setResetModal(false);
         setResetPassword('');
         setResetError('');
@@ -1076,25 +1081,78 @@
 
       const doPdfExport = (date) => {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
         const withStorage = exportMode === 'withStorage';
-        const title = withStorage ? `מלאי קפוא כולל אחסנה | ${date}` : `מלאי קפוא — מצב נתון | ${date}`;
-        doc.setFontSize(13);
-        doc.text(title, 14, 14);
-        const head = [['מוצר', ...selectedKashrut.flatMap(k => withStorage ? [`${k.name} מגשים`, `${k.name} קרטונים`, `${k.name} כולל אחסנה`] : [`${k.name} מגשים`, `${k.name} קרטונים`])]];
-        const body = frozenProductsList.map(p => {
-          const row = [p.name];
-          selectedKashrut.forEach(k => {
-            const key = `${p.name}|${k.name}`;
-            const t = frozenStock[key] || 0;
-            const c = t ? Math.floor(t / TRAYS_PER_CARTON) : '-';
-            if (withStorage) row.push(t || '-', c, (Math.floor(t / TRAYS_PER_CARTON)) + (bsBalance[key] || 0));
-            else row.push(t || '-', c);
-          });
-          return row;
+        const title = withStorage ? `מלאי קפוא כולל אחסנה — ${date}` : `מלאי קפוא — מצב נתון — ${date}`;
+
+        const nonFishProducts = frozenProductsList.filter(p => p.kashrut !== 'כללי' && p.storageTypes?.includes('frozen'));
+        const fishProducts = frozenProductsList.filter(p => p.kashrut === 'כללי' && p.storageTypes?.includes('frozen'));
+
+        const colHeaders = selectedKashrut.flatMap(k =>
+          withStorage ? [`${k.name}<br>מגשים`, `${k.name}<br>קרטונים`, `${k.name}<br>כולל אחסנה`]
+                      : [`${k.name}<br>מגשים`, `${k.name}<br>קרטונים`]
+        );
+
+        const buildCells = (name, kashrut) => {
+          const key = `${name}|${kashrut}`;
+          const t = frozenStock[key] || 0;
+          const c = Math.floor(t / TRAYS_PER_CARTON);
+          return withStorage
+            ? `<td style="padding:5px 8px;text-align:center;">${t}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;">${c}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;color:#4338ca;">${c + (bsBalance[key] || 0)}</td>`
+            : `<td style="padding:5px 8px;text-align:center;">${t}</td><td style="padding:5px 8px;text-align:center;font-weight:bold;">${c}</td>`;
+        };
+
+        let tableRows = nonFishProducts.map((p, i) =>
+          `<tr style="background:${i%2===0?'#fff':'#f8fafc'};">
+            <td style="padding:5px 8px;font-weight:bold;">${p.name}</td>
+            ${selectedKashrut.map(k => buildCells(p.name, k.name)).join('')}
+          </tr>`
+        ).join('');
+
+        if (fishProducts.length) {
+          tableRows += `<tr style="background:#dbeafe;"><td colspan="${1 + colHeaders.length}" style="padding:5px 8px;font-weight:bold;color:#1d4ed8;">🐟 דגים — כללי</td></tr>`;
+          tableRows += fishProducts.map((p, i) =>
+            `<tr style="background:${i%2===0?'#eff6ff':'#dbeafe'};">
+              <td style="padding:5px 8px;font-weight:bold;">${p.name}</td>
+              ${buildCells(p.name, 'כללי')}
+              ${withStorage ? selectedKashrut.slice(1).map(() => '<td></td><td></td><td></td>').join('') : selectedKashrut.slice(1).map(() => '<td></td><td></td>').join('')}
+            </tr>`
+          ).join('');
+        }
+
+        const html = `
+          <div style="font-family:Arial,sans-serif;direction:rtl;padding:20px;width:1000px;">
+            <h2 style="text-align:center;margin-bottom:16px;font-size:16px;">${title}</h2>
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              <thead>
+                <tr style="background:#1e293b;color:#fff;">
+                  <th style="padding:6px 8px;text-align:right;">מוצר</th>
+                  ${colHeaders.map(h => `<th style="padding:6px 8px;text-align:center;">${h}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>`;
+
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+        container.innerHTML = html;
+        document.body.appendChild(container);
+
+        window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
+          document.body.removeChild(container);
+          const imgData = canvas.toDataURL('image/png');
+          const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+          const pageW = doc.internal.pageSize.getWidth();
+          const pageH = doc.internal.pageSize.getHeight();
+          const imgH = (canvas.height * pageW) / canvas.width;
+          let posY = 0;
+          while (posY < imgH) {
+            doc.addImage(imgData, 'PNG', 0, -posY, pageW, imgH);
+            posY += pageH;
+            if (posY < imgH) doc.addPage();
+          }
+          doc.save(`מלאי-סופר-עוף-${date}.pdf`);
         });
-        doc.autoTable({ head, body, startY: 18, styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [30,30,30], textColor: 255 }, alternateRowStyles: { fillColor: [245,245,255] }, columnStyles: { 0: { halign: 'right', fontStyle: 'bold' } } });
-        doc.save(`מלאי סופר עוף ${date}.pdf`);
       };
 
       return (
