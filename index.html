@@ -4820,15 +4820,15 @@
                         {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
                       </div>
                       <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
-                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
-                          <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
-                            <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div className="relative"><label className="text-xs text-gray-400 block mb-0.5">חיפוש לפי שם</label>
-                            <input ref={exitNameSearchRef} type="text" autoComplete="off" placeholder="הקלד שם מוצר..." value={exitNameSearch}
+                        <div className="flex items-end gap-1 flex-wrap">
+                          <div style={{width:'58px'}}><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                            <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div className="relative" style={{width:'150px'}}><label className="text-xs text-gray-400 block mb-0.5">חיפוש לפי שם</label>
+                            <input ref={exitNameSearchRef} type="text" autoComplete="off" placeholder="הקלד שם..." value={exitNameSearch}
                               onChange={e => { setExitNameSearch(e.target.value); setShowExitNameDropdown(true); }}
                               onFocus={() => setShowExitNameDropdown(true)}
                               onBlur={() => setTimeout(() => setShowExitNameDropdown(false), 150)}
-                              className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" />
+                              className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" />
                             {showExitNameDropdown && exitNameSearch && (() => {
                               const results = (frozenProductsList || []).filter(p =>
                                 p.name?.includes(exitNameSearch) || p.name?.toLowerCase().includes(exitNameSearch.toLowerCase())
@@ -4848,31 +4848,30 @@
                               );
                             })()}
                           </div>
-                          <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-                            <input type="text" value={exitProductForm.name} onChange={e => setExitProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
-                          <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
-                            <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
-                          <div><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
-                            <input type="number" value={exitProductForm.weight} onChange={e => setExitProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1.5 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div className="col-span-2 sm:col-span-1">
-                            <label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <input type="date" value={exitProductForm.expiryDate} onChange={e => setExitProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1.5 text-xs focus:border-blue-400 outline-none bg-white" />
-                              <label className="flex items-center gap-1 text-xs font-semibold cursor-pointer select-none">
-                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל' ? '' : 'מ.ל'}))} className="w-3.5 h-3.5 cursor-pointer" />
+                          <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div style={{width:'120px'}}><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                            <input type="text" value={exitProductForm.name} onChange={e => setExitProductForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+                          <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                            <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+                          <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
+                            <input type="number" value={exitProductForm.weight} onChange={e => setExitProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
+                            <div className="flex items-center gap-1">
+                              <input type="date" value={exitProductForm.expiryDate} onChange={e => setExitProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1 text-xs focus:border-blue-400 outline-none bg-white" />
+                              <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
+                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל' ? '' : 'מ.ל'}))} className="w-3 h-3 cursor-pointer" />
                                 מ.ל
                               </label>
-                              <label className="flex items-center gap-1 text-xs font-semibold cursor-pointer select-none">
-                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל.ה'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל.ה' ? '' : 'מ.ל.ה'}))} className="w-3.5 h-3.5 cursor-pointer" />
+                              <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
+                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל.ה'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל.ה' ? '' : 'מ.ל.ה'}))} className="w-3 h-3 cursor-pointer" />
                                 מ.ל.ה
                               </label>
                             </div>
                           </div>
-                          <div className="col-span-2 flex gap-2 sm:col-span-1">
-                            <button onClick={() => addProductToExitPallet(pallet.id)} className={`flex-1 text-white px-4 py-2 rounded text-xs font-bold whitespace-nowrap ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן מוצר' : 'הוסף'}</button>
-                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); setExitNameSearch(''); setShowExitNameDropdown(false); }} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                          <div className="flex gap-1">
+                            <button onClick={() => addProductToExitPallet(pallet.id)} className={`text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן' : 'הוסף'}</button>
+                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); setExitNameSearch(''); setShowExitNameDropdown(false); }} className="bg-gray-200 text-gray-600 px-2 py-1.5 rounded text-xs font-bold">נקה</button>
                           </div>
                         </div>
                       </div>
