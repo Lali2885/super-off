@@ -757,6 +757,28 @@
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
+      const [bsBalance, setBsBalance] = useState({});
+
+      useEffect(() => {
+        Promise.all([
+          db.from('beit_shemesh_shipments').select('*'),
+          db.from('beit_shemesh_withdrawals').select('*')
+        ]).then(([shRes, wdRes]) => {
+          const map = {};
+          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            if (!map[key]) map[key] = 0;
+            map[key] += Number(pr.cartons || 0);
+          })));
+          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            if (!map[key]) map[key] = 0;
+            map[key] -= Number(pr.cartons || 0);
+          }));
+          Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
+          setBsBalance(map);
+        });
+      }, []);
 
       const getETrays = (key) => entryTrays[key] || 0;
       const getWTrays = (key) => withdrawTrays[key] || 0;
@@ -792,14 +814,16 @@
             <th className="p-2 font-bold text-right bg-gray-50" rowSpan={2}>מוצר</th>
             <th className="p-2 font-bold text-center bg-green-50 text-green-700 border-r border-green-100" colSpan={2}>כניסה למלאי</th>
             <th className="p-2 font-bold text-center bg-red-50 text-red-700 border-r border-red-100" colSpan={1}>משיכה ממלאי</th>
-            <th className="p-2 font-bold text-center bg-blue-50 text-blue-700" colSpan={2}>מצב נתון</th>
+            <th className="p-2 font-bold text-center bg-blue-50 text-blue-700 border-r border-blue-100" colSpan={2}>מצב נתון</th>
+            <th className="p-2 font-bold text-center bg-indigo-50 text-indigo-700" colSpan={1}>כולל אחסנה</th>
           </tr>
           <tr>
             <th className="p-2 font-bold text-center bg-green-50 text-green-600">מגשים</th>
             <th className="p-2 font-bold text-center bg-green-50 text-green-600 border-r border-green-100">קרטונים</th>
             <th className="p-2 font-bold text-center bg-red-50 text-red-600 border-r border-red-100">קרטונים</th>
             <th className="p-2 font-bold text-center bg-blue-50 text-blue-600">מגשים</th>
-            <th className="p-2 font-bold text-center bg-blue-50 text-blue-600">קרטונים</th>
+            <th className="p-2 font-bold text-center bg-blue-50 text-blue-600 border-r border-blue-100">קרטונים</th>
+            <th className="p-2 font-bold text-center bg-indigo-50 text-indigo-600">קרטונים</th>
           </tr>
         </thead>
       );
@@ -844,9 +868,12 @@
             <td className="p-2 text-center bg-blue-50/40">
               <span className="font-black text-blue-800 text-base">{trays}</span>
             </td>
-            <td className="p-2 text-center bg-blue-50/40">
+            <td className="p-2 text-center bg-blue-50/40 border-r border-blue-100">
               <span className="font-black text-blue-700 text-base">{cartons}</span>
               {remainder > 0 && <div className="text-[10px] text-gray-400">+{remainder}</div>}
+            </td>
+            <td className="p-2 text-center bg-indigo-50/40">
+              <span className="font-black text-indigo-700 text-base">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
             </td>
           </tr>
         );
