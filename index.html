@@ -126,11 +126,13 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
+    // ===[DB]===
     // --- Supabase ---
     const SUPABASE_URL = 'https://tqcoeapxjzolrhwaasah.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_qamU2RU-O_cwKOL_a-JI2A_q0PTIsPW';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // ===[ICONS]===
     // --- Inline Vector Icons to ensure zero external dependency issues ---
     const Icons = {
       Home: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -308,6 +310,7 @@
       );
     };
 
+    // ===[CONSTANTS]===
     // --- Jerusalem Neighborhoods & Streets ---
     const INITIAL_NEIGHBORHOODS = [
       { id: 'n1',  name: 'רמות',         streets: ['שלמה המלך','נחמיה','אברהם שטרן','יהודה המכבי','הרב בגון','רחל המשוררת','פנחס רוזן'] },
@@ -448,6 +451,7 @@
     const DEFAULT_CAT_COLORS = { outer: 'border-gray-200', headerBg: 'bg-gray-50', headerHover: 'hover:bg-gray-100', headerText: 'text-gray-900', headerBorder: 'border-gray-200', divider: 'divide-gray-100', qtyBg: 'bg-purple-100', qtyText: 'text-purple-800', qtyBorder: 'border-purple-200', subBorder: 'border-purple-200', subQty: 'text-purple-600', cardActive: 'bg-purple-100 border-purple-500 shadow-sm', cardHover: 'hover:border-purple-300 hover:bg-purple-50', cardActiveText: 'text-purple-900', inputActive: 'border-purple-400 text-purple-900', ring: 'focus:ring-purple-400' };
     const getCatColors = (cat) => CATEGORY_COLORS[cat] || DEFAULT_CAT_COLORS;
 
+    // ===[DASHBOARD]===
     // --- Dashboard View ---
     const DashboardView = ({ orders, stock, shortages, setActiveTab }) => {
       // Counts
@@ -552,6 +556,7 @@
       );
     };
 
+    // ===[INVENTORY]===
     // --- Inventory View ---
     const StockPanel = ({ title, color, accentClass, items, stockData, setStockData }) => {
       const [selectedProduct, setSelectedProduct] = useState('');
@@ -761,6 +766,7 @@
       );
     };
 
+    // ===[INVENTORY-FROZEN]===
     // --- Frozen Stock Panel ---
     const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
@@ -1413,6 +1419,7 @@ ${htmlRows}
       );
     };
 
+    // ===[ORDERS]===
     // --- Orders View ---
     const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap, logoImage }) => {
       const getSku = (itemId, k) => (orderFormSkuMap || {})[itemId]?.[k] || '';
@@ -1455,6 +1462,7 @@ ${htmlRows}
 
       // Client state fields
       const [customerName, setCustomerName] = useState('');
+      const [customerSuggestions, setCustomerSuggestions] = useState([]);
       const [customerPhone, setCustomerPhone] = useState('');
       const [customerMobile, setCustomerMobile] = useState('');
       const [neighborhood, setNeighborhood] = useState('');
@@ -1716,7 +1724,7 @@ ${htmlRows}
       const closeModal = () => {
         setIsModalOpen(false);
         setEditingOrder(null);
-        setCustomerName(''); setCustomerPhone(''); setCustomerMobile('');
+        setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]);
         setNeighborhood(''); setSubNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
         setDeliveryDate(new Date().toISOString().split('T')[0]); setPickupTime(new Date().toISOString().split('T')[0]); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
@@ -2655,32 +2663,52 @@ ${htmlRows}
                     </label>
                   </div>
 
-                  {/* בחירת לקוח מרשימה */}
-                  {contactsList.length > 0 && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                      <label className="block text-xs font-bold text-blue-700 mb-1.5">👥 בחר לקוח קיים (אופציונלי)</label>
-                      <select onChange={e => {
-                        const c = contactsList.find(x => x.id === e.target.value);
-                        if (!c) return;
-                        setCustomerName(c.name);
-                        setCustomerPhone(c.phone || '');
-                        setCustomerMobile(c.mobile || '');
-                        setStreet(c.address || '');
-                        setNeighborhood(c.neighborhood || '');
-                      }} defaultValue=""
-                        className="w-full p-2.5 border border-blue-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-blue-400">
-                        <option value="">-- חיפוש לקוח --</option>
-                        {contactsList.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}{c.phone ? ` | ${c.phone}` : ''}{c.neighborhood ? ` | ${c.neighborhood}` : ''}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
                   {/* פרטי לקוח */}
                   <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-3 shadow-sm">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input type="text" required value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="שם הלקוח *" className="w-full p-2.5 border border-gray-300 rounded-md text-sm outline-none font-bold" />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required
+                          value={customerName}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setCustomerName(val);
+                            if (val.trim().length >= 1 && contactsList.length > 0) {
+                              setCustomerSuggestions(contactsList.filter(c => c.name.includes(val.trim())).slice(0, 6));
+                            } else {
+                              setCustomerSuggestions([]);
+                            }
+                          }}
+                          onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)}
+                          placeholder="שם הלקוח *"
+                          className="w-full p-2.5 border border-gray-300 rounded-md text-sm outline-none font-bold focus:ring-2 focus:ring-blue-400"
+                          autoComplete="off"
+                        />
+                        {customerSuggestions.length > 0 && (
+                          <div className="absolute top-full right-0 left-0 z-50 bg-white border border-blue-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                            {customerSuggestions.map(c => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onMouseDown={() => {
+                                  setCustomerName(c.name);
+                                  setCustomerPhone(c.phone || '');
+                                  setCustomerMobile(c.mobile || '');
+                                  setStreet(c.address || '');
+                                  setNeighborhood(c.neighborhood || '');
+                                  setCustomerSuggestions([]);
+                                }}
+                                className="w-full text-right px-3 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 text-sm"
+                              >
+                                <span className="font-bold text-gray-800">{c.name}</span>
+                                {c.phone && <span className="text-gray-400 text-xs me-2"> {c.phone}</span>}
+                                {c.neighborhood && <span className="text-gray-400 text-xs"> · {c.neighborhood}</span>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <input type="tel" required value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="טלפון *" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none font-bold" />
                         <input type="tel" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} placeholder="נייד" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none" />
@@ -3459,6 +3487,7 @@ ${htmlRows}
       );
     };
 
+    // ===[DELIVERIES]===
     // --- Deliveries View ---
     const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList, butchersList }) => {
       const [activeTab, setActiveTab] = useState('delivery');
@@ -3839,6 +3868,7 @@ ${htmlRows}
       );
     };
 
+    // ===[LISTS]===
     // --- ListEditor Helpers ---
     const ListEditor = ({ title, items, setItems, placeholder, showColor = false }) => {
       const [newItemName, setNewItemName] = useState('');
@@ -3918,6 +3948,7 @@ ${htmlRows}
       );
     };
 
+    // ===[CONTACTS]===
     // --- Contacts View ---
     const ContactsView = ({ contactsList, setContactsList }) => {
       const [editingContact, setEditingContact] = useState(null); // contact object being edited
@@ -4675,6 +4706,7 @@ ${htmlRows}
     };
 
 
+    // ===[SETTINGS]===
     const SettingsView = ({ logoImage, setLogoImage, companyVat, setCompanyVat }) => {
       const handleLogoUpload = (e) => {
         const file = e.target.files?.[0];
@@ -4731,6 +4763,7 @@ ${htmlRows}
       );
     };
 
+    // ===[BEIT-SHEMESH]===
     const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
       const today = new Date().toISOString().split('T')[0];
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
@@ -5438,6 +5471,7 @@ ${htmlRows}
       );
     };
 
+    // ===[ARCHIVE]===
     // --- Archive View ---
     const ArchiveView = ({ orders, setOrders, kashrutList }) => {
       const [search, setSearch] = useState('');
@@ -5580,6 +5614,7 @@ ${htmlRows}
       );
     };
 
+    // ===[STATS]===
     // --- Stats View ---
     const StatsView = ({ orders, stock, frozenStock, frozenProductsList, kashrutList, butchersList, couriersList, inventoryLog, setInventoryLog }) => {
       const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
@@ -5788,6 +5823,7 @@ ${htmlRows}
       );
     };
 
+    // ===[AUTH]===
     // --- User Management Helpers ---
     const hashPassword = async (pw) => {
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
@@ -6139,6 +6175,7 @@ ${htmlRows}
       );
     };
 
+    // ===[APP]===
     // --- Main App Component ---
     function App() {
       const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'orders');
