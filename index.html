@@ -6133,7 +6133,8 @@ ${htmlRows}
           onLogin(user);
         } else {
           const { data, error: err } = await db.from('app_users').select('*').eq('username', username).eq('password_hash', hash).eq('active', true).maybeSingle();
-          if (err || !data) { setError('שם משתמש או סיסמה שגויים'); setLoading(false); return; }
+          if (err) { setError('שגיאה: ' + err.message); setLoading(false); return; }
+          if (!data) { setError('שם משתמש או סיסמה שגויים'); setLoading(false); return; }
           const user = { id: data.id, username: data.username, is_admin: data.is_admin, permissions: data.permissions };
           localStorage.setItem('appUser', JSON.stringify(user));
           onLogin(user);
