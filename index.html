@@ -417,6 +417,15 @@
     ];
     const TRAYS_PER_CARTON = 14;
 
+    // ניקוי אוטומטי של localStorage ישן (כשמחליפים מערכת Auth)
+    const LS_VERSION = '2';
+    if (localStorage.getItem('ls_version') !== LS_VERSION) {
+      const activeTab = localStorage.getItem('activeTab');
+      localStorage.clear();
+      localStorage.setItem('ls_version', LS_VERSION);
+      if (activeTab) localStorage.setItem('activeTab', activeTab);
+    }
+
     const initFrozenStock = () => {
       const obj = {};
       FROZEN_PRODUCTS.forEach(p => FROZEN_KASHRUT.forEach(k => { obj[`${p}|${k}`] = 0; }));
