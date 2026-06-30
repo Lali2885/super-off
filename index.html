@@ -389,10 +389,10 @@
 
     const PRODUCT_CATEGORIES = ['עוף', 'הודו', 'בשר', 'דגים'];
     const CAT_STYLES = {
-      'עוף':  { header: 'bg-yellow-50 border-yellow-200', text: 'text-yellow-800', dot: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-      'הודו': { header: 'bg-green-50 border-green-200',   text: 'text-green-800',  dot: 'bg-green-400',  badge: 'bg-green-100 text-green-800 border-green-200'  },
-      'בשר':  { header: 'bg-red-50 border-red-200',       text: 'text-red-800',    dot: 'bg-red-400',    badge: 'bg-red-100 text-red-800 border-red-200'        },
-      'דגים': { header: 'bg-blue-50 border-blue-200',     text: 'text-blue-800',   dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-800 border-blue-200'     },
+      'עוף':  { header: 'bg-yellow-50', border: 'border-yellow-400', text: 'text-yellow-800', dot: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+      'הודו': { header: 'bg-green-50',  border: 'border-green-400',  text: 'text-green-800',  dot: 'bg-green-400',  badge: 'bg-green-100 text-green-800 border-green-200'  },
+      'בשר':  { header: 'bg-red-50',    border: 'border-red-400',    text: 'text-red-800',    dot: 'bg-red-400',    badge: 'bg-red-100 text-red-800 border-red-200'        },
+      'דגים': { header: 'bg-blue-50',   border: 'border-blue-400',   text: 'text-blue-800',   dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-800 border-blue-200'     },
     };
     const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟' };
 
@@ -803,21 +803,21 @@
       const activeColor = activeKashrutObj.color || '#6366f1';
 
       const renderTableHeader = () => (
-        <thead className="text-sm border-b border-gray-100">
+        <thead className="text-sm">
           <tr>
-            <th className="p-2.5 font-bold text-right bg-gray-50" rowSpan={2}>מוצר</th>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-700 border-r border-green-100" colSpan={2}>כניסה למלאי</th>
-            <th className="p-2.5 font-bold text-center bg-red-50 text-red-700 border-r border-red-100" colSpan={1}>משיכה ממלאי</th>
-            <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-700 border-r border-blue-100" colSpan={2}>מצב נתון</th>
-            <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" colSpan={1}>כולל אחסנה</th>
+            <th className="p-2.5 font-bold text-right bg-gray-50 border-b-2 border-gray-300" rowSpan={2}>מוצר</th>
+            <th className="p-2.5 font-bold text-center bg-green-50 text-green-700 border-r-2 border-green-400 border-b border-green-200" colSpan={2}>כניסה למלאי</th>
+            <th className="p-2.5 font-bold text-center bg-red-50 text-red-700 border-r-2 border-red-400 border-b border-red-200" colSpan={1}>משיכה ממלאי</th>
+            <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-700 border-r-2 border-blue-400 border-b border-blue-200" colSpan={2}>מצב נתון</th>
+            <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700 border-b border-indigo-200" colSpan={1}>כולל אחסנה</th>
           </tr>
           <tr>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r border-green-300">מגשים</th>
-            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r border-gray-300">קרטונים</th>
-            <th className="p-2.5 font-bold text-center bg-red-50 text-red-600 border-r border-gray-300">קרטונים</th>
-            <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400 border-r border-green-300">מגשים</th>
-            <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-600 border-r border-gray-300">קרטונים</th>
-            <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-600">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r-2 border-green-400 border-b-2 border-green-300">מגשים</th>
+            <th className="p-2.5 font-bold text-center bg-green-50 text-green-600 border-r border-gray-300 border-b-2 border-green-300">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-red-50 text-red-600 border-r-2 border-red-400 border-b-2 border-red-300">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400 border-r-2 border-blue-400 border-b-2 border-gray-300">מגשים</th>
+            <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-600 border-r border-gray-300 border-b-2 border-blue-300">קרטונים</th>
+            <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-600 border-b-2 border-indigo-300">קרטונים</th>
           </tr>
         </thead>
       );
@@ -831,11 +831,11 @@
         const wT = getWTrays(key); const wC = Math.floor(wT / TRAYS_PER_CARTON); const wR = wT % TRAYS_PER_CARTON;
         return (
           <tr key={p.name} style={{ backgroundColor: idx % 2 === 0 ? rowEven : rowOdd }}>
-            <td className="p-2.5 font-bold text-gray-900 text-sm border-r border-gray-300">
+            <td className="p-2.5 font-bold text-gray-900 text-sm">
               {p.name}
               {p.sku && <span className="block text-xs text-gray-400 font-normal">{p.sku}</span>}
             </td>
-            <td className="p-1 text-center bg-green-50/30 border-r border-green-300">
+            <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
               <input type="number" min="0" step="1" value={eT||''} placeholder="0"
                 onChange={e => setEFromTrays(key, e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
@@ -850,7 +850,7 @@
                 {eR > 0 && <div className="text-xs text-gray-900 font-bold">+{eR}</div>}
               </div>
             </td>
-            <td className="p-1 text-center bg-red-50/30 border-r border-gray-300">
+            <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
               <div className="flex flex-col items-center">
                 <input type="number" min="0" step="1" value={wC||''} placeholder="0"
                   onChange={e => setWFromCartons(key, e.target.value)}
@@ -859,7 +859,7 @@
                 {wR > 0 && <div className="text-xs text-gray-900 font-bold">+{wR}</div>}
               </div>
             </td>
-            <td className="p-2.5 text-center bg-gray-50/60 border-r border-green-300">
+            <td className="p-2.5 text-center bg-gray-50/60 border-r-2 border-blue-400">
               <span className="font-bold text-gray-400 text-lg">{trays}</span>
             </td>
             <td className="p-2.5 text-center bg-blue-50/40 border-r border-gray-300">
@@ -901,13 +901,13 @@
             return PRODUCT_CATEGORIES.filter(c => grouped[c]?.length).map(cat => {
               const cs = CAT_STYLES[cat] || {};
               return (
-                <div key={cat} className={`rounded-xl overflow-hidden border ${cs.header || 'border-gray-200'}`}>
-                  <div className={`px-4 py-2.5 flex items-center gap-2 font-extrabold text-sm ${cs.header || 'bg-gray-50'} ${cs.text || 'text-gray-700'} border-b`}>
+                <div key={cat} className={`rounded-xl overflow-hidden border-2 ${cs.border || 'border-gray-300'}`}>
+                  <div className={`px-4 py-2.5 flex items-center gap-2 font-extrabold text-sm ${cs.header || 'bg-gray-50'} ${cs.text || 'text-gray-700'} border-b-2 ${cs.border || 'border-gray-200'}`}>
                     <span>{CAT_EMOJI[cat]}</span><span>{cat}</span>
                     <span className={`mr-auto text-xs font-bold px-2 py-0.5 rounded-full border ${cs.badge || 'bg-gray-100 text-gray-500 border-gray-200'}`}>{grouped[cat].length} מוצרים</span>
                   </div>
                   <div className="bg-white overflow-x-auto">
-                    <table className="w-full text-right text-sm min-w-max">
+                    <table className="w-full text-right text-sm min-w-max border-collapse">
                       {renderTableHeader()}
                       <tbody className="divide-y divide-gray-100">
                         {grouped[cat].map((p, idx) => renderRow(p, activeKashrut, idx, '#ffffff', '#f9fafb'))}
@@ -922,12 +922,12 @@
 
           {/* סקשן דגים */}
           {fishProducts.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-blue-200 overflow-hidden mt-2">
+            <div className="bg-white rounded-xl shadow-sm border-2 border-blue-400 overflow-hidden mt-2">
               <div className="py-2 px-4 bg-blue-50 border-b border-blue-200">
                 <span className="text-blue-600 font-extrabold text-sm">🐟 דגים — כללי</span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-sm min-w-max">
+                <table className="w-full text-right text-sm min-w-max border-collapse">
                   {renderTableHeader()}
                   <tbody className="divide-y divide-gray-100">
                     {fishProducts.map((p, idx) => renderRow(p, 'כללי', idx, '#ffffff', '#eff6ff'))}
