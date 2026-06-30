@@ -787,17 +787,33 @@
       const setWFromTrays = (key, val) => setWithdrawTrays(prev => ({ ...prev, [key]: Math.max(0, parseInt(val) || 0) }));
       const setWFromCartons = (key, val) => setWithdrawTrays(prev => ({ ...prev, [key]: Math.max(0, (parseInt(val) || 0) * TRAYS_PER_CARTON) }));
 
+      const logAction = (action, key, trays) => {
+        const [product, kashrut] = key.split('|');
+        const entry = {
+          action,
+          product,
+          kashrut,
+          trays,
+          cartons: Math.floor(trays / TRAYS_PER_CARTON),
+          date: new Date().toISOString().split('T')[0],
+          timestamp: new Date().toISOString()
+        };
+        db.from('frozen_stock_log').insert([{ data: entry }]).then();
+      };
+
       const applyEntry = (key) => {
         const delta = entryTrays[key] || 0;
         if (!delta) return;
         setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
         setEntryTrays(prev => ({ ...prev, [key]: 0 }));
+        logAction('כניסה', key, delta);
       };
       const applyWithdraw = (key) => {
         const delta = withdrawTrays[key] || 0;
         if (!delta) return;
         setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
         setWithdrawTrays(prev => ({ ...prev, [key]: 0 }));
+        logAction('משיכה', key, delta);
       };
 
       const fishProducts = frozenProductsList.filter(p => p.kashrut === 'כללי' && p.storageTypes?.includes('frozen'));
@@ -976,6 +992,32 @@
       const [resetModal, setResetModal] = useState(false);
       const [resetPassword, setResetPassword] = useState('');
       const [resetError, setResetError] = useState('');
+      const [logEntries, setLogEntries] = useState([]);
+      const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+      const [logLoaded, setLogLoaded] = useState(false);
+
+      const loadLog = () => {
+        db.from('frozen_stock_log').select('*').order('created_at', { ascending: false }).limit(500).then(({ data }) => {
+          if (data) setLogEntries(data.map(r => r.data));
+          setLogLoaded(true);
+        });
+      };
+
+      const filteredLog = logEntries.filter(e => e.date === logDate);
+
+      const downloadLogExcel = () => {
+        const rows = [['תאריך', 'שעה', 'פעולה', 'מוצר', 'כשרות', 'קרטונים', 'מגשים']];
+        filteredLog.forEach(e => {
+          const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
+          rows.push([e.date, time, e.action, e.product, e.kashrut || '', e.cartons || 0, e.trays || 0]);
+        });
+        const ws = window.XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:22},{wch:10},{wch:10},{wch:10}];
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, 'יומן פעולות');
+        wb.Sheets['יומן פעולות']['!sheetViews'] = [{ rightToLeft: true }];
+        window.XLSX.writeFile(wb, `יומן-מלאי-${logDate}.xlsx`);
+      };
 
       const handleReset = () => {
         if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
@@ -1124,6 +1166,11 @@
               className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'frozen' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-50'}`}>
               🧊 מלאי קפוא ({new Set(frozenItems.filter(p => p.storageTypes?.includes('frozen')).map(p => p.name)).size} פריטים)
             </button>
+            <button
+              onClick={() => { setActiveTab('log'); if (!logLoaded) loadLog(); }}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'log' ? 'bg-amber-500 text-white border-amber-500 shadow-md' : 'bg-white text-amber-600 border-amber-200 hover:bg-amber-50'}`}>
+              📋 יומן פעולות
+            </button>
           </div>
 
           {/* מודאל ייצוא */}
@@ -1197,6 +1244,64 @@
 
           {activeTab === 'frozen' && (
             <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} />
+          )}
+
+          {activeTab === 'log' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+              <div className="p-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-gray-700">תאריך:</span>
+                  <input type="date" value={logDate} onChange={e => setLogDate(e.target.value)}
+                    className="border border-gray-200 rounded-lg p-1.5 text-sm outline-none focus:border-amber-400" />
+                  <button onClick={loadLog} className="text-xs text-gray-400 hover:text-amber-600 border border-gray-200 rounded-lg px-2 py-1">רענן</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{filteredLog.length} פעולות</span>
+                  <button onClick={downloadLogExcel} disabled={filteredLog.length === 0}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-bold text-xs rounded-lg transition-colors">
+                    📊 הורד Excel
+                  </button>
+                </div>
+              </div>
+              {filteredLog.length === 0 ? (
+                <div className="text-center text-gray-400 py-16 text-sm">אין פעולות בתאריך זה</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-right">
+                    <thead className="bg-gray-50 text-xs text-gray-500 border-b border-gray-100">
+                      <tr>
+                        <th className="p-3 font-bold">שעה</th>
+                        <th className="p-3 font-bold">פעולה</th>
+                        <th className="p-3 font-bold">מוצר</th>
+                        <th className="p-3 font-bold">כשרות</th>
+                        <th className="p-3 font-bold text-center">קרטונים</th>
+                        <th className="p-3 font-bold text-center">מגשים</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredLog.map((e, i) => {
+                        const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
+                        const isEntry = e.action === 'כניסה';
+                        return (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="p-3 text-gray-400 text-xs font-mono">{time}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${isEntry ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {isEntry ? '▲ כניסה' : '▼ משיכה'}
+                              </span>
+                            </td>
+                            <td className="p-3 font-bold text-gray-900">{e.product}</td>
+                            <td className="p-3 text-gray-500 text-xs">{e.kashrut || '—'}</td>
+                            <td className="p-3 text-center font-bold">{e.cartons || 0}</td>
+                            <td className="p-3 text-center text-gray-500">{e.trays || 0}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
         </div>
       );
