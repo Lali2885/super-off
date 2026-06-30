@@ -6200,6 +6200,14 @@ ${htmlRows}
       const navigateTo = useCallback((tabId) => { setActiveTab(tabId); localStorage.setItem('activeTab', tabId); }, []);
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
       const [appUser, setAppUser] = useState(() => { try { return JSON.parse(localStorage.getItem('appUser')); } catch { return null; } });
+
+      useEffect(() => {
+        if (!appUser || appUser.is_admin) return;
+        const allowed = appUser.permissions?.pages || [];
+        if (allowed.length > 0 && !allowed.includes(activeTab)) {
+          navigateTo(allowed[0]);
+        }
+      }, [appUser]);
       const [appLoading, setAppLoading] = useState(false);
       const dataLoadedRef = useRef(false);
       const skipSaveRef = useRef(false);
