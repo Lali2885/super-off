@@ -5760,18 +5760,278 @@ ${htmlRows}
       );
     };
 
+    // --- User Management Helpers ---
+    const hashPassword = async (pw) => {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    const ALL_PAGES = [
+      { id: 'inventory',    label: 'מלאי סחורה כללי' },
+      { id: 'beit-shemesh', label: 'קירור לירוי' },
+      { id: 'orders',       label: 'ניהול הזמנות' },
+      { id: 'deliveries',   label: 'מערך משלוחים' },
+      { id: 'contacts',     label: 'אנשי קשר' },
+      { id: 'lists',        label: 'ניהול רשימות' },
+      { id: 'archive',      label: 'ארכיון הזמנות' },
+      { id: 'stats',        label: 'דוחות ובקרה' },
+      { id: 'dashboard',    label: 'לוח בקרה' },
+      { id: 'settings',     label: 'הגדרות' },
+    ];
+
+    // --- Users Management View ---
+    const UsersManagementView = () => {
+      const [users, setUsers] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [showModal, setShowModal] = useState(false);
+      const [editingUser, setEditingUser] = useState(null);
+      const [form, setForm] = useState({ username: '', password: '', is_admin: false, permissions: { pages: [], canEdit: [] } });
+      const [saving, setSaving] = useState(false);
+      const [formError, setFormError] = useState('');
+
+      const loadUsers = async () => {
+        const { data } = await db.from('app_users').select('id,username,is_admin,active,permissions,created_at').order('created_at');
+        setUsers(data || []);
+        setLoading(false);
+      };
+      useEffect(() => { loadUsers(); }, []);
+
+      const openAdd = () => {
+        setEditingUser(null);
+        setForm({ username: '', password: '', is_admin: false, permissions: { pages: [], canEdit: [] } });
+        setFormError('');
+        setShowModal(true);
+      };
+      const openEdit = (user) => {
+        setEditingUser(user);
+        setForm({ username: user.username, password: '', is_admin: user.is_admin, permissions: user.permissions || { pages: [], canEdit: [] } });
+        setFormError('');
+        setShowModal(true);
+      };
+
+      const togglePage = (pageId) => {
+        setForm(f => {
+          const pages = f.permissions.pages.includes(pageId)
+            ? f.permissions.pages.filter(p => p !== pageId)
+            : [...f.permissions.pages, pageId];
+          const canEdit = f.permissions.canEdit.filter(p => pages.includes(p));
+          return { ...f, permissions: { pages, canEdit } };
+        });
+      };
+      const toggleEdit = (pageId) => {
+        setForm(f => {
+          if (!f.permissions.pages.includes(pageId)) return f;
+          const canEdit = f.permissions.canEdit.includes(pageId)
+            ? f.permissions.canEdit.filter(p => p !== pageId)
+            : [...f.permissions.canEdit, pageId];
+          return { ...f, permissions: { ...f.permissions, canEdit } };
+        });
+      };
+      const selectAllPages = () => {
+        setForm(f => ({ ...f, permissions: { pages: ALL_PAGES.map(p => p.id), canEdit: ALL_PAGES.map(p => p.id) } }));
+      };
+      const clearAllPages = () => {
+        setForm(f => ({ ...f, permissions: { pages: [], canEdit: [] } }));
+      };
+
+      const handleSave = async () => {
+        setSaving(true); setFormError('');
+        try {
+          if (editingUser) {
+            const update = { username: form.username, is_admin: form.is_admin, permissions: form.permissions };
+            if (form.password) update.password_hash = await hashPassword(form.password);
+            const { error: err } = await db.from('app_users').update(update).eq('id', editingUser.id);
+            if (err) throw err;
+          } else {
+            if (!form.password) { setFormError('סיסמה נדרשת'); setSaving(false); return; }
+            if (!form.username.trim()) { setFormError('שם משתמש נדרש'); setSaving(false); return; }
+            const hash = await hashPassword(form.password);
+            const { error: err } = await db.from('app_users').insert({
+              username: form.username, password_hash: hash, is_admin: form.is_admin,
+              active: true, permissions: form.permissions
+            });
+            if (err) throw err;
+          }
+          await loadUsers();
+          setShowModal(false);
+        } catch (e) {
+          setFormError(e.message || 'שגיאה בשמירה');
+        }
+        setSaving(false);
+      };
+
+      const toggleActive = async (user) => {
+        await db.from('app_users').update({ active: !user.active }).eq('id', user.id);
+        await loadUsers();
+      };
+
+      if (loading) return <div className="text-center p-12 text-gray-400">טוען משתמשים...</div>;
+
+      return (
+        <div dir="rtl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-extrabold text-gray-800">ניהול משתמשים</h2>
+            <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700">
+              <Icons.Plus className="w-4 h-4" /> הוסף משתמש
+            </button>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="p-3 text-right font-bold text-gray-600">שם משתמש</th>
+                  <th className="p-3 text-center font-bold text-gray-600">תפקיד</th>
+                  <th className="p-3 text-center font-bold text-gray-600">עמודים</th>
+                  <th className="p-3 text-center font-bold text-gray-600">סטטוס</th>
+                  <th className="p-3 text-center font-bold text-gray-600">פעולות</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(user => (
+                  <tr key={user.id} className={`border-b border-gray-100 ${!user.active ? 'opacity-50' : ''}`}>
+                    <td className="p-3 font-bold text-gray-800">{user.username}</td>
+                    <td className="p-3 text-center">
+                      {user.is_admin
+                        ? <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">מנהל</span>
+                        : <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">משתמש</span>}
+                    </td>
+                    <td className="p-3 text-center text-gray-500 text-xs">
+                      {user.is_admin ? 'הכל' : `${(user.permissions?.pages || []).length} / ${ALL_PAGES.length}`}
+                    </td>
+                    <td className="p-3 text-center">
+                      {user.active
+                        ? <span className="text-green-600 font-bold text-xs">פעיל</span>
+                        : <span className="text-gray-400 font-bold text-xs">מושבת</span>}
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => openEdit(user)} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100">עריכה</button>
+                        <button onClick={() => toggleActive(user)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold ${user.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>
+                          {user.active ? 'השבת' : 'הפעל'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {showModal && (
+            <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" dir="rtl">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="text-lg font-extrabold">{editingUser ? 'עריכת משתמש' : 'הוספת משתמש'}</h3>
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><Icons.X className="w-5 h-5" /></button>
+                </div>
+                <div className="p-5 space-y-4">
+                  {formError && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{formError}</div>}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">שם משתמש</label>
+                    <input type="text" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">
+                      {editingUser ? 'סיסמה חדשה (השאר ריק לאי-שינוי)' : 'סיסמה'}
+                    </label>
+                    <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="isAdminCb" checked={form.is_admin} onChange={e => setForm(f => ({ ...f, is_admin: e.target.checked }))} className="w-4 h-4 accent-purple-600" />
+                    <label htmlFor="isAdminCb" className="font-bold text-sm text-gray-700">מנהל — גישה לכל העמודים</label>
+                  </div>
+                  {!form.is_admin && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-gray-500">הרשאות עמודים</span>
+                        <div className="flex gap-2">
+                          <button onClick={selectAllPages} className="text-xs text-blue-600 hover:underline">בחר הכל</button>
+                          <span className="text-gray-300">|</span>
+                          <button onClick={clearAllPages} className="text-xs text-gray-500 hover:underline">נקה הכל</button>
+                        </div>
+                      </div>
+                      <div className="border border-gray-200 rounded-xl overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="p-2 text-right text-xs font-bold text-gray-500">עמוד</th>
+                              <th className="p-2 text-center text-xs font-bold text-gray-500">צפייה</th>
+                              <th className="p-2 text-center text-xs font-bold text-gray-500">עריכה</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ALL_PAGES.map(page => (
+                              <tr key={page.id} className="border-t border-gray-100">
+                                <td className="p-2 text-gray-700">{page.label}</td>
+                                <td className="p-2 text-center">
+                                  <input type="checkbox" checked={form.permissions.pages.includes(page.id)} onChange={() => togglePage(page.id)} className="w-4 h-4 accent-blue-600" />
+                                </td>
+                                <td className="p-2 text-center">
+                                  <input type="checkbox" checked={form.permissions.canEdit.includes(page.id)} onChange={() => toggleEdit(page.id)}
+                                    disabled={!form.permissions.pages.includes(page.id)} className="w-4 h-4 accent-green-600 disabled:opacity-30" />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 border-t border-gray-100 flex gap-3">
+                  <button onClick={handleSave} disabled={saving}
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50">
+                    {saving ? 'שומר...' : 'שמור'}
+                  </button>
+                  <button onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl">
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
     // --- Login Screen ---
-    const LoginScreen = () => {
-      const [email, setEmail] = useState('');
+    const LoginScreen = ({ onLogin }) => {
+      const [username, setUsername] = useState('');
       const [password, setPassword] = useState('');
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState('');
+      const [isFirstSetup, setIsFirstSetup] = useState(false);
+
+      useEffect(() => {
+        db.from('app_users').select('id', { count: 'exact', head: true }).then(({ count }) => {
+          if (count === 0) setIsFirstSetup(true);
+        });
+      }, []);
 
       const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true); setError('');
-        const { error } = await db.auth.signInWithPassword({ email, password });
-        if (error) { setError('אימייל או סיסמה שגויים'); setLoading(false); }
+        const hash = await hashPassword(password);
+        if (isFirstSetup) {
+          const allIds = ALL_PAGES.map(p => p.id);
+          const { error: err } = await db.from('app_users').insert({
+            username, password_hash: hash, is_admin: true, active: true,
+            permissions: { pages: allIds, canEdit: allIds }
+          });
+          if (err) { setError('שגיאה ביצירת משתמש: ' + err.message); setLoading(false); return; }
+          const user = { username, is_admin: true, permissions: { pages: allIds, canEdit: allIds } };
+          localStorage.setItem('appUser', JSON.stringify(user));
+          onLogin(user);
+        } else {
+          const { data, error: err } = await db.from('app_users').select('*').eq('username', username).eq('password_hash', hash).eq('active', true).maybeSingle();
+          if (err || !data) { setError('שם משתמש או סיסמה שגויים'); setLoading(false); return; }
+          const user = { id: data.id, username: data.username, is_admin: data.is_admin, permissions: data.permissions };
+          localStorage.setItem('appUser', JSON.stringify(user));
+          onLogin(user);
+        }
       };
 
       return (
@@ -5782,14 +6042,15 @@ ${htmlRows}
               <div className="text-red-200 text-sm mt-1">מערכת ניהול קצביה</div>
             </div>
             <div className="p-6">
-              <h2 className="font-bold text-lg text-gray-800 mb-5 text-center">כניסה למערכת</h2>
+              <h2 className="font-bold text-lg text-gray-800 mb-5 text-center">{isFirstSetup ? 'הגדרת מנהל ראשוני' : 'כניסה למערכת'}</h2>
+              {isFirstSetup && <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">כניסה ראשונה — צור שם משתמש וסיסמה</div>}
               {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-bold text-center">{error}</div>}
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">אימייל</label>
-                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-400 text-left" dir="ltr" />
+                  <label className="block text-xs font-bold text-gray-500 mb-1">שם משתמש</label>
+                  <input type="text" required value={username} onChange={e => setUsername(e.target.value)}
+                    placeholder="שם משתמש"
+                    className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">סיסמה</label>
@@ -5799,7 +6060,7 @@ ${htmlRows}
                 </div>
                 <button type="submit" disabled={loading}
                   className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  {loading ? '...כניסה' : 'כניסה'}
+                  {loading ? '...אנא המתן' : (isFirstSetup ? 'צור מנהל וכנס' : 'כניסה')}
                 </button>
               </form>
             </div>
@@ -5813,8 +6074,7 @@ ${htmlRows}
       const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'orders');
       const navigateTo = useCallback((tabId) => { setActiveTab(tabId); localStorage.setItem('activeTab', tabId); }, []);
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-      const [authUser, setAuthUser] = useState(null);
-      const [authLoading, setAuthLoading] = useState(true);
+      const [appUser, setAppUser] = useState(() => { try { return JSON.parse(localStorage.getItem('appUser')); } catch { return null; } });
       const [appLoading, setAppLoading] = useState(false);
       const dataLoadedRef = useRef(false);
       const skipSaveRef = useRef(false);
@@ -5912,22 +6172,9 @@ ${htmlRows}
 
       const [inventoryLog, setInventoryLog] = useState([]);
 
-      // --- Supabase: Auth ---
-      useEffect(() => {
-        db.auth.getSession().then(({ data: { session } }) => {
-          setAuthUser(session?.user ?? null);
-          setAuthLoading(false);
-        });
-        const { data: { subscription } } = db.auth.onAuthStateChange((_e, session) => {
-          setAuthUser(session?.user ?? null);
-          if (!session?.user) { dataLoadedRef.current = false; }
-        });
-        return () => subscription.unsubscribe();
-      }, []);
-
       // --- Supabase: טעינת נתונים ---
       useEffect(() => {
-        if (!authUser || initialLoadDoneRef.current) return;
+        if (!appUser || initialLoadDoneRef.current) return;
         initialLoadDoneRef.current = true;
         const load = async () => {
           setAppLoading(true);
@@ -6006,7 +6253,7 @@ ${htmlRows}
           }
         };
         load();
-      }, [authUser]);
+      }, [appUser]);
 
       // --- Supabase: שמירה ---
       useEffect(() => {
@@ -6067,7 +6314,12 @@ ${htmlRows}
         inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
       }, [inventoryLog]);
 
-      const handleSignOut = () => db.auth.signOut();
+      const handleSignOut = () => {
+        localStorage.removeItem('appUser');
+        setAppUser(null);
+        dataLoadedRef.current = false;
+        initialLoadDoneRef.current = false;
+      };
 
       const menuItems = [
         { id: 'inventory', label: 'מלאי סחורה - כללי', icon: Icons.Package },
@@ -6080,7 +6332,11 @@ ${htmlRows}
         { id: 'stats', label: 'דוחות ובקרה', icon: Icons.ClipboardList },
         { id: 'dashboard', label: 'לוח בקרה', icon: Icons.Home },
         { id: 'settings', label: 'הגדרות', icon: Icons.Settings },
+        ...(appUser?.is_admin ? [{ id: 'users', label: 'ניהול משתמשים', icon: Icons.User }] : []),
       ];
+      const visibleMenuItems = appUser?.is_admin
+        ? menuItems
+        : menuItems.filter(item => (appUser?.permissions?.pages || []).includes(item.id));
 
       const renderContent = () => {
         switch (activeTab) {
@@ -6106,21 +6362,14 @@ ${htmlRows}
             return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
+          case 'users':
+            return <UsersManagementView />;
           default:
             return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={navigateTo} />;
         }
       };
 
-      if (authLoading) return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-4xl font-black text-red-600 mb-3">סופר עוף</div>
-            <div className="text-gray-500 text-sm">טוען...</div>
-          </div>
-        </div>
-      );
-
-      if (!authUser) return <LoginScreen />;
+      if (!appUser) return <LoginScreen onLogin={user => { setAppUser(user); }} />;
 
       if (appLoading) return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -6159,7 +6408,7 @@ ${htmlRows}
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-1 mt-16 md:mt-0 custom-scrollbar">
-              {menuItems.map(item => {
+              {visibleMenuItems.map(item => {
                 const isActive = activeTab === item.id;
                 return (
                   <button 
@@ -6182,7 +6431,8 @@ ${htmlRows}
             </div>
             
             <div className="p-4 border-t border-gray-100 bg-gray-50/50 space-y-2">
-              <div className="text-xs text-gray-400 text-center truncate">{authUser?.email}</div>
+              <div className="text-xs text-gray-500 text-center font-bold truncate">{appUser?.username}</div>
+              {appUser?.is_admin && <div className="text-xs text-purple-400 text-center">מנהל</div>}
               <button onClick={handleSignOut}
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors border border-gray-200">
                 <Icons.LogOut className="w-4 h-4" /> יציאה
