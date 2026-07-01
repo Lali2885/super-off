@@ -5788,28 +5788,89 @@ ${htmlRows}
                         <div className="text-xs text-gray-400 mt-0.5">נשמר ב-{entry.savedAt} | {entry.ordersCount} הזמנות במערכת</div>
                         {entry.note && <div className="text-xs text-blue-600 mt-0.5 font-medium">📝 {entry.note}</div>}
                       </div>
-                      <button
-                        onClick={() => setViewArchive(viewArchive?.id === entry.id ? null : entry)}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-                        {viewArchive?.id === entry.id ? 'סגור' : 'הצג פירוט'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setViewArchive(viewArchive?.id === entry.id ? null : entry)}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-800 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                          {viewArchive?.id === entry.id ? 'סגור' : 'הצג פירוט'}
+                        </button>
+                        <button
+                          onClick={() => { if (viewArchive?.id === entry.id) setViewArchive(null); setInventoryLog(prev => prev.filter(e => e.id !== entry.id)); }}
+                          className="text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                          מחק
+                        </button>
+                      </div>
                     </div>
 
                     {viewArchive?.id === entry.id && (
                       <div className="border-t border-gray-100 p-4 bg-gray-50/50 space-y-4">
-                        {/* סיכום קפוא בארכיון */}
-                        <div>
-                          <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">מלאי קפוא לפי כשרות</div>
-                          <div className="flex flex-wrap gap-3">
-                            {entry.frozenSummary.map(k => (
-                              <div key={k.name} className="bg-white rounded-lg border px-3 py-2 text-center min-w-[90px]" style={{ borderColor: (k.color || '#888') + '50' }}>
-                                <div className="text-xs font-bold mb-1" style={{ color: k.color || '#888' }}>{k.name}</div>
-                                <div className="font-black text-gray-900">{k.trays} מגשים</div>
-                                <div className="text-xs text-gray-500">{k.cartons} קרטונים</div>
-                              </div>
-                            ))}
-                          </div>
+                        {/* סיכום לפי כשרות */}
+                        <div className="flex flex-wrap gap-3">
+                          {entry.frozenSummary.map(k => (
+                            <div key={k.name} className="bg-white rounded-lg border px-3 py-2 text-center min-w-[90px]" style={{ borderColor: (k.color || '#888') + '50' }}>
+                              <div className="text-xs font-bold mb-1" style={{ color: k.color || '#888' }}>{k.name}</div>
+                              <div className="font-black text-gray-900">{k.trays} מגשים</div>
+                              <div className="text-xs text-gray-500">{k.cartons} קרטונים</div>
+                            </div>
+                          ))}
                         </div>
+                        {/* פירוט מוצרים לפי כשרות וקטגוריה */}
+                        {(() => {
+                          const snap = entry.frozenStock || {};
+                          const allKashrut = [
+                            ...kashrutList,
+                            { name: 'כללי', color: '#3b82f6' }
+                          ];
+                          return allKashrut.map(k => {
+                            const products = (frozenProductsList || [])
+                              .filter(p => (p.kashrut || '') === k.name && p.storageTypes?.includes('frozen'))
+                              .filter(p => (snap[`${p.name}|${k.name}`] || 0) > 0);
+                            if (!products.length) return null;
+                            const grouped = {};
+                            products.forEach(p => {
+                              const cat = p.category || getProductCategory(p.name);
+                              if (!grouped[cat]) grouped[cat] = [];
+                              grouped[cat].push(p);
+                            });
+                            const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
+                            return (
+                              <div key={k.name} className="rounded-xl overflow-hidden border-2" style={{ borderColor: (k.color || '#888') + '60' }}>
+                                <div className="px-4 py-2 text-white text-sm font-bold" style={{ backgroundColor: k.color || '#888' }}>{k.name}</div>
+                                {cats.map(cat => {
+                                  const cs = CAT_STYLES[cat] || {};
+                                  return (
+                                    <div key={cat}>
+                                      <div className={`px-3 py-1.5 text-xs font-extrabold flex items-center gap-1 border-b border-gray-100 ${cs.header || 'bg-gray-50'} ${cs.text || 'text-gray-600'}`}>
+                                        <span>{CAT_EMOJI[cat]}</span><span>{cat}</span>
+                                      </div>
+                                      <table className="w-full text-right text-xs">
+                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                          {grouped[cat].map((p, idx) => {
+                                            const trays = snap[`${p.name}|${k.name}`] || 0;
+                                            const cartons = Math.floor(trays / TRAYS_PER_CARTON);
+                                            const remainder = trays % TRAYS_PER_CARTON;
+                                            return (
+                                              <tr key={p.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                                <td className="p-2 font-bold text-gray-900">
+                                                  {p.name}
+                                                  {p.sku && <span className="block text-gray-400 font-normal">{p.sku}</span>}
+                                                </td>
+                                                <td className="p-2 text-center text-gray-500">{trays} מגשים</td>
+                                                <td className="p-2 text-center font-black text-blue-700">
+                                                  {cartons}{remainder > 0 ? `+${remainder}` : ''} קרטונים
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          }).filter(Boolean);
+                        })()}
                       </div>
                     )}
                   </div>
