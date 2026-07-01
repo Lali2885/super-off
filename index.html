@@ -5774,38 +5774,68 @@ ${htmlRows}
 
                     {viewArchive?.id === entry.id && (
                       <div className="border-t border-gray-100 p-4 bg-gray-50/50 space-y-4">
-                        {/* סיכום לפי כשרות */}
-                        <div className="flex flex-wrap gap-3">
-                          {entry.frozenSummary.map(k => (
-                            <div key={k.name} className="bg-white rounded-lg border px-3 py-2 text-center min-w-[90px]" style={{ borderColor: (k.color || '#888') + '50' }}>
-                              <div className="text-xs font-bold mb-1" style={{ color: k.color || '#888' }}>{k.name}</div>
-                              <div className="font-black text-gray-900">{k.trays} מגשים</div>
-                              <div className="text-xs text-gray-500">{k.cartons} קרטונים</div>
-                            </div>
-                          ))}
-                        </div>
-                        {/* פירוט מוצרים לפי כשרות וקטגוריה */}
+                        {/* סיכום לפי קטגוריה */}
                         {(() => {
                           const snap = entry.frozenStock || {};
-                          const allKashrut = [
-                            ...kashrutList,
-                            { name: 'כללי', color: '#3b82f6' }
-                          ];
-                          return allKashrut.map(k => {
-                            const products = (frozenProductsList || [])
-                              .filter(p => (p.kashrut || '') === k.name && p.storageTypes?.includes('frozen'))
-                              .filter(p => (snap[`${p.name}|${k.name}`] || 0) > 0);
-                            if (!products.length) return null;
+                          const catTotals = {};
+                          Object.entries(snap).forEach(([key, trays]) => {
+                            if (!trays) return;
+                            const [name, kashrut] = key.split('|');
+                            const prod = (frozenProductsList || []).find(p => p.name === name && (p.kashrut || '') === kashrut);
+                            const cat = prod?.category || getProductCategory(name);
+                            if (!catTotals[cat]) catTotals[cat] = 0;
+                            catTotals[cat] += trays;
+                          });
+                          const cats = PRODUCT_CATEGORIES.filter(c => catTotals[c]);
+                          if (!cats.length) return <div className="text-sm text-gray-400">אין מלאי בסנאפשוט זה</div>;
+                          return (
+                            <div className="flex flex-wrap gap-3">
+                              {cats.map(cat => {
+                                const cs = CAT_STYLES[cat] || {};
+                                const trays = catTotals[cat];
+                                const cartons = Math.floor(trays / TRAYS_PER_CARTON);
+                                const remainder = trays % TRAYS_PER_CARTON;
+                                return (
+                                  <div key={cat} className={`bg-white rounded-xl border-2 px-4 py-3 text-center min-w-[110px] ${cs.border || 'border-gray-200'}`}>
+                                    <div className={`text-sm font-extrabold mb-1 ${cs.text || 'text-gray-700'}`}>{CAT_EMOJI[cat]} {cat}</div>
+                                    <div className="font-black text-gray-900 text-lg">{cartons}{remainder > 0 ? <span className="text-sm font-bold text-gray-400">+{remainder}</span> : ''} קרטונים</div>
+                                    <div className="text-xs text-gray-400 mt-0.5">{trays} מגשים</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                        {/* פירוט מוצרים לפי כשרות וקטגוריה — ישירות ממפתחות הסנאפשוט */}
+                        {(() => {
+                          const snap = entry.frozenStock || {};
+                          // בנה רשימת מוצרים מהמפתחות עצמם
+                          const items = Object.entries(snap)
+                            .filter(([, trays]) => trays > 0)
+                            .map(([key, trays]) => {
+                              const [name, kashrut] = key.split('|');
+                              const prod = (frozenProductsList || []).find(p => p.name === name && (p.kashrut || '') === kashrut);
+                              return { name, kashrut, sku: prod?.sku || '', category: prod?.category || getProductCategory(name), trays };
+                            });
+                          if (!items.length) return null;
+                          // קבץ לפי כשרות
+                          const byKashrut = {};
+                          items.forEach(item => {
+                            if (!byKashrut[item.kashrut]) byKashrut[item.kashrut] = [];
+                            byKashrut[item.kashrut].push(item);
+                          });
+                          const kashrutOrder = [...kashrutList.map(k => k.name), 'כללי'];
+                          return kashrutOrder.filter(kName => byKashrut[kName]).map(kName => {
+                            const kObj = kashrutList.find(k => k.name === kName) || { name: 'כללי', color: '#3b82f6' };
                             const grouped = {};
-                            products.forEach(p => {
-                              const cat = p.category || getProductCategory(p.name);
-                              if (!grouped[cat]) grouped[cat] = [];
-                              grouped[cat].push(p);
+                            byKashrut[kName].forEach(item => {
+                              if (!grouped[item.category]) grouped[item.category] = [];
+                              grouped[item.category].push(item);
                             });
                             const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
                             return (
-                              <div key={k.name} className="rounded-xl overflow-hidden border-2" style={{ borderColor: (k.color || '#888') + '60' }}>
-                                <div className="px-4 py-2 text-white text-sm font-bold" style={{ backgroundColor: k.color || '#888' }}>{k.name}</div>
+                              <div key={kName} className="rounded-xl overflow-hidden border-2" style={{ borderColor: (kObj.color || '#888') + '60' }}>
+                                <div className="px-4 py-2 text-white text-sm font-bold" style={{ backgroundColor: kObj.color || '#888' }}>{kName}</div>
                                 {cats.map(cat => {
                                   const cs = CAT_STYLES[cat] || {};
                                   return (
@@ -5815,20 +5845,17 @@ ${htmlRows}
                                       </div>
                                       <table className="w-full text-right text-xs">
                                         <tbody className="divide-y divide-gray-100 bg-white">
-                                          {grouped[cat].map((p, idx) => {
-                                            const trays = snap[`${p.name}|${k.name}`] || 0;
-                                            const cartons = Math.floor(trays / TRAYS_PER_CARTON);
-                                            const remainder = trays % TRAYS_PER_CARTON;
+                                          {grouped[cat].map((item, idx) => {
+                                            const cartons = Math.floor(item.trays / TRAYS_PER_CARTON);
+                                            const remainder = item.trays % TRAYS_PER_CARTON;
                                             return (
-                                              <tr key={p.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                              <tr key={item.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                                                 <td className="p-2 font-bold text-gray-900">
-                                                  {p.name}
-                                                  {p.sku && <span className="block text-gray-400 font-normal">{p.sku}</span>}
+                                                  {item.name}
+                                                  {item.sku && <span className="block text-gray-400 font-normal">{item.sku}</span>}
                                                 </td>
-                                                <td className="p-2 text-center text-gray-500">{trays} מגשים</td>
-                                                <td className="p-2 text-center font-black text-blue-700">
-                                                  {cartons}{remainder > 0 ? `+${remainder}` : ''} קרטונים
-                                                </td>
+                                                <td className="p-2 text-center text-gray-500">{item.trays} מגשים</td>
+                                                <td className="p-2 text-center font-black text-blue-700">{cartons}{remainder > 0 ? `+${remainder}` : ''} קרטונים</td>
                                               </tr>
                                             );
                                           })}
@@ -5839,7 +5866,7 @@ ${htmlRows}
                                 })}
                               </div>
                             );
-                          }).filter(Boolean);
+                          });
                         })()}
                       </div>
                     )}
