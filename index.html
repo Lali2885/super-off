@@ -5672,46 +5672,31 @@ ${htmlRows}
 
     // ===[STATS]===
     // --- Stats View ---
-    const StatsView = ({ orders, stock, frozenStock, frozenProductsList, kashrutList, butchersList, couriersList, inventoryLog, setInventoryLog }) => {
+    const StatsView = ({ orders, frozenStock, frozenProductsList, kashrutList, inventoryLog, setInventoryLog }) => {
       const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
       const [checkNote, setCheckNote] = useState('');
       const [viewArchive, setViewArchive] = useState(null);
 
-      // --- חישובים ---
-      const totalOrders = orders.length;
-      const newOrders = orders.filter(o => o.status === 'new' && !o.assignedButcher).length;
-      const assignedOrders = orders.filter(o => o.status === 'new' && o.assignedButcher).length;
-      const completedOrders = orders.filter(o => o.status === 'completed' || o.status === 'delivered').length;
-      const deliveryOrders = orders.filter(o => o.type === 'delivery').length;
-      const pickupOrders = orders.filter(o => o.type === 'pickup').length;
-
-      const ordersByKashrut = kashrutList.map(k => ({
-        ...k,
-        count: orders.filter(o => o.kashrut === k.name).length
-      }));
-
-      const ordersByButcher = butchersList.map(b => ({
-        ...b,
-        count: orders.filter(o => o.assignedButcher === b.name).length
-      }));
-
-      const frozenTotalByKashrut = kashrutList.map(k => {
-        const trays = frozenProductsList
-          .filter(p => (p.kashrut || '') === k.name)
-          .reduce((sum, p) => sum + (frozenStock[`${p.name}|${k.name}`] || 0), 0);
-        return { ...k, trays, cartons: Math.floor(trays / TRAYS_PER_CARTON), remainder: trays % TRAYS_PER_CARTON };
-      });
-
+      const allKashrutForSnap = [
+        ...kashrutList,
+        { name: 'כללי', color: '#3b82f6' }
+      ];
 
       const saveInventoryCheck = () => {
+        const frozenSummary = allKashrutForSnap.map(k => {
+          const trays = (frozenProductsList || [])
+            .filter(p => (p.kashrut || '') === k.name && p.storageTypes?.includes('frozen'))
+            .reduce((sum, p) => sum + (frozenStock[`${p.name}|${k.name}`] || 0), 0);
+          return { name: k.name, color: k.color, trays, cartons: Math.floor(trays / TRAYS_PER_CARTON) };
+        }).filter(k => k.trays > 0);
+
         const snapshot = {
           id: Date.now(),
           date: checkDate,
           note: checkNote,
           savedAt: new Date().toLocaleString('he-IL'),
           frozenStock: { ...frozenStock },
-          ordersCount: totalOrders,
-          frozenSummary: frozenTotalByKashrut.map(k => ({ name: k.name, color: k.color, trays: k.trays, cartons: k.cartons }))
+          frozenSummary
         };
         setInventoryLog(prev => [snapshot, ...prev]);
         setCheckNote('');
@@ -5721,7 +5706,6 @@ ${htmlRows}
         <div className="animate-in fade-in duration-300 space-y-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">דוחות ובקרה</h1>
-            <p className="text-gray-500 mt-1">מבט כולל על פעילות המערכת — הזמנות, מלאי, עובדים</p>
           </div>
 
           {/* בדיקת מלאי */}
@@ -5730,7 +5714,7 @@ ${htmlRows}
               <span className="text-xl">📋</span>
               <div>
                 <h2 className="font-extrabold text-blue-900">עדכון בדיקת מלאי</h2>
-                <p className="text-xs text-blue-600">שמירת סנאפשוט של המלאי הנוכחי עם תאריך — יישמר בארכיון</p>
+                <p className="text-xs text-blue-600">שמירת סנאפשוט של מלאי סחורה עם תאריך — יישמר בארכיון</p>
               </div>
             </div>
             <div className="p-5 flex flex-wrap gap-4 items-end">
@@ -5757,24 +5741,6 @@ ${htmlRows}
             )}
           </div>
 
-          {/* מלאי קפוא */}
-          <div>
-            <h2 className="text-lg font-extrabold text-gray-700 mb-3 flex items-center gap-2">🧊 מלאי קפוא לפי כשרות</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {frozenTotalByKashrut.map(k => (
-                <div key={k.id} className="bg-white rounded-xl border shadow-sm overflow-hidden" style={{ borderColor: (k.color || '#888') + '50' }}>
-                  <div className="py-1.5 text-center text-white text-xs font-bold" style={{ backgroundColor: k.color || '#888' }}>{k.name}</div>
-                  <div className="p-3 text-center">
-                    <div className="text-xl font-black text-gray-900">{k.trays} מגשים</div>
-                    <div className="text-sm font-bold mt-1" style={{ color: k.color || '#888' }}>
-                      {k.cartons} קרטונים{k.remainder > 0 ? ` +${k.remainder}` : ''}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* ארכיון בדיקות מלאי */}
           {inventoryLog.length > 0 && (
             <div>
@@ -5795,7 +5761,11 @@ ${htmlRows}
                           {viewArchive?.id === entry.id ? 'סגור' : 'הצג פירוט'}
                         </button>
                         <button
-                          onClick={() => { if (viewArchive?.id === entry.id) setViewArchive(null); setInventoryLog(prev => prev.filter(e => e.id !== entry.id)); }}
+                          onClick={() => {
+                            if (viewArchive?.id === entry.id) setViewArchive(null);
+                            setInventoryLog(prev => prev.filter(e => e.id !== entry.id));
+                            db.from('inventory_log').delete().eq('id', entry.id).then();
+                          }}
                           className="text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
                           מחק
                         </button>
@@ -6553,7 +6523,7 @@ ${htmlRows}
           case 'archive':
             return <ArchiveView orders={orders} setOrders={setOrders} kashrutList={kashrutList} />;
           case 'stats':
-            return <StatsView orders={orders} stock={stock} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} butchersList={butchersList} couriersList={couriersList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
+            return <StatsView orders={orders} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
           case 'beit-shemesh':
             return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
           case 'settings':
