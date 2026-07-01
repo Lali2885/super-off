@@ -965,10 +965,12 @@
           {/* סקשן דגים */}
           {fishProducts.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border-2 border-blue-400 overflow-hidden mt-2">
-              <div className="py-2 px-4 bg-blue-50 border-b border-blue-200">
+              <div onClick={() => setCollapsedCats(prev => ({ ...prev, 'דגים': !prev['דגים'] }))}
+                className="py-2 px-4 bg-blue-50 border-b border-blue-200 flex items-center cursor-pointer select-none">
                 <span className="text-blue-600 font-extrabold text-sm">🐟 דגים — כללי</span>
+                <Icons.ChevronDown className={`w-4 h-4 mr-auto text-blue-400 transition-transform duration-200 ${collapsedCats['דגים'] ? '-rotate-90' : ''}`} />
               </div>
-              <div className="overflow-x-auto">
+              {!collapsedCats['דגים'] && <div className="overflow-x-auto">
                 <table className="w-full text-right text-sm min-w-max border-collapse">
                   {renderTableHeader()}
                   <tbody className="divide-y divide-gray-100">
@@ -981,7 +983,7 @@
                     }).map((p, idx) => renderRow(p, 'כללי', idx, '#ffffff', '#eff6ff'))}
                   </tbody>
                 </table>
-              </div>
+              </div>}
             </div>
           )}
         </div>
