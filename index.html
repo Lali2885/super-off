@@ -647,6 +647,7 @@
     // --- Fresh Stock Panel ---
     const FreshStockPanel = ({ stock, setStock, kashrutList, frozenProductsList }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
+      const [collapsedCats, setCollapsedCats] = useState({});
       const seen = new Set();
       const freshItems = (frozenProductsList || [])
         .filter(p => p.storageTypes?.includes('fresh'))
@@ -714,12 +715,14 @@
               const cs = CAT_STYLES[cat] || {};
               return (
                 <div key={cat} className={`rounded-xl overflow-hidden border ${cs.header || 'border-gray-200'}`}>
-                  <div className={`px-4 py-2.5 flex items-center gap-2 font-extrabold text-sm ${cs.header || 'bg-gray-50 border-gray-200'} ${cs.text || 'text-gray-700'} border-b`}>
+                  <div onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}
+                    className={`px-4 py-2.5 flex items-center gap-2 font-extrabold text-sm cursor-pointer select-none ${cs.header || 'bg-gray-50 border-gray-200'} ${cs.text || 'text-gray-700'} border-b`}>
                     <span>{CAT_EMOJI[cat]}</span>
                     <span>{cat}</span>
                     <span className={`mr-auto text-xs font-bold px-2 py-0.5 rounded-full border ${cs.badge || 'bg-gray-100 text-gray-500 border-gray-200'}`}>{grouped[cat].length} מוצרים</span>
+                    <Icons.ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedCats[cat] ? '-rotate-90' : ''}`} />
                   </div>
-                  <div className="bg-white">
+                  {!collapsedCats[cat] && <div className="bg-white">
                     <table className="w-full text-right text-sm">
                       <thead className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
                         <tr>
@@ -757,7 +760,7 @@
                         })}
                       </tbody>
                     </table>
-                  </div>
+                  </div>}
                 </div>
               );
             });
@@ -770,6 +773,7 @@
     // --- Frozen Stock Panel ---
     const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
+      const [collapsedCats, setCollapsedCats] = useState({});
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
 
@@ -932,11 +936,13 @@
               const cs = CAT_STYLES[cat] || {};
               return (
                 <div key={cat} className={`rounded-xl overflow-hidden border-2 ${cs.border || 'border-gray-300'}`}>
-                  <div className={`px-4 py-2.5 flex items-center gap-2 font-extrabold text-sm ${cs.header || 'bg-gray-50'} ${cs.text || 'text-gray-700'} border-b-2 ${cs.border || 'border-gray-200'}`}>
+                  <div onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}
+                    className={`px-4 py-2.5 flex items-center gap-2 font-extrabold text-sm cursor-pointer select-none ${cs.header || 'bg-gray-50'} ${cs.text || 'text-gray-700'} border-b-2 ${cs.border || 'border-gray-200'}`}>
                     <span>{CAT_EMOJI[cat]}</span><span>{cat}</span>
                     <span className={`mr-auto text-xs font-bold px-2 py-0.5 rounded-full border ${cs.badge || 'bg-gray-100 text-gray-500 border-gray-200'}`}>{grouped[cat].length} מוצרים</span>
+                    <Icons.ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedCats[cat] ? '-rotate-90' : ''}`} />
                   </div>
-                  <div className="bg-white overflow-x-auto">
+                  {!collapsedCats[cat] && <div className="bg-white overflow-x-auto">
                     <table className="w-full text-right text-sm min-w-max border-collapse">
                       {renderTableHeader()}
                       <tbody className="divide-y divide-gray-100">
@@ -949,7 +955,7 @@
                         }).map((p, idx) => renderRow(p, activeKashrut, idx, '#ffffff', '#f9fafb'))}
                       </tbody>
                     </table>
-                  </div>
+                  </div>}
                 </div>
               );
             });
