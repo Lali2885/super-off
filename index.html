@@ -5702,17 +5702,6 @@ ${htmlRows}
         return { ...k, trays, cartons: Math.floor(trays / TRAYS_PER_CARTON), remainder: trays % TRAYS_PER_CARTON };
       });
 
-      const freshByKashrut = kashrutList.map(k => {
-        const seen = new Set();
-        const freshProducts = (frozenProductsList || [])
-          .filter(p => p.storageTypes?.includes('fresh'))
-          .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; });
-        const items = freshProducts
-          .map(p => ({ name: p.name, qty: stock[`${p.name}|${k.name}`] || 0 }))
-          .filter(i => i.qty > 0);
-        const total = items.reduce((s, i) => s + i.qty, 0);
-        return { ...k, items, total };
-      });
 
       const saveInventoryCheck = () => {
         const snapshot = {
@@ -5721,10 +5710,8 @@ ${htmlRows}
           note: checkNote,
           savedAt: new Date().toLocaleString('he-IL'),
           frozenStock: { ...frozenStock },
-          freshStock: { ...stock },
           ordersCount: totalOrders,
-          frozenSummary: frozenTotalByKashrut.map(k => ({ name: k.name, color: k.color, trays: k.trays, cartons: k.cartons })),
-          freshSummary: freshByKashrut.map(k => ({ name: k.name, color: k.color, total: k.total, items: k.items }))
+          frozenSummary: frozenTotalByKashrut.map(k => ({ name: k.name, color: k.color, trays: k.trays, cartons: k.cartons }))
         };
         setInventoryLog(prev => [snapshot, ...prev]);
         setCheckNote('');
@@ -5788,40 +5775,6 @@ ${htmlRows}
             </div>
           </div>
 
-          {/* מלאי טרי לפי כשרות */}
-          <div>
-            <h2 className="text-lg font-extrabold text-gray-700 mb-3 flex items-center gap-2">🥩 מלאי טרי לפי כשרות</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {freshByKashrut.map(k => (
-                <div key={k.id} className="bg-white rounded-xl border shadow-sm overflow-hidden" style={{ borderColor: (k.color || '#888') + '50' }}>
-                  <div className="py-2 px-3 text-white text-sm font-bold flex justify-between items-center" style={{ backgroundColor: k.color || '#888' }}>
-                    <span>{k.name}</span>
-                    <span className="text-xs opacity-80">סה"כ {k.total.toFixed(2)} ק"ג</span>
-                  </div>
-                  {k.items.length === 0 ? (
-                    <div className="p-4 text-center text-gray-400 text-sm">אין מלאי</div>
-                  ) : (
-                    <table className="w-full text-right text-xs">
-                      <tbody className="divide-y divide-gray-100">
-                        {k.items.map(item => (
-                          <tr key={item.name} className="hover:bg-gray-50">
-                            <td className="p-2.5 font-bold text-gray-900">{item.name}</td>
-                            <td className="p-2.5 text-center font-black" style={{ color: k.color || '#888' }}>{item.qty} ק"ג</td>
-                            <td className="p-2.5 text-center">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${item.qty < 10 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
-                                {item.qty < 10 ? 'נמוך' : 'תקין'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* ארכיון בדיקות מלאי */}
           {inventoryLog.length > 0 && (
             <div>
@@ -5857,20 +5810,6 @@ ${htmlRows}
                             ))}
                           </div>
                         </div>
-                        {/* מלאי טרי בארכיון */}
-                        {entry.freshSummary?.some(k => k.total > 0) && (
-                          <div>
-                            <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">מלאי טרי לפי כשרות</div>
-                            <div className="flex flex-wrap gap-2">
-                              {entry.freshSummary.filter(k => k.total > 0).map(k => (
-                                <div key={k.name} className="bg-white rounded-lg border px-3 py-1.5 text-center min-w-[80px]" style={{ borderColor: (k.color||'#888')+'50' }}>
-                                  <div className="text-xs font-bold" style={{ color: k.color||'#888' }}>{k.name}</div>
-                                  <div className="font-black text-gray-900 text-sm">{k.total.toFixed(2)} ק"ג</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
