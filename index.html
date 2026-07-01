@@ -4371,20 +4371,18 @@ ${htmlRows}
 
       const openAddModal = () => {
         const cat = activeCats.size === 1 ? [...activeCats][0] : 'עוף';
-        setNewProduct({ name: '', category: cat, sku: '', storageTypes: ['frozen'], kashrut: '' });
+        setNewProduct({ name: '', category: cat, sku: '', storageTypes: ['frozen'], kashrut: cat === 'דגים' ? 'כללי' : '' });
         setShowAddModal(true);
       };
 
       const confirmAddProduct = () => {
         if (!newProduct.name.trim()) return;
-        const isFish = newProduct.category === 'דגים';
-        if (!isFish && !newProduct.kashrut) return;
+        if (!newProduct.kashrut) return;
         if (!newProduct.storageTypes.length) return;
         const newId = `p_${Date.now()}`;
-        const kashrut = isFish ? 'כללי' : newProduct.kashrut;
         const existingCombos = new Set(items.map(p => `${p.name}|${p.kashrut}`));
-        if (existingCombos.has(`${newProduct.name.trim()}|${kashrut}`)) { setShowAddModal(false); return; }
-        const newItem = { id: `${newId}_0`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut, category: isFish ? 'דגים' : newProduct.category };
+        if (existingCombos.has(`${newProduct.name.trim()}|${newProduct.kashrut}`)) { setShowAddModal(false); return; }
+        const newItem = { id: `${newId}_0`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: newProduct.kashrut, category: newProduct.category };
         setItems(prev => [...prev, newItem]);
         setShowAddModal(false);
       };
@@ -4592,7 +4590,11 @@ ${htmlRows}
                             </div>
                           </td>
                           <td className="px-4 py-2">
-                            <span className={`text-xs font-bold px-2 py-1 rounded-full border ${(CAT_STYLES[p._cat] || {}).badge || 'bg-purple-100 text-purple-700 border-purple-200'}`}>{p.kashrut}</span>
+                            <select value={p.kashrut || ''} onChange={e => updateProduct(p.id, 'kashrut', e.target.value)}
+                              className="p-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
+                              <option value="כללי">כללי</option>
+                              {kashrutList.map(k => <option key={k.id || k.name} value={k.name}>{k.name}</option>)}
+                            </select>
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex gap-1">
@@ -4651,7 +4653,7 @@ ${htmlRows}
                     <label className="block text-xs font-bold text-gray-500 mb-1">קטגוריה</label>
                     <div className="flex gap-2 flex-wrap">
                       {PRODUCT_CATEGORIES.map(cat => (
-                        <button key={cat} type="button" onClick={() => setNewProduct(p => ({ ...p, category: cat }))}
+                        <button key={cat} type="button" onClick={() => setNewProduct(p => ({ ...p, category: cat, kashrut: cat === 'דגים' ? 'כללי' : (p.kashrut === 'כללי' ? '' : p.kashrut) }))}
                           className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.category === cat ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
                           {CAT_EMOJI[cat]} {cat}
                         </button>
@@ -4671,24 +4673,22 @@ ${htmlRows}
                   </div>
 
                   {/* כשרות */}
-                  {newProduct.category !== 'דגים' && (
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1">כשרות *</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {kashrutList.map(k => (
-                          <button key={k.id || k.name} type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: k.name }))}
-                            className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.kashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
-                            {k.name}
-                          </button>
-                        ))}
-                      </div>
-                      {!newProduct.kashrut && <p className="text-xs text-red-400 mt-1">יש לבחור כשרות</p>}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">כשרות *</label>
+                    <div className="flex gap-2 flex-wrap">
+                      <button type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: 'כללי' }))}
+                        className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.kashrut === 'כללי' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+                        כללי
+                      </button>
+                      {kashrutList.map(k => (
+                        <button key={k.id || k.name} type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: k.name }))}
+                          className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.kashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+                          {k.name}
+                        </button>
+                      ))}
                     </div>
-                  )}
-
-                  {newProduct.category === 'דגים' && (
-                    <p className="text-xs text-gray-400">דגים מתווספים תחת כשרות כללי</p>
-                  )}
+                    {!newProduct.kashrut && <p className="text-xs text-red-400 mt-1">יש לבחור כשרות</p>}
+                  </div>
 
                   {/* סוג מלאי */}
                   <div>
@@ -4709,7 +4709,7 @@ ${htmlRows}
                 </div>
 
                 <div className="flex gap-3 pt-1">
-                  <button onClick={confirmAddProduct} disabled={!newProduct.name.trim() || (newProduct.category !== 'דגים' && !newProduct.kashrut) || !newProduct.storageTypes.length}
+                  <button onClick={confirmAddProduct} disabled={!newProduct.name.trim() || !newProduct.kashrut || !newProduct.storageTypes.length}
                     className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors">
                     הוסף לרשימה
                   </button>
