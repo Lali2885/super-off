@@ -4377,17 +4377,15 @@ ${htmlRows}
 
       const confirmAddProduct = () => {
         if (!newProduct.name.trim()) return;
-        const newId = `p_${Date.now()}`;
         const isFish = newProduct.category === 'דגים';
-        const targetKashrutList = isFish
-          ? [{ name: 'כללי' }]
-          : (newProduct.kashrut ? [{ name: newProduct.kashrut }] : kashrutList);
+        if (!isFish && !newProduct.kashrut) return;
+        if (!newProduct.storageTypes.length) return;
+        const newId = `p_${Date.now()}`;
+        const kashrut = isFish ? 'כללי' : newProduct.kashrut;
         const existingCombos = new Set(items.map(p => `${p.name}|${p.kashrut}`));
-        const newItems = targetKashrutList
-          .map((k, j) => ({ id: `${newId}_${j}`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut: k.name, category: isFish ? 'דגים' : newProduct.category }))
-          .filter(item => !existingCombos.has(`${item.name}|${item.kashrut}`));
-        if (!newItems.length) { setShowAddModal(false); return; }
-        setItems(prev => [...prev, ...newItems]);
+        if (existingCombos.has(`${newProduct.name.trim()}|${kashrut}`)) { setShowAddModal(false); return; }
+        const newItem = { id: `${newId}_0`, name: newProduct.name.trim(), sku: newProduct.sku, storageTypes: newProduct.storageTypes, kashrut, category: isFish ? 'דגים' : newProduct.category };
+        setItems(prev => [...prev, newItem]);
         setShowAddModal(false);
       };
 
@@ -4658,12 +4656,8 @@ ${htmlRows}
                   {/* כשרות */}
                   {newProduct.category !== 'דגים' && (
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1">כשרות</label>
+                      <label className="block text-xs font-bold text-gray-500 mb-1">כשרות *</label>
                       <div className="flex gap-2 flex-wrap">
-                        <button type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: '' }))}
-                          className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${!newProduct.kashrut ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
-                          כל הכשרויות
-                        </button>
                         {kashrutList.map(k => (
                           <button key={k.id || k.name} type="button" onClick={() => setNewProduct(p => ({ ...p, kashrut: k.name }))}
                             className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.kashrut === k.name ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
@@ -4671,12 +4665,17 @@ ${htmlRows}
                           </button>
                         ))}
                       </div>
+                      {!newProduct.kashrut && <p className="text-xs text-red-400 mt-1">יש לבחור כשרות</p>}
                     </div>
+                  )}
+
+                  {newProduct.category === 'דגים' && (
+                    <p className="text-xs text-gray-400">דגים מתווספים תחת כשרות כללי</p>
                   )}
 
                   {/* סוג מלאי */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">סוג מלאי</label>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">סוג מלאי *</label>
                     <div className="flex gap-2">
                       {STORAGE_TYPES.map(st => {
                         const active = newProduct.storageTypes.includes(st.key);
@@ -4688,17 +4687,12 @@ ${htmlRows}
                         );
                       })}
                     </div>
+                    {!newProduct.storageTypes.length && <p className="text-xs text-red-400 mt-1">יש לבחור סוג מלאי</p>}
                   </div>
-
-                  <p className="text-xs text-gray-400">
-                    {newProduct.kashrut
-                      ? `המוצר יתווסף לכשרות: ${newProduct.kashrut}`
-                      : `המוצר יתווסף לכל סוגי הכשרות (${kashrutList.map(k => k.name).join(', ')})`}
-                  </p>
                 </div>
 
                 <div className="flex gap-3 pt-1">
-                  <button onClick={confirmAddProduct} disabled={!newProduct.name.trim()}
+                  <button onClick={confirmAddProduct} disabled={!newProduct.name.trim() || (newProduct.category !== 'דגים' && !newProduct.kashrut) || !newProduct.storageTypes.length}
                     className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors">
                     הוסף לרשימה
                   </button>
@@ -6348,22 +6342,6 @@ ${htmlRows}
                     return true;
                   });
 
-                  const existingNames = new Set(loaded.map(p => p.name));
-                  const missing = NEW_PRODUCTS_TEMPLATE.filter(p => !existingNames.has(p.name));
-                  if (missing.length > 0) {
-                    const kNames = (settingsRes.data.find(r => r.id === 'kashrutList')?.data || []).map(k => k.name);
-                    const kList = kNames.length ? kNames : FROZEN_KASHRUT;
-                    const base = Date.now();
-                    missing.forEach((p, i) => {
-                      if (p.category === 'דגים') {
-                        loaded.push({ id: `np_${base + i * 100}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut: 'כללי', category: 'דגים' });
-                      } else {
-                        kList.forEach((kashrut, j) => {
-                          loaded.push({ id: `np_${base + i * 100 + j}`, name: p.name, sku: '', storageTypes: p.storageTypes, kashrut });
-                        });
-                      }
-                    });
-                  }
                   setFrozenProductsList(loaded);
                 }
                 if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
