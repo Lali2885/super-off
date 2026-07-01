@@ -940,7 +940,13 @@
                     <table className="w-full text-right text-sm min-w-max border-collapse">
                       {renderTableHeader()}
                       <tbody className="divide-y divide-gray-100">
-                        {grouped[cat].map((p, idx) => renderRow(p, activeKashrut, idx, '#ffffff', '#f9fafb'))}
+                        {[...grouped[cat]].sort((a, b) => {
+                          const sa = a.sku || '', sb = b.sku || '';
+                          if (!sa && !sb) return 0;
+                          if (!sa) return 1;
+                          if (!sb) return -1;
+                          return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+                        }).map((p, idx) => renderRow(p, activeKashrut, idx, '#ffffff', '#f9fafb'))}
                       </tbody>
                     </table>
                   </div>
@@ -960,7 +966,13 @@
                 <table className="w-full text-right text-sm min-w-max border-collapse">
                   {renderTableHeader()}
                   <tbody className="divide-y divide-gray-100">
-                    {fishProducts.map((p, idx) => renderRow(p, 'כללי', idx, '#ffffff', '#eff6ff'))}
+                    {[...fishProducts].sort((a, b) => {
+                      const sa = a.sku || '', sb = b.sku || '';
+                      if (!sa && !sb) return 0;
+                      if (!sa) return 1;
+                      if (!sb) return -1;
+                      return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+                    }).map((p, idx) => renderRow(p, 'כללי', idx, '#ffffff', '#eff6ff'))}
                   </tbody>
                 </table>
               </div>
@@ -1091,8 +1103,16 @@
         htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
         htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
 
+        const sortBySku = (a, b) => {
+          const sa = a.sku || '', sb = b.sku || '';
+          if (!sa && !sb) return 0;
+          if (!sa) return 1;
+          if (!sb) return -1;
+          return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+        };
+
         cats.forEach(cat => {
-          const products = grouped[cat];
+          const products = [...grouped[cat]].sort(sortBySku);
           const emoji = CAT_EMOJI[cat] || '';
 
           htmlRows += `<tr><td colspan="${cs}" style="font-size:13pt;font-weight:bold;background:#334155;color:#fff;padding:6px 8px;">${esc(`${emoji} ${cat}`)}</td></tr>`;
@@ -1163,8 +1183,16 @@ ${htmlRows}
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
         let first = true;
 
+        const sortBySku = (a, b) => {
+          const sa = a.sku || '', sb = b.sku || '';
+          if (!sa && !sb) return 0;
+          if (!sa) return 1;
+          if (!sb) return -1;
+          return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+        };
+
         for (const cat of cats) {
-          const products = grouped[cat];
+          const products = [...grouped[cat]].sort(sortBySku);
           const emoji = CAT_EMOJI[cat] || '';
           const rows = products.map((p, i) => {
             const key = `${p.name}|${p.kashrut}`;
