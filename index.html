@@ -6233,7 +6233,7 @@ ${htmlRows}
           const u = JSON.parse(localStorage.getItem('appUser'));
           if (!u || u.is_admin) return stored;
           const allowed = u.permissions?.pages || [];
-          return allowed.includes(stored) ? stored : (allowed[0] || 'dashboard');
+          return allowed.includes(stored) ? stored : (allowed[0] || 'orders');
         } catch { return stored; }
       });
       const navigateTo = useCallback((tabId) => { setActiveTab(tabId); localStorage.setItem('activeTab', tabId); }, []);
@@ -6514,11 +6514,10 @@ ${htmlRows}
         { id: 'beit-shemesh', label: 'קירור לירוי', icon: Icons.Package },
         { id: 'orders', label: 'ניהול הזמנות', icon: Icons.ShoppingCart, badge: orders.filter(o => o.status === 'new').length.toString(), badgeColor: 'bg-red-500' },
         { id: 'deliveries', label: 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
-        { id: 'contacts', label: 'אנשי קשר', icon: Icons.User, badge: contactsList.length > 0 ? contactsList.length.toString() : null, badgeColor: 'bg-blue-500' },
+        { id: 'contacts', label: 'אנשי קשר', icon: Icons.User },
         { id: 'lists', label: 'ניהול רשימות', icon: Icons.List },
         { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
         { id: 'stats', label: 'דוחות ובקרה', icon: Icons.ClipboardList },
-        { id: 'dashboard', label: 'לוח בקרה', icon: Icons.Home },
         { id: 'settings', label: 'הגדרות', icon: Icons.Settings },
         ...(appUser?.is_admin ? [{ id: 'users', label: 'ניהול משתמשים', icon: Icons.User }] : []),
       ];
@@ -6528,8 +6527,6 @@ ${htmlRows}
 
       const renderContent = () => {
         switch (activeTab) {
-          case 'dashboard': 
-            return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={navigateTo} />;
           case 'inventory':
             return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} appUser={appUser} />;
           case 'orders':
@@ -6553,7 +6550,7 @@ ${htmlRows}
           case 'users':
             return <UsersManagementView />;
           default:
-            return <DashboardView orders={orders} stock={stock} shortages={shortages} setActiveTab={navigateTo} />;
+            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
         }
       };
 
