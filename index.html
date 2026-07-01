@@ -4411,6 +4411,10 @@ ${htmlRows}
         ...kashrutList.filter(k => k.name !== 'קהילות' && k.name !== 'לנדא'),
       ];
 
+      const skuCounts = {};
+      items.forEach(p => { if (p.sku) skuCounts[p.sku] = (skuCounts[p.sku] || 0) + 1; });
+      const duplicateSkus = new Set(Object.keys(skuCounts).filter(sku => skuCounts[sku] > 1));
+
       const enriched = items.map(p => ({ ...p, _cat: p.category || getProductCategory(p.name) }));
       let filtered = enriched;
       if (searchName)         filtered = filtered.filter(p => p.name.includes(searchName));
@@ -4511,6 +4515,16 @@ ${htmlRows}
             </button>
           </div>
 
+          {duplicateSkus.size > 0 && (
+            <div className="px-5 py-3 bg-red-50 border-b border-red-200 flex items-start gap-2">
+              <span className="text-lg leading-none mt-0.5">⚠️</span>
+              <div>
+                <p className="text-sm font-bold text-red-700">נמצאו מק"טים כפולים — יש לתקן לפני השמירה</p>
+                <p className="text-xs text-red-500 mt-0.5">מק"טים: {[...duplicateSkus].join(', ')}</p>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -4571,8 +4585,11 @@ ${htmlRows}
                             </select>
                           </td>
                           <td className="px-4 py-2">
-                            <input value={p.sku || ''} onChange={e => updateProduct(p.id, 'sku', e.target.value)}
-                              className="w-28 p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none font-mono" placeholder='מק"ט...' />
+                            <div className="flex items-center gap-1">
+                              <input value={p.sku || ''} onChange={e => updateProduct(p.id, 'sku', e.target.value)}
+                                className={`w-28 p-1.5 border rounded-lg text-sm focus:ring-2 outline-none font-mono ${p.sku && duplicateSkus.has(p.sku) ? 'border-red-400 bg-red-50 focus:ring-red-300' : 'border-gray-200 focus:ring-purple-400'}`} placeholder='מק"ט...' />
+                              {p.sku && duplicateSkus.has(p.sku) && <span title="מק&quot;ט כפול" className="text-red-500 text-base leading-none">⚠️</span>}
+                            </div>
                           </td>
                           <td className="px-4 py-2">
                             <span className={`text-xs font-bold px-2 py-1 rounded-full border ${(CAT_STYLES[p._cat] || {}).badge || 'bg-purple-100 text-purple-700 border-purple-200'}`}>{p.kashrut}</span>
