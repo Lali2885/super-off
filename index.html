@@ -647,7 +647,7 @@
     // --- Fresh Stock Panel ---
     const FreshStockPanel = ({ stock, setStock, kashrutList, frozenProductsList }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
-      const [collapsedCats, setCollapsedCats] = useState({});
+      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
       const seen = new Set();
       const freshItems = (frozenProductsList || [])
         .filter(p => p.storageTypes?.includes('fresh'))
@@ -773,7 +773,7 @@
     // --- Frozen Stock Panel ---
     const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
-      const [collapsedCats, setCollapsedCats] = useState({});
+      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
 
