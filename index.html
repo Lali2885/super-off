@@ -399,7 +399,7 @@
       'מתובלים':  { header: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-800', dot: 'bg-orange-400', badge: 'bg-orange-100 text-orange-800 border-orange-200' },
       'קפואים':   { header: 'bg-cyan-50',   border: 'border-cyan-400',   text: 'text-cyan-800',   dot: 'bg-cyan-400',   badge: 'bg-cyan-100 text-cyan-800 border-cyan-200'     },
     };
-    const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟', 'מתובלים': '🧂', 'קפואים': '🧊' };
+    const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟', 'מתובלים': '🧂', 'קפואים': '❄️' };
 
     const getDynProductPriority = (name, category) => {
       if (category === 'עוף') {
@@ -4396,6 +4396,7 @@ ${htmlRows}
       const [sortDir, setSortDir] = useState('asc');
       const [showAddModal, setShowAddModal] = useState(false);
       const [newProduct, setNewProduct] = useState({ name: '', category: 'עוף', sku: '', storageTypes: ['frozen'], kashrut: '' });
+      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
       const tableRef = useRef(null);
 
       useEffect(() => {
@@ -4594,18 +4595,21 @@ ${htmlRows}
                   });
                   if (!catItems.length) return null;
                   const s = CAT_STYLES[cat] || CAT_STYLES['עוף'];
+                  const isCollapsed = collapsedCats[cat];
                   return (
                     <React.Fragment key={cat}>
-                      <tr className={`border-y ${s.header}`}>
+                      <tr className={`border-y cursor-pointer select-none ${s.header}`}
+                        onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}>
                         <td colSpan={6} className={`px-4 py-2 font-bold text-sm ${s.text}`}>
                           <div className="flex items-center gap-2">
                             <span className={`w-2.5 h-2.5 rounded-full ${s.dot} shrink-0`}></span>
                             {CAT_EMOJI[cat]} {cat}
                             <span className="font-normal text-xs opacity-50">({catItems.length} פריטים)</span>
+                            <Icons.ChevronDown className={`w-4 h-4 mr-auto transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
                           </div>
                         </td>
                       </tr>
-                      {catItems.map(p => (
+                      {!isCollapsed && catItems.map(p => (
                         <tr key={p.id} className="hover:bg-gray-50/60 border-b border-gray-50">
                           <td className="px-4 py-2">
                             {editingName.id === p.id
