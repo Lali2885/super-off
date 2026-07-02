@@ -5830,11 +5830,15 @@ ${htmlRows}
                         {/* פירוט מוצרים לפי כשרות וקטגוריה — ישירות ממפתחות הסנאפשוט */}
                         {(() => {
                           const snap = entry.frozenStock || {};
-                          // בנה רשימת מוצרים מהמפתחות עצמם
-                          const items = Object.entries(snap)
-                            .filter(([, trays]) => trays > 0)
-                            .map(([key, trays]) => {
+                          const snapBs = entry.bsBalance || {};
+                          // איחוד מפתחות מ-frozenStock ומ-bsBalance
+                          const allKeys = new Set([
+                            ...Object.keys(snap).filter(k => (snap[k] || 0) > 0),
+                            ...Object.keys(snapBs).filter(k => (snapBs[k] || 0) > 0)
+                          ]);
+                          const items = Array.from(allKeys).map(key => {
                               const [name, kashrut] = key.split('|');
+                              const trays = snap[key] || 0;
                               const prod = (frozenProductsList || []).find(p => p.name === name && (p.kashrut || '') === kashrut);
                               return { name, kashrut, sku: prod?.sku || '', category: prod?.category || getProductCategory(name), trays };
                             });
@@ -5876,7 +5880,6 @@ ${htmlRows}
                                           {grouped[cat].map((item, idx) => {
                                             const cartons = Math.floor(item.trays / TRAYS_PER_CARTON);
                                             const remainder = item.trays % TRAYS_PER_CARTON;
-                                            const snapBs = entry.bsBalance || {};
                                             const key = `${item.name}|${item.kashrut}`;
                                             const bsCar = snapBs[key] || 0;
                                             const totalCar = cartons + bsCar;
