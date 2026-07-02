@@ -5676,6 +5676,26 @@ ${htmlRows}
       const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
       const [checkNote, setCheckNote] = useState('');
       const [viewArchive, setViewArchive] = useState(null);
+      const [bsBalance, setBsBalance] = useState({});
+
+      useEffect(() => {
+        Promise.all([
+          db.from('beit_shemesh_shipments').select('*'),
+          db.from('beit_shemesh_withdrawals').select('*')
+        ]).then(([shRes, wdRes]) => {
+          const map = {};
+          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) + Number(pr.cartons || 0);
+          })));
+          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) - Number(pr.cartons || 0);
+          }));
+          Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
+          setBsBalance(map);
+        });
+      }, []);
 
       const allKashrutForSnap = [
         ...kashrutList,
@@ -5696,6 +5716,7 @@ ${htmlRows}
           note: checkNote,
           savedAt: new Date().toLocaleString('he-IL'),
           frozenStock: { ...frozenStock },
+          bsBalance: { ...bsBalance },
           frozenSummary
         };
         setInventoryLog(prev => [snapshot, ...prev]);
@@ -5844,18 +5865,29 @@ ${htmlRows}
                                         <span>{CAT_EMOJI[cat]}</span><span>{cat}</span>
                                       </div>
                                       <table className="w-full text-right text-xs">
+                                        <thead>
+                                          <tr className="bg-gray-100 text-gray-500">
+                                            <th className="p-2 text-right font-bold">מוצר</th>
+                                            <th className="p-2 text-center font-bold">🧊 מצב נתון</th>
+                                            <th className="p-2 text-center font-bold">🏭 כולל אחסנה</th>
+                                          </tr>
+                                        </thead>
                                         <tbody className="divide-y divide-gray-100 bg-white">
                                           {grouped[cat].map((item, idx) => {
                                             const cartons = Math.floor(item.trays / TRAYS_PER_CARTON);
                                             const remainder = item.trays % TRAYS_PER_CARTON;
+                                            const snapBs = entry.bsBalance || {};
+                                            const key = `${item.name}|${item.kashrut}`;
+                                            const bsCar = snapBs[key] || 0;
+                                            const totalCar = cartons + bsCar;
                                             return (
                                               <tr key={item.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                                                 <td className="p-2 font-bold text-gray-900">
                                                   {item.name}
                                                   {item.sku && <span className="block text-gray-400 font-normal">{item.sku}</span>}
                                                 </td>
-                                                <td className="p-2 text-center text-gray-500">{item.trays} מגשים</td>
-                                                <td className="p-2 text-center font-black text-blue-700">{cartons}{remainder > 0 ? `+${remainder}` : ''} קרטונים</td>
+                                                <td className="p-2 text-center text-blue-700 font-black">{cartons}{remainder > 0 ? <span className="text-gray-400 font-normal">+{remainder}</span> : ''} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
+                                                <td className="p-2 text-center font-black text-emerald-700">{totalCar} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
                                               </tr>
                                             );
                                           })}
