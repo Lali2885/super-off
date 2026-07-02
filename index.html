@@ -390,7 +390,7 @@
       { name: 'דג נילוס', storageTypes: ['frozen'], category: 'דגים' },
     ];
 
-    const PRODUCT_CATEGORIES = ['עוף', 'הודו', 'בשר', 'דגים', 'מתובלים', 'קפואים'];
+    const PRODUCT_CATEGORIES = ['עוף', 'הודו', 'בשר', 'דגים', 'מתובלים', 'קפואים', 'טחונים'];
     const CAT_STYLES = {
       'עוף':      { header: 'bg-yellow-50', border: 'border-yellow-400', text: 'text-yellow-800', dot: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
       'הודו':     { header: 'bg-green-50',  border: 'border-green-400',  text: 'text-green-800',  dot: 'bg-green-400',  badge: 'bg-green-100 text-green-800 border-green-200'  },
@@ -398,8 +398,9 @@
       'דגים':     { header: 'bg-blue-50',   border: 'border-blue-400',   text: 'text-blue-800',   dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-800 border-blue-200'     },
       'מתובלים':  { header: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-800', dot: 'bg-orange-400', badge: 'bg-orange-100 text-orange-800 border-orange-200' },
       'קפואים':   { header: 'bg-cyan-50',   border: 'border-cyan-400',   text: 'text-cyan-800',   dot: 'bg-cyan-400',   badge: 'bg-cyan-100 text-cyan-800 border-cyan-200'     },
+      'טחונים':   { header: 'bg-pink-50',   border: 'border-pink-400',   text: 'text-pink-800',   dot: 'bg-pink-400',   badge: 'bg-pink-100 text-pink-800 border-pink-200'     },
     };
-    const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟', 'מתובלים': '🧂', 'קפואים': '❄️' };
+    const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟', 'מתובלים': '🧂', 'קפואים': '❄️', 'טחונים': '🍔' };
 
     const getDynProductPriority = (name, category) => {
       if (category === 'עוף') {
@@ -451,6 +452,7 @@
       'דגים':       { outer: 'border-blue-200',   headerBg: 'bg-blue-50',    headerHover: 'hover:bg-blue-100',   headerText: 'text-blue-900',   headerBorder: 'border-blue-200',   divider: 'divide-blue-100',   qtyBg: 'bg-blue-100',   qtyText: 'text-blue-900',   qtyBorder: 'border-blue-300',   subBorder: 'border-blue-300',   subQty: 'text-blue-700',   cardActive: 'bg-blue-100 border-blue-500 shadow-sm',   cardHover: 'hover:border-blue-300 hover:bg-blue-50',   cardActiveText: 'text-blue-900',   inputActive: 'border-blue-400 text-blue-900',   ring: 'focus:ring-blue-400' },
       'מתובלים':    { outer: 'border-orange-200', headerBg: 'bg-orange-50',  headerHover: 'hover:bg-orange-100', headerText: 'text-orange-900', headerBorder: 'border-orange-200', divider: 'divide-orange-100', qtyBg: 'bg-orange-100', qtyText: 'text-orange-900', qtyBorder: 'border-orange-300', subBorder: 'border-orange-300', subQty: 'text-orange-700', cardActive: 'bg-orange-100 border-orange-500 shadow-sm', cardHover: 'hover:border-orange-300 hover:bg-orange-50', cardActiveText: 'text-orange-900', inputActive: 'border-orange-400 text-orange-900', ring: 'focus:ring-orange-400' },
       'קפואים':     { outer: 'border-cyan-200',   headerBg: 'bg-cyan-50',    headerHover: 'hover:bg-cyan-100',   headerText: 'text-cyan-900',   headerBorder: 'border-cyan-200',   divider: 'divide-cyan-100',   qtyBg: 'bg-cyan-100',   qtyText: 'text-cyan-900',   qtyBorder: 'border-cyan-300',   subBorder: 'border-cyan-300',   subQty: 'text-cyan-700',   cardActive: 'bg-cyan-100 border-cyan-500 shadow-sm',   cardHover: 'hover:border-cyan-300 hover:bg-cyan-50',   cardActiveText: 'text-cyan-900',   inputActive: 'border-cyan-400 text-cyan-900',   ring: 'focus:ring-cyan-400' },
+      'טחונים':     { outer: 'border-pink-200',   headerBg: 'bg-pink-50',    headerHover: 'hover:bg-pink-100',   headerText: 'text-pink-900',   headerBorder: 'border-pink-200',   divider: 'divide-pink-100',   qtyBg: 'bg-pink-100',   qtyText: 'text-pink-900',   qtyBorder: 'border-pink-300',   subBorder: 'border-pink-300',   subQty: 'text-pink-700',   cardActive: 'bg-pink-100 border-pink-500 shadow-sm',   cardHover: 'hover:border-pink-300 hover:bg-pink-50',   cardActiveText: 'text-pink-900',   inputActive: 'border-pink-400 text-pink-900',   ring: 'focus:ring-pink-400' },
     };
     const DEFAULT_CAT_COLORS = { outer: 'border-gray-200', headerBg: 'bg-gray-50', headerHover: 'hover:bg-gray-100', headerText: 'text-gray-900', headerBorder: 'border-gray-200', divider: 'divide-gray-100', qtyBg: 'bg-purple-100', qtyText: 'text-purple-800', qtyBorder: 'border-purple-200', subBorder: 'border-purple-200', subQty: 'text-purple-600', cardActive: 'bg-purple-100 border-purple-500 shadow-sm', cardHover: 'hover:border-purple-300 hover:bg-purple-50', cardActiveText: 'text-purple-900', inputActive: 'border-purple-400 text-purple-900', ring: 'focus:ring-purple-400' };
     const getCatColors = (cat) => CATEGORY_COLORS[cat] || DEFAULT_CAT_COLORS;
@@ -658,7 +660,7 @@
         .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; })
         .map(p => ({ name: p.name, category: p.category || getProductCategory(p.name) }))
         .sort((a, b) => {
-          const order = { 'עוף': 0, 'הודו': 1, 'בשר': 2, 'דגים': 3, 'מתובלים': 4, 'קפואים': 5 };
+          const order = { 'עוף': 0, 'הודו': 1, 'בשר': 2, 'דגים': 3, 'מתובלים': 4, 'קפואים': 5, 'טחונים': 6 };
           return (order[a.category] ?? 99) - (order[b.category] ?? 99);
         });
 
