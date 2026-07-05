@@ -416,6 +416,7 @@
     const getProductCategory = (name) => {
       const t = NEW_PRODUCTS_TEMPLATE.find(p => p.name === name);
       if (t?.category) return t.category;
+      if (name && name.includes('הודו')) return 'הודו';
       return 'עוף';
     };
     const STORAGE_TYPES = [
