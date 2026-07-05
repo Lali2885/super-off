@@ -1,5 +1,5 @@
-const CACHE = 'super-off-v6';
-const ASSETS = ['/', '/index.html'];
+const CACHE = 'super-off-v7';
+const ASSETS = ['/super-off/', '/super-off/index.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
