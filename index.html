@@ -1557,6 +1557,7 @@ ${htmlRows}
       const nameSearchRef = React.useRef(null);
       const modalFormRef = React.useRef(null);
       const editingItemRef = React.useRef(null);
+      const complexOptionsRef = React.useRef(null);
       useEffect(() => {
         if (editingItemId && editingItemRef.current && modalFormRef.current) {
           setTimeout(() => editingItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
@@ -1564,8 +1565,8 @@ ${htmlRows}
       }, [editingItemId]);
 
       useEffect(() => {
-        if (showComplex && modalFormRef.current) {
-          setTimeout(() => modalFormRef.current.scrollTo({ top: modalFormRef.current.scrollHeight, behavior: 'smooth' }), 120);
+        if (showComplex && complexOptionsRef.current) {
+          setTimeout(() => complexOptionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120);
         }
       }, [showComplex]);
 
@@ -2925,7 +2926,7 @@ ${htmlRows}
                         if (!template) return null;
                         const cc = getCatColors(template.category);
                         return (
-                          <div className={`border-t-2 border-dashed pt-3 space-y-3 ${cc.headerBorder}`}>
+                          <div ref={complexOptionsRef} className={`border-t-2 border-dashed pt-3 space-y-3 ${cc.headerBorder}`}>
                             {template.options.length > 0 && (() => {
                               const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
                               const skuQtyVal = parseFloat(orderSkuRow.qty) || 0;
