@@ -1482,6 +1482,15 @@ ${htmlRows}
     const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap, logoImage }) => {
       const getSku = (itemId, k) => (orderFormSkuMap || {})[itemId]?.[k] || '';
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
+      // מזהה טרי/קפוא/דג לפי הגדרת המוצר ברשימה (אם חד-משמעית), ורק אם המוצר תומך בשני הסוגים נופלים חזרה לסוג שנשמר על הפריט עצמו
+      const resolveItemStorage = (item) => {
+        const name = item.cleanName || item.name;
+        const p = (frozenProductsList || []).find(fp => fp.name === name);
+        const category = p?.category || getProductCategory(name);
+        if (category === 'דגים') return 'fish';
+        if (p?.storageTypes?.length === 1) return p.storageTypes[0] === 'frozen' ? 'frozen' : 'fresh';
+        return item.storageType === 'frozen' ? 'frozen' : 'fresh';
+      };
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingOrder, setEditingOrder] = useState(null);
       const [activePrintOrder, setActivePrintOrder] = useState(null);
@@ -2409,23 +2418,9 @@ ${htmlRows}
                 const p = (frozenProductsList || []).find(fp => fp.name === name);
                 return p?.category || getProductCategory(name) || ORDER_FORM_TEMPLATE.find(t => t.name === name)?.category;
               }).filter(Boolean));
-              const hasFish = regularItems.some(i => {
-                const name = i.cleanName || i.name;
-                const p = (frozenProductsList || []).find(fp => fp.name === name);
-                return (p?.category || getProductCategory(name)) === 'דגים';
-              });
-              const hasFrozen = regularItems.some(i => {
-                const name = i.cleanName || i.name;
-                const p = (frozenProductsList || []).find(fp => fp.name === name);
-                if ((p?.category || getProductCategory(name)) === 'דגים') return false;
-                return i.storageType === 'frozen';
-              });
-              const hasFresh = regularItems.some(i => {
-                const name = i.cleanName || i.name;
-                const p = (frozenProductsList || []).find(fp => fp.name === name);
-                if ((p?.category || getProductCategory(name)) === 'דגים') return false;
-                return !i.storageType || i.storageType === 'fresh';
-              });
+              const hasFish = regularItems.some(i => resolveItemStorage(i) === 'fish');
+              const hasFrozen = regularItems.some(i => resolveItemStorage(i) === 'frozen');
+              const hasFresh = regularItems.some(i => resolveItemStorage(i) === 'fresh');
               return (
               <div key={order.id}
                 draggable={draggable}
@@ -3296,16 +3291,9 @@ ${htmlRows}
                       });
                       return groups;
                     };
-                    const getItemStorage = (item) => {
-                      const name = item.cleanName || item.name;
-                      const p = (frozenProductsList || []).find(fp => fp.name === name);
-                      if ((p?.category || getProductCategory(name)) === 'דגים') return 'fish';
-                      if (item.storageType === 'frozen') return 'frozen';
-                      return 'fresh';
-                    };
-                    const freshGroups  = buildGroups(allRegular.filter(i => getItemStorage(i) === 'fresh'));
-                    const frozenGroups = buildGroups(allRegular.filter(i => getItemStorage(i) === 'frozen'));
-                    const fishGroups   = buildGroups(allRegular.filter(i => getItemStorage(i) === 'fish'));
+                    const freshGroups  = buildGroups(allRegular.filter(i => resolveItemStorage(i) === 'fresh'));
+                    const frozenGroups = buildGroups(allRegular.filter(i => resolveItemStorage(i) === 'frozen'));
+                    const fishGroups   = buildGroups(allRegular.filter(i => resolveItemStorage(i) === 'fish'));
 
                     const renderTable = (groups, extraRow) => (
                       <table className="w-full text-right border-collapse border border-black mt-3">
