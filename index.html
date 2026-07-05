@@ -2486,7 +2486,7 @@ ${htmlRows}
                             {hasFresh && (
                               <button type="button" onClick={() => openPrint(order, 'fresh')}
                                 className="w-full text-right px-3 py-2 text-sm font-bold hover:bg-green-50 text-green-700 flex items-center gap-2 whitespace-nowrap">
-                                🌿 בון טרי
+                                🍗 בון טרי
                               </button>
                             )}
                             {hasFrozen && (
@@ -3322,11 +3322,14 @@ ${htmlRows}
                               <td className="p-3 border border-black">
                                 <span className="block font-extrabold text-2xl">{group.key}</span>
                                 {(group.items[0]?.sku || group.items[0]?.kashrut) && (
-                                  <span className="block text-lg text-gray-600 font-bold">
-                                    {group.items[0].sku && `מק"ט: ${group.items[0].sku}`}
-                                    {group.items[0].sku && group.items[0].kashrut && '  •  '}
-                                    {group.items[0].kashrut}
-                                  </span>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {group.items[0].sku && <span className="text-lg text-gray-600 font-bold">מק"ט: {group.items[0].sku}</span>}
+                                    {group.items[0].kashrut && (
+                                      <span className="inline-block text-lg font-extrabold px-3 py-0.5 rounded-full border-2 border-black">
+                                        {group.items[0].kashrut}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                                 {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className="mt-1 mr-1 space-y-1 border-r-2 border-gray-400 pr-2">
@@ -3410,7 +3413,7 @@ ${htmlRows}
                         style={{ fontFamily: BON_FONT }}>
                         <div ref={withRefs ? bonHeaderRef : null}>
                           <div className="flex items-center justify-between mb-2">
-                            <div className="font-extrabold text-3xl text-green-800">🐔 בון טרי</div>
+                            <div className="font-extrabold text-3xl text-green-800">🍗 בון טרי</div>
                             {bonLogo}
                           </div>
                           {slipHeader}
