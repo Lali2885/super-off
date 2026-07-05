@@ -442,7 +442,7 @@
     // --- Constants ---
     // עוף מפורק בלבד — שאר המוצרים נגזרים ישירות מ-frozenProductsList
     const ORDER_FORM_TEMPLATE = [
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'] },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'], quickMark: { label: '8 שניצל', option: 'שניצל', check: 'לחלק כרעיים' } },
       { id: 'c3', category: 'עוף', name: 'כרעיים', storageType: 'fresh', inline: true, showTotalQty: true, options: [], checkboxOptions: ['לחלק כרעיים', 'להוריד עור'] },
       { id: 'f1', category: 'דגים', name: 'בייבי סלמון', storageType: 'frozen', inline: true, showTotalQty: true, options: [], checkboxOptions: ['5 במגש', '6 במגש', '8 במגש', '32/8'] },
     ];
@@ -1549,6 +1549,7 @@ ${htmlRows}
       const [orderNotes, setOrderNotes] = useState('');
       const [complexState, setComplexState] = useState({ totalQty: '', rows: [], checks: [], notes: '' });
       const [showComplex, setShowComplex] = useState(false);
+      const [quickMarkOn, setQuickMarkOn] = useState(false);
       const [nameSearch, setNameSearch] = useState('');
       const [showNameDropdown, setShowNameDropdown] = useState(false);
       const [editingItemId, setEditingItemId] = useState(null);
@@ -1558,6 +1559,31 @@ ${htmlRows}
       const modalFormRef = React.useRef(null);
       const editingItemRef = React.useRef(null);
       const complexOptionsRef = React.useRef(null);
+      const activeComplexTemplate = showComplex ? ORDER_FORM_TEMPLATE.find(t => t.name === orderSkuRow.name) : null;
+
+      useEffect(() => {
+        if (!quickMarkOn || !activeComplexTemplate?.quickMark) return;
+        const { option, check } = activeComplexTemplate.quickMark;
+        setComplexState(prev => ({
+          ...prev,
+          rows: [{ option, qty: orderSkuRow.qty }],
+          checks: prev.checks.includes(check) ? prev.checks : [...prev.checks, check],
+        }));
+      }, [quickMarkOn, orderSkuRow.qty, activeComplexTemplate]);
+
+      const toggleQuickMark = () => {
+        const next = !quickMarkOn;
+        setQuickMarkOn(next);
+        if (!next && activeComplexTemplate?.quickMark) {
+          const { option, check } = activeComplexTemplate.quickMark;
+          setComplexState(prev => ({
+            ...prev,
+            rows: prev.rows.filter(r => r.option !== option),
+            checks: prev.checks.filter(c => c !== check),
+          }));
+        }
+      };
+
       useEffect(() => {
         if (editingItemId && editingItemRef.current && modalFormRef.current) {
           setTimeout(() => editingItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
@@ -1599,7 +1625,7 @@ ${htmlRows}
           if (sk && String(sk) === String(sku)) {
             setOrderSkuRow(prev => ({ ...prev, sku, name: template.name, category: template.category, kashrut: fpBySku?.kashrut || '', ...getStorageInfo(template.name) }));
             setShowComplex(true);
-            setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+            setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false);
             return;
           }
         }
@@ -1610,7 +1636,7 @@ ${htmlRows}
               if (template) {
                 setOrderSkuRow(prev => ({ ...prev, sku, name: template.name, category: template.category, kashrut: fpBySku?.kashrut || kName, ...getStorageInfo(template.name) }));
                 setShowComplex(true);
-                setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+                setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false);
                 return;
               }
             }
@@ -1621,7 +1647,7 @@ ${htmlRows}
           if (templateMatch) {
             setOrderSkuRow(prev => ({ ...prev, sku, name: templateMatch.name, category: templateMatch.category, kashrut: fpBySku.kashrut || '', ...getStorageInfo(templateMatch.name) }));
             setShowComplex(true);
-            setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+            setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false);
             return;
           }
           setOrderSkuRow(prev => ({ ...prev, sku, name: fpBySku.name, category: fpBySku.category || getProductCategory(fpBySku.name), kashrut: fpBySku.kashrut || '', ...getStorageInfo(fpBySku.name) }));
@@ -1653,7 +1679,7 @@ ${htmlRows}
             checks: complexState.checks, notes: complexState.notes
           }]);
           setShowComplex(false);
-          setComplexState({ totalQty: '', rows: [], checks: [], notes: '' });
+          setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false);
           setComplexAddError('');
         } else {
           if (!parseFloat(orderSkuRow.qty)) return;
@@ -1790,7 +1816,7 @@ ${htmlRows}
         setAssignedButcher('');
         setFormItemsState({});
         setPackingOption('');
-        setOrderAddedItems([]); setOrderNotes(''); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setNameSearch(''); setShowNameDropdown(false);
+        setOrderAddedItems([]); setOrderNotes(''); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false); setNameSearch(''); setShowNameDropdown(false);
       };
 
       const handleAddOrder = (e) => {
@@ -2901,6 +2927,15 @@ ${htmlRows}
                             className="w-full h-[42px] p-2.5 border-2 border-gray-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-purple-400 text-center"
                           />
                         </div>
+                        {showComplex && activeComplexTemplate?.quickMark && (
+                          <div className="shrink-0">
+                            <label className="block text-[10px] font-bold text-gray-400 mb-1">&nbsp;</label>
+                            <button type="button" onClick={toggleQuickMark}
+                              className={`h-[42px] px-3 rounded-lg border-2 text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${quickMarkOn ? 'bg-yellow-100 border-yellow-500 text-yellow-900' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+                              <span className="text-sm">{quickMarkOn ? '✓' : '○'}</span> {activeComplexTemplate.quickMark.label}
+                            </button>
+                          </div>
+                        )}
                         <div className="flex-1 min-w-[100px]">
                           <label className="block text-[10px] font-bold text-gray-400 mb-1">הערה</label>
                           <input id="orderNotesInput" type="text" placeholder="הערה..."
