@@ -2637,7 +2637,7 @@ setTimeout(function(){
                                   <span className="font-bold text-gray-800">{group.key}</span>
                                   {kc && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'15', color: kc }}>{group.items[0].kashrut}</span>}
                                   {group.items[0].sku && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-500 border border-gray-200">{group.items[0].sku}</span>}
-                                  {group.items[0].storageType === 'frozen' ? <span className="text-[10px]">🧊</span> : <span className="text-[10px]">🥩</span>}
+                                  {resolveItemStorage(group.items[0]) === 'frozen' ? <span className="text-[10px]">🧊</span> : resolveItemStorage(group.items[0]) === 'fish' ? <span className="text-[10px]">🐟</span> : <span className="text-[10px]">🥩</span>}
                                 </div>
                                 {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
@@ -3141,7 +3141,7 @@ setTimeout(function(){
                                         <span className="font-mono text-[11px] text-gray-400 w-12 shrink-0">{item.sku || '—'}</span>
                                         <span className="flex-1 font-bold text-sm truncate" style={{ color: ikc }}>{item.name}</span>
                                         {item.kashrut && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0" style={{ borderColor: ikc+'80', backgroundColor: ikc+'15', color: ikc }}>{item.kashrut}</span>}
-                                        {item.storageType === 'frozen' ? <span className="text-[11px] shrink-0">🧊</span> : <span className="text-[11px] shrink-0">🥩</span>}
+                                        {resolveItemStorage(item) === 'frozen' ? <span className="text-[11px] shrink-0">🧊</span> : resolveItemStorage(item) === 'fish' ? <span className="text-[11px] shrink-0">🐟</span> : <span className="text-[11px] shrink-0">🥩</span>}
                                         {item.type === 'simple' && !isEditing && <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{item.qty}</span>}
                                         {item.type === 'complex' && !isEditing && (() => { const tot = (item.rows||[]).reduce((s,r)=>s+(parseFloat(r.qty)||0),0)||(parseFloat(item.totalQty)||0); return tot>0 ? <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{tot}</span> : null; })()}
                                         {item.type === 'simple' && isEditing && <input type="number" min="0" step="0.5" value={editItemState.qty ?? item.qty} onChange={e => setEditItemState(prev => ({...prev, qty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none shrink-0" />}
