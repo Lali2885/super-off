@@ -1100,7 +1100,7 @@
                       <div className="p-5 space-y-4">
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">מוצר</label>
-                          <select value={stickerProd} onChange={e => setStickerProd(e.target.value)}
+                          <select value={stickerProd} onChange={e => { setStickerProd(e.target.value); setStickerMark(''); setStickerMarkErr(false); }}
                             className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:border-indigo-400 outline-none">
                             {frozenProductsList.map(p => (
                               <option key={p.name + p.kashrut} value={p.name}>{p.name}{p.kashrut ? ` (${p.kashrut})` : ''}</option>
@@ -1110,19 +1110,35 @@
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">סימון מדבקה <span className="text-red-500">* חובה</span></label>
                           <div className="flex gap-3">
-                            {['מ.ל', 'מ.ל.ה'].map(m => (
-                              <button key={m} onClick={() => { setStickerMark(m); setStickerMarkErr(false); }}
-                                className={`flex-1 py-3 rounded-xl font-extrabold text-lg border-2 transition-all ${stickerMark === m ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}>
-                                {m}
-                              </button>
-                            ))}
+                            {['מ.ל', 'מ.ל.ה'].map(m => {
+                              const selProdObj = frozenProductsList.find(p => p.name === stickerProd);
+                              const key = `STICKER|${stickerProd}|${selProdObj?.kashrut || ''}|${m}`;
+                              const alreadyExists = Object.prototype.hasOwnProperty.call(frozenStock, key);
+                              return (
+                                <button key={m}
+                                  disabled={alreadyExists}
+                                  onClick={() => { if (!alreadyExists) { setStickerMark(m); setStickerMarkErr(false); } }}
+                                  className={`flex-1 py-3 rounded-xl font-extrabold text-lg border-2 transition-all relative
+                                    ${alreadyExists ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed' :
+                                      stickerMark === m ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}>
+                                  {m}
+                                  {alreadyExists && <span className="block text-xs font-bold text-gray-400">קיים ✓</span>}
+                                </button>
+                              );
+                            })}
                           </div>
                           {stickerMarkErr && <p className="text-red-500 text-xs font-bold mt-1">יש לבחור סימון מדבקה</p>}
+                          {['מ.ל', 'מ.ל.ה'].every(m => {
+                            const selProdObj = frozenProductsList.find(p => p.name === stickerProd);
+                            return Object.prototype.hasOwnProperty.call(frozenStock, `STICKER|${stickerProd}|${selProdObj?.kashrut || ''}|${m}`);
+                          }) && <p className="text-amber-600 text-xs font-bold mt-1">שני הסימונים כבר קיימים עבור מוצר זה</p>}
                         </div>
                       </div>
                       <div className="p-4 border-t border-gray-100 flex gap-3">
                         <button onClick={() => setStickerModal(false)} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
-                        <button onClick={saveStickerProd} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">הוסף</button>
+                        <button onClick={saveStickerProd}
+                          disabled={['מ.ל', 'מ.ל.ה'].every(m => { const selProdObj = frozenProductsList.find(p => p.name === stickerProd); return Object.prototype.hasOwnProperty.call(frozenStock, `STICKER|${stickerProd}|${selProdObj?.kashrut || ''}|${m}`); })}
+                          className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm">הוסף</button>
                       </div>
                     </div>
                   </div>
