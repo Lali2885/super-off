@@ -1551,20 +1551,18 @@ ${htmlRows}
             const bg = gIdx % 2 === 0 ? '#eef4ff' : '#dbeafe';
             const qtyDisplay = group.items.length > 1 ? group.total : group.items[0].qty;
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
-              ? group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="font-size:18px;color:#555;padding-right:12px;">└ ${item.qty} × ${opt}</div>`; }).join('') : '';
-            const notes = group.items.length === 1 && group.items[0].notes ? `<div style="font-size:18px;color:#dc2626;font-weight:bold;">✂️ ${group.items[0].notes}</div>` : '';
-            const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:16px;font-weight:800;padding:1px 10px;border-radius:999px;border:2px solid black;">${group.items[0].kashrut}</span>` : '';
-            return `<tr style="background:${bg};border-bottom:1px solid #93c5fd;">
-              <td style="padding:10px 8px;font-size:28px;text-align:center;width:36px;color:#1e40af;">☐</td>
-              <td style="padding:10px 8px;font-size:26px;font-weight:800;text-align:center;width:56px;">${qtyDisplay}</td>
-              <td style="padding:10px 8px;"><span style="font-size:22px;font-weight:bold;">${group.key}</span> ${kashrutBadge}${subItems}${notes}</td>
-            </tr>`;
+              ? group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="font-size:0.8em;color:#555;padding-right:10px;">└ ${item.qty}×${opt}</div>`; }).join('') : '';
+            const notes = group.items.length === 1 && group.items[0].notes ? `<div style="font-size:0.8em;color:#dc2626;font-weight:bold;">✂️ ${group.items[0].notes}</div>` : '';
+            const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:0.72em;font-weight:800;padding:1px 8px;border-radius:999px;border:2px solid black;white-space:nowrap;">${group.items[0].kashrut}</span>` : '';
+            return `<div class="frozen-row" style="display:flex;align-items:flex-start;gap:4px;padding:5px 4px;border-bottom:1px solid #93c5fd;background:${bg};break-inside:avoid;">
+              <span style="font-size:1.2em;color:#1e40af;flex-shrink:0;">☐</span>
+              <span style="font-weight:800;min-width:30px;text-align:center;flex-shrink:0;">${qtyDisplay}</span>
+              <div style="flex:1;min-width:0;"><span style="font-weight:bold;">${group.key}</span> ${kashrutBadge}${subItems}${notes}</div>
+            </div>`;
           }).join('');
-          return `<div style="margin-top:16px;border-top:3px solid #1e40af;padding-top:10px;">
-            <div style="font-size:22px;font-weight:800;color:#1e40af;margin-bottom:8px;">🧊 קפוא — נא לסמן מה נלקח</div>
-            <table style="width:100%;border-collapse:collapse;border:2px solid #1e40af;border-radius:4px;overflow:hidden;">
-              <tbody>${rows}</tbody>
-            </table>
+          return `<div class="frozen-section" style="margin-top:12px;border-top:3px solid #1e40af;padding-top:8px;font-size:22px;">
+            <div style="font-size:20px;font-weight:800;color:#1e40af;margin-bottom:6px;">🧊 קפוא — נא לסמן מה נלקח</div>
+            <div class="frozen-grid" style="border:2px solid #1e40af;border-radius:4px;overflow:hidden;">${rows}</div>
           </div>`;
         };
 
@@ -1576,16 +1574,42 @@ ${htmlRows}
             ? `<div style="font-size:20px;font-weight:800;color:#166534;margin-top:4px;">🍗 טרי</div>${tableHtml(freshGroups, true)}`
             : '';
           const frozenSection = frozenGroups.length > 0 ? frozenChecklistHtml(frozenGroups) : '';
-          bons.push(`<div style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#166534;">🍗 בון עוף</div>${logoHtml}</div>${headerHtml}${freshSection}${frozenSection}</div>`);
+          bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#166534;">🍗 בון עוף</div>${logoHtml}</div>${headerHtml}${freshSection}${frozenSection}</div>`);
         }
 
         if (fishGroups.length > 0) {
-          bons.push(`<div style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#1e3a8a;">🐟 בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false, false)}</div>`);
+          bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#1e3a8a;">🐟 בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false, false)}</div>`);
         }
 
         const bodyContent = bons.map((bon, i) => i < bons.length - 1 ? `<div style="page-break-after:always;">${bon}</div>` : bon).join('');
         const printWindow = window.open('', '_blank', 'width=800,height=900');
-        printWindow.document.write(`<html dir="rtl"><head><title>בון הזמנה - סופר עוף</title><style>@import url('https://fonts.googleapis.com/css2?family=David+Libre:wght@400;700&display=swap');body{font-family:'David Libre','David',serif;padding:0;margin:0;background:white;color:black;-webkit-print-color-adjust:exact;print-color-adjust:exact;}@page{size:A5 portrait;margin:5mm;}@media print{html,body{width:138mm;overflow:hidden;}header,footer{display:none!important;}}</style></head><body onload="window.print();setTimeout(function(){window.close();},500);">${bodyContent}</body></html>`);
+        printWindow.document.write(`<html dir="rtl"><head><title>בון הזמנה - סופר עוף</title><style>
+@import url('https://fonts.googleapis.com/css2?family=David+Libre:wght@400;700&display=swap');
+body{font-family:'David Libre','David',serif;padding:0;margin:0;background:white;color:black;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+@page{size:A5 portrait;margin:5mm;}
+@media print{html,body{width:138mm;overflow:hidden;}header,footer{display:none!important;}}
+.two-col .frozen-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.frozen-row{break-inside:avoid;}
+</style></head><body>
+${bodyContent}
+<script>
+setTimeout(function(){
+  var A5_H=Math.round(200*3.7795);
+  document.querySelectorAll('.bon-page').forEach(function(page){
+    var fs=page.querySelector('.frozen-section');
+    if(!fs)return;
+    if(page.scrollHeight>A5_H){fs.classList.add('two-col');}
+    var sizes=[20,18,16,14,12];
+    for(var i=0;i<sizes.length;i++){
+      if(page.scrollHeight<=A5_H)break;
+      fs.style.fontSize=sizes[i]+'px';
+    }
+  });
+  window.print();
+  setTimeout(function(){window.close();},500);
+},350);
+<\/script>
+</body></html>`);
         printWindow.document.close();
       };
       const [orderType, setOrderType] = useState('delivery');
