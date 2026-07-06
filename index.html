@@ -994,9 +994,11 @@
 
             const [stickerSearch, setStickerSearch] = React.useState('');
             const [stickerDropOpen, setStickerDropOpen] = React.useState(false);
-            const filteredStickerProds = frozenProductsList.filter(p =>
-              !stickerSearch || p.name.includes(stickerSearch) || (p.kashrut||'').includes(stickerSearch)
-            );
+            const filteredStickerProds = frozenProductsList.filter(p => {
+              if (!stickerSearch) return true;
+              const terms = stickerSearch.trim().split(/\s+/);
+              return terms.every(t => p.name.includes(t) || (p.kashrut||'').includes(t));
+            });
 
             const openStickerModal = () => {
               setStickerProd(''); setStickerSearch(''); setStickerDropOpen(false);
@@ -1111,14 +1113,12 @@
                             type="text"
                             value={stickerSearch}
                             onChange={e => { setStickerSearch(e.target.value); setStickerProd(''); setStickerDropOpen(true); setStickerMark(''); setStickerMarkErr(false); }}
-                            onFocus={() => setStickerDropOpen(true)}
                             onBlur={() => setTimeout(() => setStickerDropOpen(false), 150)}
                             placeholder="חפש מוצר..."
-                            className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:border-indigo-400 outline-none"
+                            className={`w-full border-2 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none ${stickerProd ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 focus:border-indigo-400'}`}
                             autoFocus
                           />
-                          {stickerProd && <div className="mt-1 text-xs font-bold text-indigo-600 px-1">✓ נבחר: {stickerProd}</div>}
-                          {stickerDropOpen && filteredStickerProds.length > 0 && (
+                          {stickerDropOpen && stickerSearch && filteredStickerProds.length > 0 && (
                             <div className="absolute z-10 w-full bg-white border-2 border-indigo-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
                               {filteredStickerProds.map(p => (
                                 <div key={p.name + p.kashrut}
@@ -1131,8 +1131,9 @@
                             </div>
                           )}
                           {stickerDropOpen && stickerSearch && filteredStickerProds.length === 0 && (
-                            <div className="absolute z-10 w-full bg-white border-2 border-gray-200 rounded-xl shadow mt-1 px-3 py-2 text-sm text-gray-400">לא נמצאו תוצאות</div>
+                            <div className="absolute z-10 w-full bg-white border-2 border-gray-200 rounded-xl shadow-lg mt-1 px-3 py-2 text-sm text-gray-400">לא נמצאו תוצאות</div>
                           )}
+                          {!stickerDropOpen && !stickerProd && <p className="text-xs text-gray-400 mt-1 px-1">הקלידי שם מוצר לחיפוש</p>}
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">סימון מדבקה <span className="text-red-500">* חובה</span></label>
