@@ -1517,18 +1517,22 @@ ${htmlRows}
 
         const logoHtml = logoImage ? `<img src="${logoImage}" style="width:64px;height:64px;object-fit:contain;" />` : '';
 
+        const customerLine = [
+          order.customer,
+          order.phone,
+          order.mobile,
+          order.neighborhood
+        ].filter(Boolean).join('  |  ');
+
         const headerHtml = `
-          <div style="border:1px solid black;border-radius:4px;padding:8px;margin-bottom:8px;background:#f9f9f9;font-size:14px;">
-            <div style="display:flex;justify-content:space-between;font-weight:800;border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:4px;">
+          <div style="border:1px solid black;border-radius:4px;padding:6px 8px;margin-bottom:8px;background:#f9f9f9;font-size:14px;">
+            <div style="display:flex;justify-content:space-between;font-weight:800;">
               <span>${order.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}</span>
               <span>הזמנה #${order.id}</span>
             </div>
-            ${order.timeString ? `<div style="font-weight:bold;">מועד: ${order.timeString}</div>` : ''}
           </div>
-          <div style="border-bottom:2px solid black;padding-bottom:8px;margin-bottom:8px;">
-            <div style="font-size:30px;font-weight:800;">${order.customer}</div>
-            <div style="font-size:20px;font-weight:bold;color:#555;">${order.phone}${order.mobile ? ` | ${order.mobile}` : ''}</div>
-            ${order.type === 'delivery' ? `<div style="font-size:13px;font-weight:bold;margin-top:2px;">${[order.neighborhood, order.street, order.entrance && `כניסה ${order.entrance}`, order.floor && `קומה ${order.floor}`, order.apt && `דירה ${order.apt}`].filter(Boolean).join(' | ')}</div>` : ''}
+          <div style="border-bottom:2px solid black;padding-bottom:6px;margin-bottom:8px;">
+            <div style="font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${customerLine}</div>
           </div>`;
 
         const tableHtml = (groups, isFresh, showKashrut = true) => {
@@ -1553,7 +1557,7 @@ ${htmlRows}
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
               ? group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="font-size:0.8em;color:#555;padding-right:10px;">└ ${item.qty}×${opt}</div>`; }).join('') : '';
             const notes = group.items.length === 1 && group.items[0].notes ? `<div style="font-size:0.8em;color:#dc2626;font-weight:bold;">✂️ ${group.items[0].notes}</div>` : '';
-            const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:0.72em;font-weight:800;padding:1px 8px;border-radius:999px;border:2px solid black;white-space:nowrap;">${group.items[0].kashrut}</span>` : '';
+            const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:0.55em;font-weight:800;padding:1px 6px;border-radius:999px;border:1.5px solid black;white-space:nowrap;">${group.items[0].kashrut}</span>` : '';
             return `<div class="frozen-row" style="display:flex;align-items:flex-start;gap:4px;padding:5px 4px;border-bottom:1px solid #93c5fd;background:${bg};break-inside:avoid;">
               <span style="font-size:1.2em;color:#1e40af;flex-shrink:0;">☐</span>
               <span style="font-weight:800;min-width:30px;text-align:center;flex-shrink:0;">${qtyDisplay}</span>
@@ -1561,7 +1565,7 @@ ${htmlRows}
             </div>`;
           }).join('');
           return `<div class="frozen-section" style="margin-top:12px;border-top:3px solid #1e40af;padding-top:8px;font-size:22px;">
-            <div style="font-size:20px;font-weight:800;color:#1e40af;margin-bottom:6px;">🧊 קפוא — נא לסמן מה נלקח</div>
+            <div style="font-size:14px;font-weight:700;color:#1e40af;margin-bottom:5px;">🧊 קפוא — נא לסמן מה נלקח</div>
             <div class="frozen-grid" style="border:2px solid #1e40af;border-radius:4px;overflow:hidden;">${rows}</div>
           </div>`;
         };
