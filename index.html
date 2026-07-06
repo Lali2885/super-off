@@ -1531,7 +1531,7 @@ ${htmlRows}
             ${order.type === 'delivery' ? `<div style="font-size:13px;font-weight:bold;margin-top:2px;">${[order.neighborhood, order.street, order.entrance && `כניסה ${order.entrance}`, order.floor && `קומה ${order.floor}`, order.apt && `דירה ${order.apt}`].filter(Boolean).join(' | ')}</div>` : ''}
           </div>`;
 
-        const tableHtml = (groups, isFresh) => {
+        const tableHtml = (groups, isFresh, showKashrut = true) => {
           const rows = groups.map((group, gIdx) => {
             const bg = gIdx % 2 === 0 ? '#fff' : '#f9f9f9';
             const qtyDisplay = group.items.length > 1 ? group.total : group.items[0].qty;
@@ -1539,7 +1539,7 @@ ${htmlRows}
               ? `<div style="margin-top:4px;margin-right:4px;padding-right:8px;border-right:2px solid #aaa;">${group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="display:flex;gap:8px;font-size:22px;color:#555;font-weight:bold;"><span style="min-width:44px;text-align:center;font-weight:800;">${item.qty}</span><span>${opt}</span></div>`; }).join('')}</div>` : '';
             const notes = group.items.length === 1 && group.items[0].notes ? `<span style="display:block;font-size:22px;color:#dc2626;font-weight:bold;margin-top:4px;">✂️ ${group.items[0].notes}</span>` : '';
             const checks = group.items[0]?.checks?.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${group.items[0].checks.map(c => `<span style="font-size:22px;padding:2px 8px;border:1px solid #ccc;border-radius:4px;font-weight:bold;">✓ ${c}</span>`).join('')}</div>` : '';
-            const skuKash = (group.items[0]?.sku || group.items[0]?.kashrut) ? `<div style="display:flex;align-items:center;gap:8px;margin-top:2px;">${group.items[0].sku ? `<span style="font-size:18px;color:#666;font-weight:bold;">מק"ט: ${group.items[0].sku}</span>` : ''}${group.items[0].kashrut ? `<span style="font-size:18px;font-weight:800;padding:2px 12px;border-radius:999px;border:2px solid black;">${group.items[0].kashrut}</span>` : ''}</div>` : '';
+            const skuKash = showKashrut && (group.items[0]?.sku || group.items[0]?.kashrut) ? `<div style="display:flex;align-items:center;gap:8px;margin-top:2px;">${group.items[0].sku ? `<span style="font-size:18px;color:#666;font-weight:bold;">מק"ט: ${group.items[0].sku}</span>` : ''}${group.items[0].kashrut ? `<span style="font-size:18px;font-weight:800;padding:2px 12px;border-radius:999px;border:2px solid black;">${group.items[0].kashrut}</span>` : ''}</div>` : '';
             return `<tr style="background:${bg};"><td style="padding:12px;border:1px solid black;text-align:center;font-size:36px;font-weight:800;background:#f0f0f0;">${qtyDisplay}</td><td style="padding:12px;border:1px solid black;"><span style="display:block;font-weight:800;font-size:22px;">${group.key}</span>${skuKash}${subItems}${notes}${checks}</td></tr>`;
           }).join('');
           const packingRow = isFresh && packingItem ? `<tr style="background:#f9f9f9;"><td style="padding:8px;border:1px solid black;text-align:center;font-size:22px;background:#f0f0f0;">📦</td><td style="padding:8px;border:1px solid black;font-weight:bold;font-size:22px;color:#555;">${packingItem.notes}</td></tr>` : '';
@@ -1553,11 +1553,11 @@ ${htmlRows}
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
               ? group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="font-size:18px;color:#555;padding-right:12px;">└ ${item.qty} × ${opt}</div>`; }).join('') : '';
             const notes = group.items.length === 1 && group.items[0].notes ? `<div style="font-size:18px;color:#dc2626;font-weight:bold;">✂️ ${group.items[0].notes}</div>` : '';
-            const skuKash = (group.items[0]?.sku || group.items[0]?.kashrut) ? `<span style="font-size:16px;color:#555;">${group.items[0].kashrut || ''}</span>` : '';
+            const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:16px;font-weight:800;padding:1px 10px;border-radius:999px;border:2px solid black;">${group.items[0].kashrut}</span>` : '';
             return `<tr style="background:${bg};border-bottom:1px solid #93c5fd;">
               <td style="padding:10px 8px;font-size:28px;text-align:center;width:36px;color:#1e40af;">☐</td>
               <td style="padding:10px 8px;font-size:26px;font-weight:800;text-align:center;width:56px;">${qtyDisplay}</td>
-              <td style="padding:10px 8px;"><span style="font-size:22px;font-weight:bold;">${group.key}</span>${skuKash ? ` <span style="font-size:16px;color:#555;">${group.items[0].kashrut || ''}</span>` : ''}${subItems}${notes}</td>
+              <td style="padding:10px 8px;"><span style="font-size:22px;font-weight:bold;">${group.key}</span> ${kashrutBadge}${subItems}${notes}</td>
             </tr>`;
           }).join('');
           return `<div style="margin-top:16px;border-top:3px solid #1e40af;padding-top:10px;">
@@ -1580,7 +1580,7 @@ ${htmlRows}
         }
 
         if (fishGroups.length > 0) {
-          bons.push(`<div style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#1e3a8a;">🐟 בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false)}</div>`);
+          bons.push(`<div style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#1e3a8a;">🐟 בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false, false)}</div>`);
         }
 
         const bodyContent = bons.map((bon, i) => i < bons.length - 1 ? `<div style="page-break-after:always;">${bon}</div>` : bon).join('');
