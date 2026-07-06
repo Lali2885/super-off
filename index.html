@@ -782,7 +782,7 @@
     // --- Frozen Stock Panel ---
     const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
-      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries([...PRODUCT_CATEGORIES.map(c => [c, true]), ['STICKER', false]]));
+      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries([...PRODUCT_CATEGORIES.map(c => [c, true]), ['STICKER', true]]));
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
       const [stickerEntry, setStickerEntry]       = useState({});
