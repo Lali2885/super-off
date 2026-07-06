@@ -992,11 +992,18 @@
               .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut: kashrut || '', mark, key: k }; })
               .filter(p => p.kashrut === activeKashrut);
 
+            const [stickerSearch, setStickerSearch] = React.useState('');
+            const [stickerDropOpen, setStickerDropOpen] = React.useState(false);
+            const filteredStickerProds = frozenProductsList.filter(p =>
+              !stickerSearch || p.name.includes(stickerSearch) || (p.kashrut||'').includes(stickerSearch)
+            );
+
             const openStickerModal = () => {
-              setStickerProd(frozenProductsList.filter(p => (p.kashrut||'') === activeKashrut)[0]?.name || frozenProductsList[0]?.name || '');
+              setStickerProd(''); setStickerSearch(''); setStickerDropOpen(false);
               setStickerMark(''); setStickerMarkErr(false); setStickerModal(true);
             };
             const saveStickerProd = () => {
+              if (!stickerProd) { setStickerMarkErr(false); return; }
               if (!stickerMark) { setStickerMarkErr(true); return; }
               const prod = frozenProductsList.find(p => p.name === stickerProd);
               if (!prod) return;
@@ -1098,14 +1105,34 @@
                         <button onClick={() => setStickerModal(false)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-100">✕</button>
                       </div>
                       <div className="p-5 space-y-4">
-                        <div>
+                        <div className="relative">
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">מוצר</label>
-                          <select value={stickerProd} onChange={e => { setStickerProd(e.target.value); setStickerMark(''); setStickerMarkErr(false); }}
-                            className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:border-indigo-400 outline-none">
-                            {frozenProductsList.map(p => (
-                              <option key={p.name + p.kashrut} value={p.name}>{p.name}{p.kashrut ? ` (${p.kashrut})` : ''}</option>
-                            ))}
-                          </select>
+                          <input
+                            type="text"
+                            value={stickerSearch}
+                            onChange={e => { setStickerSearch(e.target.value); setStickerProd(''); setStickerDropOpen(true); setStickerMark(''); setStickerMarkErr(false); }}
+                            onFocus={() => setStickerDropOpen(true)}
+                            onBlur={() => setTimeout(() => setStickerDropOpen(false), 150)}
+                            placeholder="חפש מוצר..."
+                            className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:border-indigo-400 outline-none"
+                            autoFocus
+                          />
+                          {stickerProd && <div className="mt-1 text-xs font-bold text-indigo-600 px-1">✓ נבחר: {stickerProd}</div>}
+                          {stickerDropOpen && filteredStickerProds.length > 0 && (
+                            <div className="absolute z-10 w-full bg-white border-2 border-indigo-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
+                              {filteredStickerProds.map(p => (
+                                <div key={p.name + p.kashrut}
+                                  onMouseDown={e => { e.preventDefault(); setStickerProd(p.name); setStickerSearch(p.name); setStickerDropOpen(false); setStickerMark(''); setStickerMarkErr(false); }}
+                                  className="px-3 py-2 text-sm font-semibold cursor-pointer hover:bg-indigo-50 flex items-center justify-between">
+                                  <span>{p.name}</span>
+                                  {p.kashrut && <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: (kashrutList.find(k=>k.name===p.kashrut)||{}).color||'#888', borderColor: ((kashrutList.find(k=>k.name===p.kashrut)||{}).color||'#888')+'60', background: ((kashrutList.find(k=>k.name===p.kashrut)||{}).color||'#888')+'15' }}>{p.kashrut}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {stickerDropOpen && stickerSearch && filteredStickerProds.length === 0 && (
+                            <div className="absolute z-10 w-full bg-white border-2 border-gray-200 rounded-xl shadow mt-1 px-3 py-2 text-sm text-gray-400">לא נמצאו תוצאות</div>
+                          )}
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">סימון מדבקה <span className="text-red-500">* חובה</span></label>
