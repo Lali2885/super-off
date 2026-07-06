@@ -1003,6 +1003,197 @@
       );
     };
 
+    const StickerStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {} }) => {
+      const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
+      const [addModal, setAddModal]           = useState(false);
+      const [selProduct, setSelProduct]       = useState('');
+      const [selMark, setSelMark]             = useState('');
+      const [markError, setMarkError]         = useState(false);
+      const [entryCartons, setEntryCartons]     = useState({});
+      const [withdrawCartons, setWithdrawCartons] = useState({});
+
+      const stickerKeys = new Set([
+        ...Object.keys(frozenStock).filter(k => k.startsWith('STICKER|')),
+        ...Object.keys(bsBalance).filter(k => k.startsWith('STICKER|')),
+      ]);
+      const stickerProducts = [...stickerKeys]
+        .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut: kashrut || '', mark }; });
+
+      const activeProducts = stickerProducts.filter(p => p.kashrut === activeKashrut);
+
+      const logAction = (action, key, cartons) => {
+        const [, name, kashrut, mark] = key.split('|');
+        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() } }]).then();
+      };
+
+      const applyEntry = (key) => {
+        const delta = entryCartons[key] || 0;
+        if (!delta) return;
+        setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
+        setEntryCartons(prev => ({ ...prev, [key]: 0 }));
+        logAction('כניסה-מדבקה', key, delta);
+      };
+      const applyWithdraw = (key) => {
+        const delta = withdrawCartons[key] || 0;
+        if (!delta) return;
+        setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
+        setWithdrawCartons(prev => ({ ...prev, [key]: 0 }));
+        logAction('משיכה-מדבקה', key, delta);
+      };
+
+      const openAddModal = () => {
+        setSelProduct(frozenProductsList[0]?.name || '');
+        setSelMark(''); setMarkError(false); setAddModal(true);
+      };
+      const saveProduct = () => {
+        if (!selMark) { setMarkError(true); return; }
+        const prod = frozenProductsList.find(p => p.name === selProduct);
+        if (!prod) return;
+        const key = `STICKER|${prod.name}|${prod.kashrut || ''}|${selMark}`;
+        if (!Object.prototype.hasOwnProperty.call(frozenStock, key)) {
+          setFrozenStock(prev => ({ ...prev, [key]: 0 }));
+        }
+        setActiveKashrut(prod.kashrut || '');
+        setAddModal(false);
+      };
+
+      const renderTableHeader = () => (
+        <thead className="text-sm">
+          <tr style={{ borderBottom: '2px solid #6b7280' }}>
+            <th className="p-2.5 font-bold text-right bg-gray-50">מוצר</th>
+            <th className="p-2.5 font-bold text-center bg-gray-50 text-indigo-700">סימון</th>
+            <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e' }}>כניסה (קרטונים)</th>
+            <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
+            <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון</th>
+            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">כולל אחסנה</th>
+          </tr>
+        </thead>
+      );
+
+      const renderRow = (p, idx) => {
+        const key = `STICKER|${p.name}|${p.kashrut}|${p.mark}`;
+        const cartons = frozenStock[key] || 0;
+        const eC = entryCartons[key] || 0;
+        const wC = withdrawCartons[key] || 0;
+        return (
+          <tr key={key} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+            <td className="p-2.5 font-bold text-gray-900 text-sm">{p.name}</td>
+            <td className="p-2.5 text-center">
+              <span className="text-xs font-bold px-2 py-0.5 rounded border-2 border-indigo-300 bg-indigo-50 text-indigo-700">{p.mark}</span>
+            </td>
+            <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
+              <input type="number" min="0" step="1" value={eC||''} placeholder="0"
+                onChange={e => setEntryCartons(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
+                className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
+            </td>
+            <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
+              <input type="number" min="0" step="1" value={wC||''} placeholder="0"
+                onChange={e => setWithdrawCartons(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
+                className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
+            </td>
+            <td className="p-2.5 text-center bg-blue-50/60 border-r-2 border-blue-400">
+              <span className="font-black text-blue-700 text-lg">{cartons}</span>
+            </td>
+            <td className="p-2.5 text-center bg-indigo-50/40">
+              <span className="font-black text-indigo-700 text-lg">{cartons + (bsBalance[key] || 0)}</span>
+            </td>
+          </tr>
+        );
+      };
+
+      return (
+        <div className="flex flex-col gap-4">
+          {/* כפתור הוסף מוצר */}
+          <div className="flex justify-end">
+            <button onClick={openAddModal}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow">
+              + הוסף מוצר
+            </button>
+          </div>
+
+          {/* טאבי כשרות */}
+          <div className="flex gap-2 flex-wrap">
+            {kashrutList.map((k) => {
+              const isActive = k.name === activeKashrut;
+              const color = k.color || '#6366f1';
+              return (
+                <button key={k.id} onClick={() => setActiveKashrut(k.name)}
+                  style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  {k.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* טבלה */}
+          {activeProducts.length === 0 ? (
+            <div className="text-center text-gray-400 py-14 border-2 border-dashed border-gray-200 rounded-2xl">
+              <div className="text-4xl mb-2">🏷️</div>
+              <div className="font-bold">אין מוצרים בכשרות זו</div>
+              <div className="text-sm mt-1">לחצי על "הוסף מוצר" כדי להוסיף מוצר עם סימון מדבקה</div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl overflow-hidden border-2 border-indigo-200">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-sm min-w-max border-collapse">
+                  {renderTableHeader()}
+                  <tbody className="divide-y divide-gray-100">
+                    {activeProducts.map((p, idx) => renderRow(p, idx))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400 text-center">* הקלד כמות קרטונים וּלחץ Enter לביצוע</p>
+
+          {/* מודאל הוסף מוצר */}
+          {addModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-bold text-lg">הוסף מוצר — מ.ל / מ.ל.ה</h3>
+                  <button onClick={() => setAddModal(false)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-100">✕</button>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5">מוצר</label>
+                    <select value={selProduct} onChange={e => setSelProduct(e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:border-indigo-400 outline-none">
+                      {frozenProductsList.map(p => (
+                        <option key={p.name + p.kashrut} value={p.name}>{p.name}{p.kashrut ? ` (${p.kashrut})` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1.5">
+                      סימון מדבקה <span className="text-red-500">* חובה</span>
+                    </label>
+                    <div className="flex gap-3">
+                      {['מ.ל', 'מ.ל.ה'].map(m => (
+                        <button key={m} onClick={() => { setSelMark(m); setMarkError(false); }}
+                          className={`flex-1 py-3 rounded-xl font-extrabold text-lg border-2 transition-all ${selMark === m ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                    {markError && <p className="text-red-500 text-xs font-bold mt-1">יש לבחור סימון מדבקה</p>}
+                  </div>
+                </div>
+                <div className="p-4 border-t border-gray-100 flex gap-3">
+                  <button onClick={() => setAddModal(false)} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                  <button onClick={saveProduct} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">הוסף</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
     const InventoryView = ({ stock, setStock, frozenStock, setFrozenStock, kashrutList, frozenProductsList, appUser }) => {
       const [activeTab, setActiveTab] = useState('frozen');
       const [exportModal, setExportModal] = useState(false);
@@ -1016,6 +1207,7 @@
       const [resetModal, setResetModal] = useState(false);
       const [resetPassword, setResetPassword] = useState('');
       const [resetError, setResetError] = useState('');
+      const [resetScope, setResetScope] = useState('frozen');
       const [exportMode, setExportMode] = useState('current');
       const [bsBalance, setBsBalance] = useState({});
       const [logEntries, setLogEntries] = useState([]);
@@ -1036,11 +1228,13 @@
         ]).then(([shRes, wdRes]) => {
           const map = {};
           (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
-            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            const dt = pr.dateType || '';
+            const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
           })));
           (wdRes.data || []).forEach(w => w.products.forEach(pr => {
-            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            const dt = pr.dateType || '';
+            const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) - Number(pr.cartons || 0);
           }));
           Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
@@ -1074,15 +1268,37 @@
       const handleReset = async () => {
         if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
         const today = new Date().toISOString().split('T')[0];
-        setFrozenStock({});
-        setLogEntries(prev => prev.filter(e => e.date !== today));
+        setFrozenStock(prev => {
+          const next = { ...prev };
+          Object.keys(next).forEach(k => {
+            const isSticker = k.startsWith('STICKER|');
+            if (resetScope === 'both') { delete next[k]; }
+            else if (resetScope === 'frozen' && !isSticker) { delete next[k]; }
+            else if (resetScope === 'sticker' && isSticker) { delete next[k]; }
+          });
+          return next;
+        });
+        if (resetScope !== 'sticker') {
+          setLogEntries(prev => prev.filter(e => e.date !== today));
+        }
         await Promise.all([
-          db.from('frozen_stock').upsert({ id: 'main', data: {}, updated_at: new Date().toISOString() }),
-          db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today)
+          db.from('frozen_stock').select('*').eq('id', 'main').single().then(({ data }) => {
+            const cur = data?.data || {};
+            const next = { ...cur };
+            Object.keys(next).forEach(k => {
+              const isSticker = k.startsWith('STICKER|');
+              if (resetScope === 'both') { delete next[k]; }
+              else if (resetScope === 'frozen' && !isSticker) { delete next[k]; }
+              else if (resetScope === 'sticker' && isSticker) { delete next[k]; }
+            });
+            return db.from('frozen_stock').upsert({ id: 'main', data: next, updated_at: new Date().toISOString() });
+          }),
+          ...(resetScope !== 'sticker' ? [db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today)] : [])
         ]);
         setResetModal(false);
         setResetPassword('');
         setResetError('');
+        setResetScope('frozen');
       };
 
       const seenFresh = new Set();
@@ -1308,11 +1524,26 @@ ${htmlRows}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
               <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-sm">
                 <div className="p-4 bg-red-50 border-b border-red-100 flex items-center justify-between rounded-t-2xl">
-                  <h3 className="font-bold text-lg text-red-800">איפוס מלאי קפוא</h3>
+                  <h3 className="font-bold text-lg text-red-800">איפוס מלאי</h3>
                   <button onClick={() => setResetModal(false)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
                 </div>
                 <div className="p-5 space-y-4">
-                  <p className="text-sm text-gray-600">פעולה זו תאפס את כל המלאי הקפוא ל-0. <span className="font-bold text-red-600">לא ניתן לבטל.</span></p>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-2">מה לאפס?</label>
+                    <div className="flex flex-col gap-2">
+                      {[
+                        ['frozen',  '🧊 מלאי קפוא בלבד'],
+                        ['sticker', '🏷️ מלאי מ.ל / מ.ל.ה בלבד'],
+                        ['both',    '🗑️ הכל (קפוא + מ.ל / מ.ל.ה)'],
+                      ].map(([val, lbl]) => (
+                        <label key={val} className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all ${resetScope === val ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                          <input type="radio" className="accent-red-500" checked={resetScope === val} onChange={() => setResetScope(val)} />
+                          <span className="font-bold text-sm text-gray-700">{lbl}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">פעולה זו לא ניתנת לביטול. <span className="font-bold text-red-600">הנתונים יימחקו לצמיתות.</span></p>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">סיסמא לאישור:</label>
                     <input
@@ -1328,8 +1559,8 @@ ${htmlRows}
                   </div>
                 </div>
                 <div className="p-4 border-t border-gray-100 flex gap-3">
-                  <button onClick={() => setResetModal(false)} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
-                  <button onClick={handleReset} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm">אפס מלאי</button>
+                  <button onClick={() => { setResetModal(false); setResetPassword(''); setResetError(''); setResetScope('frozen'); }} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                  <button onClick={handleReset} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm">אפס</button>
                 </div>
               </div>
             </div>
@@ -1341,6 +1572,11 @@ ${htmlRows}
               onClick={() => setActiveTab('frozen')}
               className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'frozen' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-50'}`}>
               🧊 מלאי קפוא ({new Set(frozenItems.filter(p => p.storageTypes?.includes('frozen')).map(p => p.name)).size} פריטים)
+            </button>
+            <button
+              onClick={() => setActiveTab('sticker')}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'sticker' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'}`}>
+              🏷️ מ.ל / מ.ל.ה
             </button>
           </div>
 
@@ -1414,6 +1650,9 @@ ${htmlRows}
 
           {activeTab === 'frozen' && (
             <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} showEntry={showEntry} showWithdrawal={showWithdrawal} />
+          )}
+          {activeTab === 'sticker' && (
+            <StickerStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} />
           )}
 
           {activeTab === 'log' && (
