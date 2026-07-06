@@ -782,9 +782,15 @@
     // --- Frozen Stock Panel ---
     const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
-      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
+      const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries([...PRODUCT_CATEGORIES.map(c => [c, true]), ['STICKER', false]]));
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
+      const [stickerEntry, setStickerEntry]       = useState({});
+      const [stickerWithdraw, setStickerWithdraw] = useState({});
+      const [stickerModal, setStickerModal]       = useState(false);
+      const [stickerProd, setStickerProd]         = useState('');
+      const [stickerMark, setStickerMark]         = useState('');
+      const [stickerMarkErr, setStickerMarkErr]   = useState(false);
 
       const getETrays = (key) => entryTrays[key] || 0;
       const getWTrays = (key) => withdrawTrays[key] || 0;
@@ -976,6 +982,155 @@
           <p className="text-xs text-gray-400 text-center">* קרטון = {TRAYS_PER_CARTON} מגשים | הקלד וּלחץ Enter לביצוע</p>
 
           {/* סקשן דגים */}
+          {/* סקשן מ.ל / מ.ל.ה — עבור הכשרות הפעילה */}
+          {(() => {
+            const stickerKeys = new Set([
+              ...Object.keys(frozenStock).filter(k => k.startsWith('STICKER|')),
+              ...Object.keys(bsBalance).filter(k => k.startsWith('STICKER|')),
+            ]);
+            const stickerProds = [...stickerKeys]
+              .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut: kashrut || '', mark, key: k }; })
+              .filter(p => p.kashrut === activeKashrut);
+
+            const openStickerModal = () => {
+              setStickerProd(frozenProductsList.filter(p => (p.kashrut||'') === activeKashrut)[0]?.name || frozenProductsList[0]?.name || '');
+              setStickerMark(''); setStickerMarkErr(false); setStickerModal(true);
+            };
+            const saveStickerProd = () => {
+              if (!stickerMark) { setStickerMarkErr(true); return; }
+              const prod = frozenProductsList.find(p => p.name === stickerProd);
+              if (!prod) return;
+              const key = `STICKER|${prod.name}|${prod.kashrut || ''}|${stickerMark}`;
+              if (!Object.prototype.hasOwnProperty.call(frozenStock, key)) {
+                setFrozenStock(prev => ({ ...prev, [key]: 0 }));
+              }
+              setStickerModal(false);
+            };
+            const applyStickerEntry = (key) => {
+              const delta = stickerEntry[key] || 0;
+              if (!delta) return;
+              setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
+              setStickerEntry(prev => ({ ...prev, [key]: 0 }));
+              const [, name, kashrut, mark] = key.split('|');
+              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() } }]).then();
+            };
+            const applyStickerWithdraw = (key) => {
+              const delta = stickerWithdraw[key] || 0;
+              if (!delta) return;
+              setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
+              setStickerWithdraw(prev => ({ ...prev, [key]: 0 }));
+              const [, name, kashrut, mark] = key.split('|');
+              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() } }]).then();
+            };
+
+            return (
+              <div className="bg-white rounded-xl shadow-sm border-2 border-indigo-400 overflow-hidden mt-2">
+                <div onClick={() => setCollapsedCats(prev => ({ ...prev, 'STICKER': !prev['STICKER'] }))}
+                  className="py-2 px-4 bg-indigo-50 border-b border-indigo-200 flex items-center gap-2 cursor-pointer select-none">
+                  <span className="text-indigo-700 font-extrabold text-sm">🏷️ מ.ל / מ.ל.ה</span>
+                  <button onClick={e => { e.stopPropagation(); openStickerModal(); }}
+                    className="text-xs font-bold px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shrink-0">
+                    + הוסף מוצר
+                  </button>
+                  <span className="mr-auto text-xs font-bold px-2 py-0.5 rounded-full border bg-indigo-100 text-indigo-600 border-indigo-200">{stickerProds.length} פריטים</span>
+                  <Icons.ChevronDown className={`w-4 h-4 text-indigo-400 transition-transform duration-200 ${collapsedCats['STICKER'] ? '-rotate-90' : ''}`} />
+                </div>
+                {!collapsedCats['STICKER'] && (
+                  stickerProds.length === 0 ? (
+                    <div className="text-center text-gray-400 py-6 text-sm">לחצי "+ הוסף מוצר" כדי להתחיל</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-right text-sm min-w-max border-collapse">
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid #6b7280' }}>
+                            <th className="p-2.5 font-bold text-right bg-gray-50">מוצר</th>
+                            <th className="p-2.5 font-bold text-center bg-gray-50 text-indigo-700">סימון</th>
+                            <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e' }}>כניסה (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">כולל אחסנה (קרטונים)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {stickerProds.map((p, idx) => {
+                            const cartons = frozenStock[p.key] || 0;
+                            const eC = stickerEntry[p.key] || 0;
+                            const wC = stickerWithdraw[p.key] || 0;
+                            return (
+                              <tr key={p.key} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f5f3ff' }}>
+                                <td className="p-2.5 font-bold text-gray-900 text-sm">{p.name}</td>
+                                <td className="p-2.5 text-center">
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded border-2 border-indigo-300 bg-indigo-50 text-indigo-700">{p.mark}</span>
+                                </td>
+                                <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
+                                  <input type="number" min="0" value={eC||''} placeholder="0"
+                                    onChange={e => setStickerEntry(prev => ({ ...prev, [p.key]: Math.max(0, parseInt(e.target.value)||0) }))}
+                                    onKeyDown={e => e.key === 'Enter' && applyStickerEntry(p.key)}
+                                    className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
+                                </td>
+                                <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
+                                  <input type="number" min="0" value={wC||''} placeholder="0"
+                                    onChange={e => setStickerWithdraw(prev => ({ ...prev, [p.key]: Math.max(0, parseInt(e.target.value)||0) }))}
+                                    onKeyDown={e => e.key === 'Enter' && applyStickerWithdraw(p.key)}
+                                    className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
+                                </td>
+                                <td className="p-2.5 text-center bg-blue-50/60 border-r-2 border-blue-400">
+                                  <span className="font-black text-blue-700 text-lg">{cartons}</span>
+                                </td>
+                                <td className="p-2.5 text-center bg-indigo-50/40">
+                                  <span className="font-black text-indigo-700 text-lg">{cartons + (bsBalance[p.key] || 0)}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                )}
+
+                {/* מודאל הוסף מוצר */}
+                {stickerModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200">
+                      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                        <h3 className="font-bold text-lg">הוסף מוצר — מ.ל / מ.ל.ה</h3>
+                        <button onClick={() => setStickerModal(false)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-100">✕</button>
+                      </div>
+                      <div className="p-5 space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1.5">מוצר</label>
+                          <select value={stickerProd} onChange={e => setStickerProd(e.target.value)}
+                            className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:border-indigo-400 outline-none">
+                            {frozenProductsList.map(p => (
+                              <option key={p.name + p.kashrut} value={p.name}>{p.name}{p.kashrut ? ` (${p.kashrut})` : ''}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1.5">סימון מדבקה <span className="text-red-500">* חובה</span></label>
+                          <div className="flex gap-3">
+                            {['מ.ל', 'מ.ל.ה'].map(m => (
+                              <button key={m} onClick={() => { setStickerMark(m); setStickerMarkErr(false); }}
+                                className={`flex-1 py-3 rounded-xl font-extrabold text-lg border-2 transition-all ${stickerMark === m ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}>
+                                {m}
+                              </button>
+                            ))}
+                          </div>
+                          {stickerMarkErr && <p className="text-red-500 text-xs font-bold mt-1">יש לבחור סימון מדבקה</p>}
+                        </div>
+                      </div>
+                      <div className="p-4 border-t border-gray-100 flex gap-3">
+                        <button onClick={() => setStickerModal(false)} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                        <button onClick={saveStickerProd} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">הוסף</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {fishProducts.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border-2 border-blue-400 overflow-hidden mt-2">
               <div onClick={() => setCollapsedCats(prev => ({ ...prev, 'דגים': !prev['דגים'] }))}
@@ -1573,11 +1728,7 @@ ${htmlRows}
               className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'frozen' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-50'}`}>
               🧊 מלאי קפוא ({new Set(frozenItems.filter(p => p.storageTypes?.includes('frozen')).map(p => p.name)).size} פריטים)
             </button>
-            <button
-              onClick={() => setActiveTab('sticker')}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${activeTab === 'sticker' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'}`}>
-              🏷️ מ.ל / מ.ל.ה
-            </button>
+            {/* טאב מ.ל/מ.ל.ה מושבת בגרסה משולבת — נמצא בתוך מלאי קפוא */}
           </div>
 
           {/* מודאל ייצוא */}
