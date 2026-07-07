@@ -780,7 +780,7 @@
 
     // ===[INVENTORY-FROZEN]===
     // --- Frozen Stock Panel ---
-    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true }) => {
+    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true, appUser }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries([...PRODUCT_CATEGORIES.map(c => [c, true]), ['STICKER', true]]));
       const [entryTrays, setEntryTrays] = useState({});
@@ -803,6 +803,7 @@
         const [product, kashrut] = key.split('|');
         const entry = {
           action,
+          user: appUser?.username || '—',
           product,
           kashrut,
           trays,
@@ -1022,7 +1023,7 @@
               setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
               setStickerEntry(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
-              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() } }]).then();
+              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
             };
             const applyStickerWithdraw = (key) => {
               const delta = stickerWithdraw[key] || 0;
@@ -1030,7 +1031,7 @@
               setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
               setStickerWithdraw(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
-              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() } }]).then();
+              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
             };
 
             return (
@@ -1204,7 +1205,7 @@
       );
     };
 
-    const StickerStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {} }) => {
+    const StickerStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, appUser }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [addModal, setAddModal]           = useState(false);
       const [selProduct, setSelProduct]       = useState('');
@@ -1224,7 +1225,7 @@
 
       const logAction = (action, key, cartons) => {
         const [, name, kashrut, mark] = key.split('|');
-        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() } }]).then();
+        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
       };
 
       const applyEntry = (key) => {
@@ -1453,13 +1454,13 @@
       const filteredLog = logEntries.filter(e => e.date === logDate);
 
       const downloadLogExcel = () => {
-        const rows = [['תאריך', 'שעה', 'פעולה', 'מוצר', 'כשרות', 'קרטונים', 'מגשים']];
+        const rows = [['תאריך', 'שעה', 'פעולה', 'מוצר', 'כשרות', 'קרטונים', 'מגשים', 'משתמש']];
         filteredLog.forEach(e => {
           const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
-          rows.push([e.date, time, e.action, e.product, e.kashrut || '', e.cartons || 0, e.trays || 0]);
+          rows.push([e.date, time, e.action, e.product, e.kashrut || '', e.cartons || 0, e.trays || 0, e.user || '—']);
         });
         const ws = window.XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:22},{wch:10},{wch:10},{wch:10}];
+        ws['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:22},{wch:10},{wch:10},{wch:10},{wch:14}];
         const wb = window.XLSX.utils.book_new();
         window.XLSX.utils.book_append_sheet(wb, ws, 'יומן פעולות');
         wb.Sheets['יומן פעולות']['!sheetViews'] = [{ rightToLeft: true }];
@@ -2084,10 +2085,10 @@ ${htmlRows}
           )}
 
           {activeTab === 'frozen' && (
-            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} showEntry={showEntry} showWithdrawal={showWithdrawal} />
+            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} showEntry={showEntry} showWithdrawal={showWithdrawal} appUser={appUser} />
           )}
           {activeTab === 'sticker' && (
-            <StickerStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} />
+            <StickerStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} appUser={appUser} />
           )}
 
           {activeTab === 'log' && (
@@ -2120,6 +2121,7 @@ ${htmlRows}
                         <th className="p-3 font-bold">כשרות</th>
                         <th className="p-3 font-bold text-center">קרטונים</th>
                         <th className="p-3 font-bold text-center">מגשים</th>
+                        <th className="p-3 font-bold text-center">משתמש</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -2138,6 +2140,7 @@ ${htmlRows}
                             <td className="p-3 text-gray-500 text-xs">{e.kashrut || '—'}</td>
                             <td className="p-3 text-center font-bold">{e.cartons || 0}</td>
                             <td className="p-3 text-center text-gray-500">{e.trays || 0}</td>
+                            <td className="p-3 text-center text-xs text-indigo-600 font-semibold">{e.user || '—'}</td>
                           </tr>
                         );
                       })}
