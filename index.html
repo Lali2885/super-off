@@ -844,7 +844,7 @@
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={simple ? 1 : 2}>כניסה למלאי</th>}
             {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={simple ? 1 : 2}>משיכה ממלאי</th>}
             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }} colSpan={simple ? 1 : 2}>מצב נתון</th>
-            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderBottom: '1px solid #c7d2fe' }} colSpan={1}>כולל אחסנה</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
           </tr>
           <tr>
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
@@ -920,7 +920,7 @@
             )}
             {!simple && (
               <td className="p-2.5 text-center bg-indigo-50/40">
-                <span className="font-black text-indigo-700 text-lg">{cartons + (bsBalance[`${p.name}|${kashrut}`] || 0)}</span>
+                <span className="font-black text-indigo-700 text-lg">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
               </td>
             )}
           </tr>
@@ -1059,7 +1059,7 @@
                             <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e' }}>כניסה (קרטונים)</th>
                             <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
                             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון (קרטונים)</th>
-                            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">כולל אחסנה (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">קירור לירוי (קרטונים)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -1089,7 +1089,7 @@
                                   <span className="font-black text-blue-700 text-lg">{cartons}</span>
                                 </td>
                                 <td className="p-2.5 text-center bg-indigo-50/40">
-                                  <span className="font-black text-indigo-700 text-lg">{cartons + (bsBalance[p.key] || 0)}</span>
+                                  <span className="font-black text-indigo-700 text-lg">{bsBalance[p.key] || 0}</span>
                                 </td>
                               </tr>
                             );
@@ -1267,7 +1267,7 @@
             <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e' }}>כניסה (קרטונים)</th>
             <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון</th>
-            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">כולל אחסנה</th>
+            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">קירור לירוי</th>
           </tr>
         </thead>
       );
@@ -1299,7 +1299,7 @@
               <span className="font-black text-blue-700 text-lg">{cartons}</span>
             </td>
             <td className="p-2.5 text-center bg-indigo-50/40">
-              <span className="font-black text-indigo-700 text-lg">{cartons + (bsBalance[key] || 0)}</span>
+              <span className="font-black text-indigo-700 text-lg">{bsBalance[key] || 0}</span>
             </td>
           </tr>
         );
@@ -1529,7 +1529,7 @@
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
         const numCols = withStorage ? 5 : 4;
         const colHeaders = withStorage
-          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'כולל אחסנה']
+          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור לירוי']
           : ['מוצר', 'מקט', 'מגשים', 'קרטונים'];
 
         const grouped = {};
@@ -1550,7 +1550,7 @@
 
         let htmlRows = '';
         htmlRows += `<tr><td colspan="${cs}" style="font-size:14pt;font-weight:bold;background:#1e293b;color:#fff;padding:8px;">${esc(`דוח מלאי סופר עוף — נכון לתאריך ${date}`)}</td></tr>`;
-        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
+        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'קירור לירוי' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
         htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
 
         const sortBySku = (a, b) => {
@@ -1573,7 +1573,7 @@
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
             const cells = [p.name, p.sku || '', t, c];
-            if (withStorage) cells.push(c + (bsBalance[key] || 0));
+            if (withStorage) cells.push(bsBalance[key] || 0);
             const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
               `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
@@ -1583,7 +1583,7 @@
           const totalT = products.reduce((s, p) => s + (frozenStock[`${p.name}|${p.kashrut}`] || 0), 0);
           const totalC = products.reduce((s, p) => s + Math.floor((frozenStock[`${p.name}|${p.kashrut}`] || 0) / TRAYS_PER_CARTON), 0);
           const totCells = ['סה"כ', '', totalT, totalC];
-          if (withStorage) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + Math.floor((frozenStock[key]||0)/TRAYS_PER_CARTON) + (bsBalance[key]||0); }, 0));
+          if (withStorage) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (bsBalance[key]||0); }, 0));
           htmlRows += `<tr style="background:#f1f5f9;font-weight:bold;">${totCells.map((v, ci) =>
             `<td style="padding:5px 8px;border-top:2px solid #94a3b8;border:1px solid #cbd5e1;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
           ).join('')}</tr>`;
@@ -1598,12 +1598,12 @@
           .filter(s => selectedNames.has(s.kashrut));
         if (stickerExcelRows.length) {
           htmlRows += `<tr><td colspan="${cs}" style="font-size:13pt;font-weight:bold;background:#4338ca;color:#fff;padding:6px 8px;">${esc('🏷️ מ.ל./מ.ל.ה')}</td></tr>`;
-          const stickerColH = withStorage ? ['מוצר', 'סימון', 'קרטונים', 'כולל אחסנה'] : ['מוצר', 'סימון', 'קרטונים'];
+          const stickerColH = withStorage ? ['מוצר', 'סימון', 'קרטונים', 'קירור לירוי'] : ['מוצר', 'סימון', 'קרטונים'];
           htmlRows += `<tr>${stickerColH.map(h => `<th style="background:#4f46e5;color:#fff;font-weight:bold;padding:5px 8px;text-align:center;border:1px solid #3730a3;">${esc(h)}</th>`).join('')}</tr>`;
           stickerExcelRows.forEach((s, i) => {
             const cartons = frozenStock[s.key] || 0;
             const cells = [s.name, s.mark, cartons];
-            if (withStorage) cells.push(cartons + (bsBalance[s.key] || 0));
+            if (withStorage) cells.push(bsBalance[s.key] || 0);
             const bg = i % 2 === 0 ? '#ffffff' : '#f5f3ff';
             htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
               `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
@@ -1612,7 +1612,7 @@
           htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
         }
 
-        const sheetName = withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון';
+        const sheetName = withStorage ? 'מלאי קירור לירוי' : 'מצב נתון';
         const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
 <!--[if gte mso 9]><xml>
@@ -1641,7 +1641,7 @@ ${htmlRows}
         const { jsPDF } = window.jspdf;
         const withStorage = exportMode === 'withStorage';
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
-        const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'כולל אחסנה'] : ['מגשים', 'קרטונים'];
+        const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'קירור לירוי'] : ['מגשים', 'קרטונים'];
 
         const grouped = {};
         frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
@@ -1675,7 +1675,7 @@ ${htmlRows}
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
             const cells = withStorage
-              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${c + (bsBalance[key] || 0)}</td>`
+              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[key] || 0}</td>`
               : `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td>`;
             return `<tr style="background:${i%2===0?'#ffffff':'#f8fafc'};border-bottom:1px solid #e5e7eb;">
               <td style="padding:6px 10px;font-weight:bold;">${p.name}</td>
@@ -1689,7 +1689,7 @@ ${htmlRows}
               <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #1e293b;">
                 <div style="font-size:13px;color:#64748b;font-weight:normal;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
                 <div style="font-size:22px;font-weight:bold;">${emoji} ${cat}</div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
               </div>
               <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
@@ -1705,7 +1705,7 @@ ${htmlRows}
                     <td style="padding:6px 10px;" colspan="2">סה"כ</td>
                     <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+(frozenStock[`${p.name}|${p.kashrut}`]||0),0)}</td>
                     <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+Math.floor((frozenStock[`${p.name}|${p.kashrut}`]||0)/TRAYS_PER_CARTON),0)}</td>
-                    ${withStorage?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+Math.floor((frozenStock[key]||0)/TRAYS_PER_CARTON)+(bsBalance[key]||0);},0)}</td>`:''}
+                    ${withStorage?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(bsBalance[key]||0);},0)}</td>`:''}
                   </tr>
                 </tfoot>
               </table>
@@ -1735,7 +1735,7 @@ ${htmlRows}
           const stickerRowsHtml = stickerPdfRows.map((s, i) => {
             const cartons = frozenStock[s.key] || 0;
             const cells = withStorage
-              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${cartons + (bsBalance[s.key] || 0)}</td>`
+              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[s.key] || 0}</td>`
               : `<td style="padding:6px 10px;text-align:center;font-weight:bold;">${cartons}</td>`;
             return `<tr style="background:${i%2===0?'#ffffff':'#f5f3ff'};border-bottom:1px solid #e5e7eb;">
               <td style="padding:6px 10px;font-weight:bold;">${s.name}</td>
@@ -1743,12 +1743,12 @@ ${htmlRows}
               ${cells}
             </tr>`;
           }).join('');
-          const stickerColH = withStorage ? ['קרטונים', 'כולל אחסנה'] : ['קרטונים'];
+          const stickerColH = withStorage ? ['קרטונים', 'קירור לירוי'] : ['קרטונים'];
           const stickerHtml = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:560px;">
             <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #4338ca;">
               <div style="font-size:13px;color:#64748b;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
               <div style="font-size:22px;font-weight:bold;">🏷️ מ.ל./מ.ל.ה</div>
-              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
             </div>
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
               <thead><tr style="background:#4338ca;color:#ffffff;">
@@ -2005,7 +2005,7 @@ ${htmlRows}
                   <div>
                     <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">תצוגת ייצוא</div>
                     <div className="flex flex-wrap gap-2">
-                      {[['current','🧊 מצב נתון'],['withStorage','🏭 כולל אחסנה'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
+                      {[['current','🧊 מצב נתון'],['withStorage','🏭 קירור לירוי'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
                         <label key={val} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportMode === val ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
                           <input type="radio" className="hidden" checked={exportMode === val} onChange={() => setExportMode(val)} />
                           {label}
@@ -6398,7 +6398,7 @@ setTimeout(function(){
                                           <tr className="bg-gray-100 text-gray-500">
                                             <th className="p-2 text-right font-bold">מוצר</th>
                                             <th className="p-2 text-center font-bold">🧊 מצב נתון</th>
-                                            <th className="p-2 text-center font-bold">🏭 כולל אחסנה</th>
+                                            <th className="p-2 text-center font-bold">🏭 קירור לירוי</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 bg-white">
