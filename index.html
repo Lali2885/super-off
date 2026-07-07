@@ -1411,6 +1411,11 @@
       const [resetError, setResetError] = useState('');
       const [resetScope, setResetScope] = useState('frozen');
       const [exportMode, setExportMode] = useState('current');
+      const [countSheetCats, setCountSheetCats] = useState(() => {
+        const obj = {};
+        [...PRODUCT_CATEGORIES, 'דגים', 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = true; });
+        return obj;
+      });
       const [bsBalance, setBsBalance] = useState({});
       const [logEntries, setLogEntries] = useState([]);
       const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
@@ -1771,143 +1776,144 @@ ${htmlRows}
 
       const doCountSheetPdf = async (date) => {
         const { jsPDF } = window.jspdf;
-        const selectedNames = new Set(selectedKashrut.map(k => k.name));
+        const kashrutNames = selectedKashrut.map(k => k.name);
+        const numK = kashrutNames.length;
+
         const sortBySku = (a, b) => {
           const sa = a.sku || '', sb = b.sku || '';
           if (!sa && !sb) return 0; if (!sa) return 1; if (!sb) return -1;
           return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
         };
 
-        // Build grouped data
+        // Build unique products per category (deduplicated by name)
         const grouped = {};
+        const seen = {};
         frozenProductsList
-          .filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut))
+          .filter(p => p.storageTypes?.includes('frozen') && kashrutNames.includes(p.kashrut))
           .forEach(p => {
             const cat = p.category || getProductCategory(p.name);
+            if (!countSheetCats[cat]) return;
             if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(p);
+            if (!seen[`${cat}|${p.name}`]) { seen[`${cat}|${p.name}`] = true; grouped[cat].push({ name: p.name, sku: p.sku }); }
           });
-        // Always include fish (kashrut === 'כללי')
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי').forEach(p => {
-          if (!grouped['דגים']) grouped['דגים'] = [];
-          grouped['דגים'].push(p);
-        });
-        const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
 
-        // Build flat row definitions
+        // Fish (כללי) — single column
+        if (countSheetCats['דגים']) {
+          frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי').forEach(p => {
+            if (!grouped['דגים']) grouped['דגים'] = [];
+            if (!seen[`דגים|${p.name}`]) { seen[`דגים|${p.name}`] = true; grouped['דגים'].push({ name: p.name, sku: p.sku, isFish: true }); }
+          });
+        }
+
+        const allCats = [...PRODUCT_CATEGORIES, 'דגים'];
+        const cats = allCats.filter(c => grouped[c]?.length);
+
+        // Stickers — group by name+mark (one row per unique product+mark)
+        const stickerMap = {};
+        if (countSheetCats['מ.ל./מ.ל.ה']) {
+          Object.keys(frozenStock).filter(k => k.startsWith('STICKER|')).forEach(k => {
+            const [, name, kashrut, mark] = k.split('|');
+            if (!kashrutNames.includes(kashrut)) return;
+            const key = `${name}|${mark}`;
+            if (!stickerMap[key]) stickerMap[key] = { name, mark };
+          });
+        }
+        const stickerList = Object.values(stickerMap);
+
+        // Build rowDefs
         const rowDefs = [];
         for (const cat of cats) {
           rowDefs.push({ type: 'cat', cat });
-          for (const p of [...grouped[cat]].sort(sortBySku))
-            rowDefs.push({ type: 'prod', p });
+          [...grouped[cat]].sort(sortBySku).forEach(p => rowDefs.push({ type: 'prod', name: p.name, isFish: !!p.isFish }));
         }
-        // Add מ.ל./מ.ל.ה section
-        const stickerRowsCount = Object.keys(frozenStock)
-          .filter(k => k.startsWith('STICKER|'))
-          .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark }; })
-          .filter(s => selectedNames.has(s.kashrut));
-        if (stickerRowsCount.length) {
-          rowDefs.push({ type: 'cat', cat: '🏷️ מ.ל./מ.ל.ה' });
-          stickerRowsCount.forEach(s => rowDefs.push({ type: 'sticker', s }));
+        if (stickerList.length) {
+          rowDefs.push({ type: 'cat', cat: 'מ.ל./מ.ל.ה' });
+          stickerList.forEach(s => rowDefs.push({ type: 'sticker', name: s.name, mark: s.mark }));
         }
 
-        const theadHtml = `<thead><tr style="background:#1e293b;color:#ffffff;">
-          <th style="padding:7px 10px;text-align:right;width:38%;">מוצר</th>
-          <th style="padding:7px 10px;text-align:center;width:12%;">מקט</th>
-          <th style="padding:7px 10px;text-align:center;width:13%;">כשרות</th>
-          <th style="padding:7px 10px;text-align:center;width:19%;">קרטונים</th>
-          <th style="padding:7px 10px;text-align:center;width:18%;">הערות</th>
+        const totalCols = 1 + numK + 1; // מוצר + כשרויות + הערות
+        const W = 740;
+
+        // Column widths
+        const kColW = numK === 1 ? '22%' : numK === 2 ? '17%' : '13%';
+        const notesW = '15%';
+        const prodW = `calc(100% - ${numK * (numK === 2 ? 17 : numK === 1 ? 22 : 13)}% - ${notesW})`;
+
+        const theadHtml = `<thead><tr style="background:#1e293b;color:#fff;font-size:10px;">
+          <th style="padding:5px 8px;text-align:right;width:${prodW};">מוצר</th>
+          ${kashrutNames.map(k => `<th style="padding:5px 4px;text-align:center;width:${kColW};">${k}</th>`).join('')}
+          <th style="padding:5px 4px;text-align:center;width:${notesW};">הערות</th>
         </tr></thead>`;
 
-        const rowToHtml = (r, prodIdx) => {
+        const rowToHtml = (r, idx) => {
           if (r.type === 'cat') {
-            const emoji = CAT_EMOJI[r.cat] || '';
-            return `<tr style="background:#e2e8f0;"><td colspan="5" style="padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #cbd5e1;">${emoji} ${r.cat}</td></tr>`;
+            const emoji = CAT_EMOJI[r.cat] || '🏷️';
+            return `<tr style="background:#d1d5db;"><td colspan="${totalCols}" style="padding:4px 8px;font-weight:bold;font-size:11px;border-bottom:1px solid #9ca3af;">${emoji} ${r.cat}</td></tr>`;
           }
-          if (r.type === 'sticker') {
-            const bg = prodIdx % 2 === 0 ? '#ffffff' : '#f5f3ff';
-            return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">
-              <td style="padding:8px 10px;font-weight:bold;">${r.s.name}</td>
-              <td style="padding:8px 10px;text-align:center;color:#64748b;font-size:11px;"></td>
-              <td style="padding:8px 10px;text-align:center;font-size:11px;color:#4f46e5;font-weight:bold;">${r.s.mark}</td>
-              <td style="padding:8px 10px;border:1px solid #cbd5e1;background:#fffbeb;"></td>
-              <td style="padding:8px 10px;border:1px solid #e2e8f0;background:#f8fafc;"></td>
-            </tr>`;
-          }
-          const bg = prodIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
+          const bg = idx % 2 === 0 ? '#fff' : '#f9fafb';
+          const fillCols = r.isFish
+            ? `<td colspan="${numK}" style="padding:4px;border:1px solid #aaa;background:#fefce8;height:20px;"></td>`
+            : kashrutNames.map(() => `<td style="padding:4px;border:1px solid #aaa;background:#fefce8;height:20px;"></td>`).join('');
+          const label = r.type === 'sticker'
+            ? `${r.name} <span style="color:#6366f1;font-size:9px;">(${r.mark})</span>`
+            : r.name;
           return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">
-            <td style="padding:8px 10px;font-weight:bold;">${r.p.name}</td>
-            <td style="padding:8px 10px;text-align:center;color:#64748b;font-size:11px;">${r.p.sku || ''}</td>
-            <td style="padding:8px 10px;text-align:center;font-size:11px;color:#7c3aed;font-weight:bold;">${r.p.kashrut}</td>
-            <td style="padding:8px 10px;border:1px solid #cbd5e1;background:#fffbeb;"></td>
-            <td style="padding:8px 10px;border:1px solid #e2e8f0;background:#f8fafc;"></td>
+            <td style="padding:4px 8px;font-size:11px;">${label}</td>
+            ${fillCols}
+            <td style="padding:4px;border:1px solid #ddd;height:20px;"></td>
           </tr>`;
         };
 
-        // Measure actual row heights from DOM
+        // Measure heights
         const measureEl = document.createElement('div');
-        measureEl.style.cssText = 'position:fixed;top:-99999px;right:0;visibility:hidden;width:616px;font-family:Arial,sans-serif;';
+        measureEl.style.cssText = `position:fixed;top:-99999px;right:0;visibility:hidden;width:${W}px;font-family:Arial,sans-serif;`;
         let pi = 0;
-        measureEl.innerHTML = `<table style="font-size:12px;border-collapse:collapse;width:100%;"><tbody>${rowDefs.map(r => rowToHtml(r, r.type === 'prod' ? pi++ : 0)).join('')}</tbody></table>`;
+        measureEl.innerHTML = `<table style="font-size:11px;border-collapse:collapse;width:100%;"><tbody>${rowDefs.map(r => rowToHtml(r, r.type !== 'cat' ? pi++ : -1)).join('')}</tbody></table>`;
         document.body.appendChild(measureEl);
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 60));
         const measuredHeights = Array.from(measureEl.querySelectorAll('tr')).map(tr => tr.offsetHeight);
         document.body.removeChild(measureEl);
 
-        // A4 in CSS px: container=616px fills page width 210mm → 1px = 210/616 mm → pageH = 297*616/210 ≈ 871px
-        const pageHeightPx = Math.floor(297 * 616 / 210);
-        const FIRST_HEADER_PX = 95;  // title block
-        const CONT_HEADER_PX  = 45;  // continuation mini-header
-        const THEAD_PX        = 36;  // table header row
-        const PADDING_PX      = 40;  // top+bottom padding
+        // A4 page splitting: W px wide, height = 297 * W / 210
+        const pageH = Math.floor(297 * W / 210);
+        const FIRST_H = 60; const CONT_H = 32; const TH_H = 26; const PAD = 36;
 
-        // Split row definitions into pages at row boundaries
         const pages = [];
         let i = 0, isFirst = true;
         while (i < rowDefs.length) {
-          const headerPx = isFirst ? FIRST_HEADER_PX : CONT_HEADER_PX;
-          const available = pageHeightPx - PADDING_PX - headerPx - THEAD_PX;
+          const avail = pageH - PAD - (isFirst ? FIRST_H : CONT_H) - TH_H;
           let used = 0, start = i;
           while (i < rowDefs.length) {
-            const h = measuredHeights[i] || 36;
-            if (used + h > available && i > start) break;
-            used += h;
-            i++;
+            const h = measuredHeights[i] || 24;
+            if (used + h > avail && i > start) break;
+            used += h; i++;
           }
           pages.push({ start, end: i, isFirst });
           isFirst = false;
         }
 
-        // Render each page as its own canvas
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
         const totalPages = pages.length;
 
         for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
           const { start, end, isFirst: first } = pages[pageIdx];
-          let prodCounter = 0;
-          const rowsHtml = rowDefs.slice(start, end).map(r => rowToHtml(r, r.type === 'prod' ? prodCounter++ : 0)).join('');
+          let pc = 0;
+          const rowsHtml = rowDefs.slice(start, end).map(r => rowToHtml(r, r.type !== 'cat' ? pc++ : -1)).join('');
 
           const headerHtml = first
-            ? `<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:3px solid #1e293b;display:flex;justify-content:space-between;align-items:flex-start;">
-                <div>
-                  <div style="font-size:22px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
-                  <div style="font-size:12px;color:#64748b;margin-top:4px;">${selectedKashrut.map(k=>k.name).join(' | ')}</div>
-                </div>
-                <div style="text-align:left;">
-                  <div style="font-size:12px;color:#64748b;">תאריך: <strong>${date}</strong></div>
-                  <div style="font-size:12px;color:#64748b;margin-top:8px;">נספר ע"י: _______________</div>
-                </div>
+            ? `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px;">
+                <div style="font-size:14px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
+                <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
               </div>`
-            : `<div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">
-                <div style="font-size:13px;font-weight:bold;color:#475569;">📋 ספירת מלאי — המשך</div>
-                <div style="font-size:11px;color:#94a3b8;">עמוד ${pageIdx+1} מתוך ${totalPages} | ${date}</div>
+            : `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #999;padding-bottom:3px;margin-bottom:6px;">
+                <div style="font-size:11px;font-weight:bold;">📋 המשך ספירת מלאי</div>
+                <div style="font-size:9px;color:#666;">עמוד ${pageIdx+1}/${totalPages} | ${date}</div>
               </div>`;
 
-          const html = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:20px 28px;width:560px;">
+          const html = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:12px 18px;width:${W}px;">
             ${headerHtml}
-            <table style="width:100%;border-collapse:collapse;font-size:12px;">
-              ${theadHtml}
-              <tbody>${rowsHtml}</tbody>
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              ${theadHtml}<tbody>${rowsHtml}</tbody>
             </table>
           </div>`;
 
@@ -1921,8 +1927,7 @@ ${htmlRows}
           if (pageIdx > 0) doc.addPage();
           const imgData = canvas.toDataURL('image/png');
           const pageW = doc.internal.pageSize.getWidth();
-          const imgH = (canvas.height * pageW) / canvas.width;
-          doc.addImage(imgData, 'PNG', 0, 0, pageW, imgH);
+          doc.addImage(imgData, 'PNG', 0, 0, pageW, (canvas.height * pageW) / canvas.width);
         }
 
         doc.save(`ספירת-מלאי-${date}.pdf`);
@@ -2070,6 +2075,27 @@ ${htmlRows}
                       ))}
                     </div>
                   </div>
+
+                  {/* קטגוריות — רק בספירת מלאי */}
+                  {exportMode === 'countSheet' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs font-extrabold text-gray-500 uppercase">קטגוריות להדפסה</div>
+                        <button onClick={() => setCountSheetCats(prev => { const allTrue = Object.values(prev).every(Boolean); const obj = {}; [...PRODUCT_CATEGORIES, 'דגים', 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = !allTrue; }); return obj; })} className="text-xs text-gray-400 hover:text-gray-600 underline">הכל / כלום</button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[...PRODUCT_CATEGORIES, 'דגים', 'מ.ל./מ.ל.ה'].map(cat => (
+                          <label key={cat} className="cursor-pointer">
+                            <input type="checkbox" className="hidden" checked={!!countSheetCats[cat]}
+                              onChange={e => setCountSheetCats(p => ({ ...p, [cat]: e.target.checked }))} />
+                            <span className={`inline-block px-2.5 py-1 rounded-lg border-2 font-bold text-xs transition-all ${countSheetCats[cat] ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-400 border-gray-200'}`}>
+                              {CAT_EMOJI[cat] || '🏷️'} {cat}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 border-t border-gray-100 flex gap-3">
