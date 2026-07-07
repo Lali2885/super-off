@@ -1782,164 +1782,118 @@ ${htmlRows}
           if (!sa && !sb) return 0; if (!sa) return 1; if (!sb) return -1;
           return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
         };
-
-        // Column groups: all kashrut from kashrutList + fish group
-        const groups = kashrutList.map(k => ({
-          label: k.name, color: k.color || '#6d28d9', isFish: false,
-        }));
-        groups.push({ label: 'דגים', color: '#0ea5e9', isFish: true });
-        const numGroups = groups.length;
-        const totalCols = numGroups * 4;
-        const W = 760;
-
         const catOrder = (p) => PRODUCT_CATEGORIES.indexOf(p.category || getProductCategory(p.name));
 
-        // Flat product list per group, sorted by category then SKU — no category headers
-        const groupProducts = groups.map(g => {
-          if (g.isFish) {
-            return frozenProductsList
-              .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי')
-              .sort(sortBySku);
-          }
-          return frozenProductsList
-            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === g.label)
-            .sort((a, b) => { const d = catOrder(a) - catOrder(b); return d !== 0 ? d : sortBySku(a, b); });
-        });
+        const W = 780;
+        const pageH = Math.floor(297 * W / 210); // ~1104px
+        const ROW_H = 21;
+        const HEADER_H = 58;
+        const THEAD_H = 40; // 2-row thead
+        const PAD = 26;
+        const maxRowsPerPage = Math.floor((pageH - HEADER_H - THEAD_H - PAD) / ROW_H);
 
-        // Stickers appended to each kashrut group
-        groups.forEach((g, gi) => {
-          if (g.isFish) return;
+        // Build flat sorted product list for a kashrut (regular + stickers)
+        const buildList = (kashrutName) => {
+          const prods = frozenProductsList
+            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === kashrutName)
+            .sort((a, b) => { const d = catOrder(a) - catOrder(b); return d !== 0 ? d : sortBySku(a, b); })
+            .map(p => ({ name: p.name, sku: p.sku || '' }));
           const stickers = Object.keys(frozenStock)
             .filter(k => k.startsWith('STICKER|'))
             .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark, isSticker: true }; })
-            .filter(s => s.kashrut === g.label)
+            .filter(s => s.kashrut === kashrutName)
             .sort((a, b) => a.name.localeCompare(b.name));
-          groupProducts[gi].push(...stickers);
-        });
+          return [...prods, ...stickers];
+        };
 
-        const maxRows = Math.max(...groupProducts.map(gp => gp.length), 0);
+        // Split list into chunks of maxRowsPerPage (each chunk = one column block)
+        const chunk = (arr) => {
+          if (!arr.length) return [[]];
+          const res = [];
+          for (let i = 0; i < arr.length; i += maxRowsPerPage) res.push(arr.slice(i, i + maxRowsPerPage));
+          return res;
+        };
 
-        // Build render units — only product rows, no category headers
-        const renderUnits = [];
-        for (let ri = 0; ri < maxRows; ri++) {
-          renderUnits.push({ type: 'prodrow', cells: groupProducts.map(gp => gp[ri] || null) });
+        // All kashrut blocks: [{label, color, items:[...]}]
+        const allBlocks = [];
+        for (const k of kashrutList) {
+          chunk(buildList(k.name)).forEach(items => allBlocks.push({ label: k.name, color: k.color || '#1e293b', items }));
         }
 
-        // Thead
-        const blockPct = 100 / numGroups;
-        const mkv = (pct) => `${(blockPct * pct / 100).toFixed(1)}%`;
-        const theadHtml = `<thead>
-          <tr style="background:#1e293b;color:#fff;font-size:9px;">
-            ${groups.map((g, gi) => `
-              <th style="padding:4px 5px;text-align:right;width:${mkv(46)};">מוצר</th>
-              <th style="padding:4px 2px;text-align:center;width:${mkv(12)};">מקט</th>
-              <th style="padding:4px 2px;text-align:center;width:${mkv(16)};" style="color:${g.color};">${g.label}</th>
-              <th style="padding:4px 2px;text-align:center;width:${mkv(26)};">כמות</th>
-            `).join('')}
-          </tr>
-        </thead>`;
+        // Fish blocks (always page 2)
+        const fishList = frozenProductsList
+          .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי')
+          .sort(sortBySku)
+          .map(p => ({ name: p.name, sku: p.sku || '' }));
+        const fishBlocks = chunk(fishList);
 
-        const emptyCells = (gi) => `<td colspan="4" style="background:${gi%2===0?'#f8fafc':'#f1f5f9'};border-left:1px solid #e2e8f0;"></td>`;
+        // Build HTML table for a set of column blocks
+        const buildTable = (blocks) => {
+          const n = blocks.length;
+          const totalRows = Math.max(...blocks.map(b => b.items.length), 0);
+          const bp = 100 / n; // block width %
+          const pw = (f) => `${(bp * f).toFixed(1)}%`;
+          const fs = n <= 2 ? 9 : n <= 4 ? 8 : 7;
 
-        const prodCells = (p, g, gi, isLast) => {
-          if (!p) return emptyCells(gi);
-          const fillStyle = `padding:2px;border:1px solid #bbb;background:#fefce8;height:18px;${isLast ? '' : 'border-left:2px solid #94a3b8;'}`;
-          const kashrutLabel = g.isFish ? '' : g.label;
-          const kashrutColor = g.isFish ? '' : g.color;
-          return `
-            <td style="padding:3px 5px;font-size:9px;border-left:none;">${p.name}</td>
-            <td style="padding:3px 2px;text-align:center;font-size:8px;color:#666;">${p.sku || ''}</td>
-            <td style="padding:3px 2px;text-align:center;font-size:8px;color:${kashrutColor};font-weight:bold;">${kashrutLabel}</td>
-            <td style="${fillStyle}"></td>
-          `;
-        };
+          const thead = `<thead>
+            <tr>${blocks.map(b => `<th colspan="3" style="padding:3px 5px;text-align:center;font-size:${fs+1}px;font-weight:bold;color:#fff;background:${b.color};">${b.label}</th>`).join('')}</tr>
+            <tr style="background:#334155;color:#fff;font-size:${fs}px;">
+              ${blocks.map((b, bi) => `
+                <th style="padding:3px 4px;text-align:right;width:${pw(0.62)};">מוצר</th>
+                <th style="padding:3px 2px;text-align:center;width:${pw(0.18)};">מקט</th>
+                <th style="padding:3px 2px;text-align:center;width:${pw(0.20)};">כמות</th>
+              `).join('')}
+            </tr>
+          </thead>`;
 
-        const stickerCells = (s, g, gi, isLast) => {
-          if (!s) return emptyCells(gi);
-          const fillStyle = `padding:2px;border:1px solid #bbb;background:#fefce8;height:18px;${isLast ? '' : 'border-left:2px solid #94a3b8;'}`;
-          return `
-            <td style="padding:3px 5px;font-size:9px;">${s.name}</td>
-            <td style="padding:3px 2px;text-align:center;font-size:8px;color:#6d28d9;font-weight:bold;">${s.mark}</td>
-            <td style="padding:3px 2px;text-align:center;font-size:8px;color:${g.color};">${g.label}</td>
-            <td style="${fillStyle}"></td>
-          `;
-        };
-
-        const unitToHtml = (u, idx) => {
-          const bg = idx % 2 === 0 ? '#fff' : '#f9fafb';
-          const cells = u.cells.map((cell, gi) => {
-            if (cell?.isSticker) return stickerCells(cell, groups[gi], gi, gi === numGroups - 1);
-            return prodCells(cell, groups[gi], gi, gi === numGroups - 1);
-          }).join('');
-          return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">${cells}</tr>`;
-        };
-
-        // Measure heights
-        const measureEl = document.createElement('div');
-        measureEl.style.cssText = `position:fixed;top:-99999px;right:0;visibility:hidden;width:${W}px;font-family:Arial,sans-serif;`;
-        let pIdx = 0;
-        measureEl.innerHTML = `<table style="font-size:9px;border-collapse:collapse;width:100%;"><tbody>${renderUnits.map(u => unitToHtml(u, u.type !== 'cat' ? pIdx++ : -1)).join('')}</tbody></table>`;
-        document.body.appendChild(measureEl);
-        await new Promise(r => setTimeout(r, 60));
-        const measuredHeights = Array.from(measureEl.querySelectorAll('tr')).map(tr => tr.offsetHeight);
-        document.body.removeChild(measureEl);
-
-        // A4 page splitting
-        const pageH = Math.floor(297 * W / 210);
-        const FIRST_H = 55; const CONT_H = 30; const TH_H = 22; const PAD = 30;
-
-        const pages = [];
-        let i = 0, isFirst = true;
-        while (i < renderUnits.length) {
-          const avail = pageH - PAD - (isFirst ? FIRST_H : CONT_H) - TH_H;
-          let used = 0, start = i;
-          while (i < renderUnits.length) {
-            const h = measuredHeights[i] || 21;
-            if (used + h > avail && i > start) break;
-            used += h; i++;
+          const bodyRows = [];
+          for (let ri = 0; ri < totalRows; ri++) {
+            const bg = ri % 2 === 0 ? '#fff' : '#f9fafb';
+            const cells = blocks.map((b, bi) => {
+              const p = b.items[ri] || null;
+              const sep = bi < n - 1 ? 'border-left:2px solid #94a3b8;' : '';
+              if (!p) return `<td colspan="3" style="background:${ri%2===0?'#f8fafc':'#f1f5f9'};height:${ROW_H-2}px;${sep}"></td>`;
+              const nm = p.isSticker ? `${p.name} (${p.mark})` : p.name;
+              return `<td style="padding:3px 4px;font-size:${fs}px;">${nm}</td><td style="padding:3px 2px;text-align:center;font-size:${fs-1}px;color:#555;">${p.sku}</td><td style="padding:2px;border:1px solid #bbb;background:#fefce8;height:${ROW_H-4}px;${sep}"></td>`;
+            }).join('');
+            bodyRows.push(`<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">${cells}</tr>`);
           }
-          pages.push({ start, end: i, isFirst });
-          isFirst = false;
-        }
+          return `${thead}<tbody>${bodyRows.join('')}</tbody>`;
+        };
 
-        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-        const totalPages = pages.length;
-
-        for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
-          const { start, end, isFirst: first } = pages[pageIdx];
-          let pc = 0;
-          const rowsHtml = renderUnits.slice(start, end).map(u => unitToHtml(u, u.type !== 'cat' ? pc++ : -1)).join('');
-
-          const headerHtml = first
-            ? `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:7px;">
-                <div style="font-size:13px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
-                <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
-              </div>`
-            : `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #999;padding-bottom:3px;margin-bottom:5px;">
-                <div style="font-size:11px;font-weight:bold;">📋 המשך</div>
-                <div style="font-size:9px;color:#666;">עמוד ${pageIdx+1}/${totalPages} | ${date}</div>
-              </div>`;
-
-          const html = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:10px 16px;width:${W}px;">
+        const wrapPage = (headerHtml, tableInner) =>
+          `<div style="font-family:Arial,sans-serif;direction:rtl;padding:10px 12px;width:${W}px;">
             ${headerHtml}
-            <table style="width:100%;border-collapse:collapse;font-size:9px;">
-              ${theadHtml}<tbody>${rowsHtml}</tbody>
-            </table>
+            <table style="width:100%;border-collapse:collapse;">${tableInner}</table>
           </div>`;
 
-          const container = document.createElement('div');
-          container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-          container.innerHTML = html;
-          document.body.appendChild(container);
-          const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
-          document.body.removeChild(container);
-
+        const renderToDoc = async (html, doc, pageIdx) => {
+          const el = document.createElement('div');
+          el.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+          el.innerHTML = html;
+          document.body.appendChild(el);
+          const canvas = await window.html2canvas(el, { scale: 2, useCORS: true });
+          document.body.removeChild(el);
           if (pageIdx > 0) doc.addPage();
           const imgData = canvas.toDataURL('image/png');
-          const pageW = doc.internal.pageSize.getWidth();
-          doc.addImage(imgData, 'PNG', 0, 0, pageW, (canvas.height * pageW) / canvas.width);
-        }
+          const pw = doc.internal.pageSize.getWidth();
+          doc.addImage(imgData, 'PNG', 0, 0, pw, (canvas.height * pw) / canvas.width);
+        };
 
+        const header1 = `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:7px;">
+          <div style="font-size:13px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
+          <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
+        </div>`;
+        const header2 = `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0ea5e9;padding-bottom:5px;margin-bottom:7px;">
+          <div style="font-size:13px;font-weight:bold;color:#0ea5e9;">🐟 ספירת מלאי — דגים</div>
+          <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
+        </div>`;
+
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        await renderToDoc(wrapPage(header1, buildTable(allBlocks)), doc, 0);
+        if (fishList.length > 0) {
+          await renderToDoc(wrapPage(header2, buildTable(fishBlocks.map(items => ({ label: 'דגים', color: '#0ea5e9', items })))), doc, 1);
+        }
         doc.save(`ספירת-מלאי-${date}.pdf`);
       };
 
