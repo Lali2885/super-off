@@ -780,7 +780,7 @@
 
     // ===[INVENTORY-FROZEN]===
     // --- Frozen Stock Panel ---
-    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, showEntry = true, showWithdrawal = true, appUser }) => {
+    const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, gvBalance = {}, showEntry = true, showWithdrawal = true, appUser }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries([...PRODUCT_CATEGORIES.map(c => [c, true]), ['STICKER', true]]));
       const [entryTrays, setEntryTrays] = useState({});
@@ -844,7 +844,8 @@
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={simple ? 1 : 2}>כניסה למלאי</th>}
             {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={simple ? 1 : 2}>משיכה ממלאי</th>}
             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }} colSpan={simple ? 1 : 2}>מצב נתון</th>
-            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderRight: '1px solid #c7d2fe', borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800" style={{ borderBottom: '1px solid #99f6e4' }} colSpan={1}>קירור גב"ש</th>}
           </tr>
           <tr>
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
@@ -853,7 +854,8 @@
             {showWithdrawal && !simple && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             <th className="p-2.5 font-bold text-center bg-gray-100 text-gray-400" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>מגשים</th>
             {!simple && <th className="p-2.5 font-bold text-center bg-blue-50 text-blue-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-teal-50 text-teal-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
           </tr>
         </thead>
       );
@@ -923,6 +925,11 @@
                 <span className="font-black text-indigo-700 text-lg">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
               </td>
             )}
+            {!simple && (
+              <td className="p-2.5 text-center bg-teal-50/40">
+                <span className="font-black text-teal-700 text-lg">{gvBalance[`${p.name}|${kashrut}`] || 0}</span>
+              </td>
+            )}
           </tr>
         );
       };
@@ -988,6 +995,7 @@
             const stickerKeys = new Set([
               ...Object.keys(frozenStock).filter(k => k.startsWith('STICKER|')),
               ...Object.keys(bsBalance).filter(k => k.startsWith('STICKER|')),
+              ...Object.keys(gvBalance).filter(k => k.startsWith('STICKER|')),
             ]);
             const stickerProds = [...stickerKeys]
               .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut: kashrut || '', mark, key: k }; })
@@ -1060,6 +1068,7 @@
                             <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
                             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון (קרטונים)</th>
                             <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">קירור לירוי (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800">קירור גב"ש (קרטונים)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -1090,6 +1099,9 @@
                                 </td>
                                 <td className="p-2.5 text-center bg-indigo-50/40">
                                   <span className="font-black text-indigo-700 text-lg">{bsBalance[p.key] || 0}</span>
+                                </td>
+                                <td className="p-2.5 text-center bg-teal-50/40">
+                                  <span className="font-black text-teal-700 text-lg">{gvBalance[p.key] || 0}</span>
                                 </td>
                               </tr>
                             );
@@ -1205,7 +1217,7 @@
       );
     };
 
-    const StickerStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, appUser }) => {
+    const StickerStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, gvBalance = {}, appUser }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
       const [addModal, setAddModal]           = useState(false);
       const [selProduct, setSelProduct]       = useState('');
@@ -1217,6 +1229,7 @@
       const stickerKeys = new Set([
         ...Object.keys(frozenStock).filter(k => k.startsWith('STICKER|')),
         ...Object.keys(bsBalance).filter(k => k.startsWith('STICKER|')),
+        ...Object.keys(gvBalance).filter(k => k.startsWith('STICKER|')),
       ]);
       const stickerProducts = [...stickerKeys]
         .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut: kashrut || '', mark }; });
@@ -1268,6 +1281,7 @@
             <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
             <th className="p-2.5 font-bold text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון</th>
             <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">קירור לירוי</th>
+            <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800">קירור גב"ש</th>
           </tr>
         </thead>
       );
@@ -1300,6 +1314,9 @@
             </td>
             <td className="p-2.5 text-center bg-indigo-50/40">
               <span className="font-black text-indigo-700 text-lg">{bsBalance[key] || 0}</span>
+            </td>
+            <td className="p-2.5 text-center bg-teal-50/40">
+              <span className="font-black text-teal-700 text-lg">{gvBalance[key] || 0}</span>
             </td>
           </tr>
         );
@@ -1417,6 +1434,7 @@
         return obj;
       });
       const [bsBalance, setBsBalance] = useState({});
+      const [gvBalance, setGvBalance] = useState({});
       const [logEntries, setLogEntries] = useState([]);
       const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
       const [logLoaded, setLogLoaded] = useState(false);
@@ -1446,6 +1464,27 @@
           }));
           Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
           setBsBalance(map);
+        });
+      }, []);
+
+      useEffect(() => {
+        Promise.all([
+          db.from('gavash_shipments').select('*'),
+          db.from('gavash_withdrawals').select('*')
+        ]).then(([shRes, wdRes]) => {
+          const map = {};
+          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+            const dt = pr.dateType || '';
+            const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) + Number(pr.cartons || 0);
+          })));
+          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
+            const dt = pr.dateType || '';
+            const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) - Number(pr.cartons || 0);
+          }));
+          Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
+          setGvBalance(map);
         });
       }, []);
 
@@ -1527,19 +1566,19 @@
       const doExcelExport = (date) => {
         const withStorage = exportMode === 'withStorage';
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
-        const numCols = withStorage ? 5 : 4;
+        const numCols = withStorage ? 6 : 4;
         const colHeaders = withStorage
-          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור לירוי']
+          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור לירוי', 'קירור גב"ש']
           : ['מוצר', 'מקט', 'מגשים', 'קרטונים'];
 
         const grouped = {};
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0 || (gvBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
           const cat = p.category || getProductCategory(p.name);
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(p);
         });
         // Always include fish (kashrut === 'כללי') that have stock
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && ((frozenStock[`${p.name}|כללי`] || 0) > 0 || (bsBalance[`${p.name}|כללי`] || 0) > 0)).forEach(p => {
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && ((frozenStock[`${p.name}|כללי`] || 0) > 0 || (bsBalance[`${p.name}|כללי`] || 0) > 0 || (gvBalance[`${p.name}|כללי`] || 0) > 0)).forEach(p => {
           if (!grouped['דגים']) grouped['דגים'] = [];
           grouped['דגים'].push(p);
         });
@@ -1550,7 +1589,7 @@
 
         let htmlRows = '';
         htmlRows += `<tr><td colspan="${cs}" style="font-size:14pt;font-weight:bold;background:#1e293b;color:#fff;padding:8px;">${esc(`דוח מלאי סופר עוף — נכון לתאריך ${date}`)}</td></tr>`;
-        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'קירור לירוי' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
+        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'קירור לירוי + קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
         htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
 
         const sortBySku = (a, b) => {
@@ -1573,7 +1612,7 @@
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
             const cells = [p.name, p.sku || '', t, c];
-            if (withStorage) cells.push(bsBalance[key] || 0);
+            if (withStorage) { cells.push(bsBalance[key] || 0); cells.push(gvBalance[key] || 0); }
             const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
               `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
@@ -1583,7 +1622,10 @@
           const totalT = products.reduce((s, p) => s + (frozenStock[`${p.name}|${p.kashrut}`] || 0), 0);
           const totalC = products.reduce((s, p) => s + Math.floor((frozenStock[`${p.name}|${p.kashrut}`] || 0) / TRAYS_PER_CARTON), 0);
           const totCells = ['סה"כ', '', totalT, totalC];
-          if (withStorage) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (bsBalance[key]||0); }, 0));
+          if (withStorage) {
+            totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (bsBalance[key]||0); }, 0));
+            totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (gvBalance[key]||0); }, 0));
+          }
           htmlRows += `<tr style="background:#f1f5f9;font-weight:bold;">${totCells.map((v, ci) =>
             `<td style="padding:5px 8px;border-top:2px solid #94a3b8;border:1px solid #cbd5e1;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
           ).join('')}</tr>`;
@@ -1598,12 +1640,12 @@
           .filter(s => selectedNames.has(s.kashrut));
         if (stickerExcelRows.length) {
           htmlRows += `<tr><td colspan="${cs}" style="font-size:13pt;font-weight:bold;background:#4338ca;color:#fff;padding:6px 8px;">${esc('🏷️ מ.ל./מ.ל.ה')}</td></tr>`;
-          const stickerColH = withStorage ? ['מוצר', 'סימון', 'קרטונים', 'קירור לירוי'] : ['מוצר', 'סימון', 'קרטונים'];
+          const stickerColH = withStorage ? ['מוצר', 'סימון', 'קרטונים', 'קירור לירוי', 'קירור גב"ש'] : ['מוצר', 'סימון', 'קרטונים'];
           htmlRows += `<tr>${stickerColH.map(h => `<th style="background:#4f46e5;color:#fff;font-weight:bold;padding:5px 8px;text-align:center;border:1px solid #3730a3;">${esc(h)}</th>`).join('')}</tr>`;
           stickerExcelRows.forEach((s, i) => {
             const cartons = frozenStock[s.key] || 0;
             const cells = [s.name, s.mark, cartons];
-            if (withStorage) cells.push(bsBalance[s.key] || 0);
+            if (withStorage) { cells.push(bsBalance[s.key] || 0); cells.push(gvBalance[s.key] || 0); }
             const bg = i % 2 === 0 ? '#ffffff' : '#f5f3ff';
             htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
               `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
@@ -1612,7 +1654,7 @@
           htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
         }
 
-        const sheetName = withStorage ? 'מלאי קירור לירוי' : 'מצב נתון';
+        const sheetName = withStorage ? 'מלאי קירור לירוי וגבש' : 'מצב נתון';
         const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
 <!--[if gte mso 9]><xml>
@@ -1641,16 +1683,16 @@ ${htmlRows}
         const { jsPDF } = window.jspdf;
         const withStorage = exportMode === 'withStorage';
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
-        const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'קירור לירוי'] : ['מגשים', 'קרטונים'];
+        const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'קירור לירוי', 'קירור גב"ש'] : ['מגשים', 'קרטונים'];
 
         const grouped = {};
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0 || (gvBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
           const cat = p.category || getProductCategory(p.name);
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(p);
         });
         // Always include fish (kashrut === 'כללי') that have stock
-        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && ((frozenStock[`${p.name}|כללי`] || 0) > 0 || (bsBalance[`${p.name}|כללי`] || 0) > 0)).forEach(p => {
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && ((frozenStock[`${p.name}|כללי`] || 0) > 0 || (bsBalance[`${p.name}|כללי`] || 0) > 0 || (gvBalance[`${p.name}|כללי`] || 0) > 0)).forEach(p => {
           if (!grouped['דגים']) grouped['דגים'] = [];
           grouped['דגים'].push(p);
         });
@@ -1675,7 +1717,7 @@ ${htmlRows}
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
             const cells = withStorage
-              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[key] || 0}</td>`
+              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[key] || 0}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0f766e;">${gvBalance[key] || 0}</td>`
               : `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td>`;
             return `<tr style="background:${i%2===0?'#ffffff':'#f8fafc'};border-bottom:1px solid #e5e7eb;">
               <td style="padding:6px 10px;font-weight:bold;">${p.name}</td>
@@ -1689,7 +1731,7 @@ ${htmlRows}
               <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #1e293b;">
                 <div style="font-size:13px;color:#64748b;font-weight:normal;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
                 <div style="font-size:22px;font-weight:bold;">${emoji} ${cat}</div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי + קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
               </div>
               <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
@@ -1705,7 +1747,7 @@ ${htmlRows}
                     <td style="padding:6px 10px;" colspan="2">סה"כ</td>
                     <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+(frozenStock[`${p.name}|${p.kashrut}`]||0),0)}</td>
                     <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+Math.floor((frozenStock[`${p.name}|${p.kashrut}`]||0)/TRAYS_PER_CARTON),0)}</td>
-                    ${withStorage?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(bsBalance[key]||0);},0)}</td>`:''}
+                    ${withStorage?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(bsBalance[key]||0);},0)}</td><td style="padding:6px 10px;text-align:center;color:#0f766e;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(gvBalance[key]||0);},0)}</td>`:''}
                   </tr>
                 </tfoot>
               </table>
@@ -1735,7 +1777,7 @@ ${htmlRows}
           const stickerRowsHtml = stickerPdfRows.map((s, i) => {
             const cartons = frozenStock[s.key] || 0;
             const cells = withStorage
-              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[s.key] || 0}</td>`
+              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[s.key] || 0}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0f766e;">${gvBalance[s.key] || 0}</td>`
               : `<td style="padding:6px 10px;text-align:center;font-weight:bold;">${cartons}</td>`;
             return `<tr style="background:${i%2===0?'#ffffff':'#f5f3ff'};border-bottom:1px solid #e5e7eb;">
               <td style="padding:6px 10px;font-weight:bold;">${s.name}</td>
@@ -1743,12 +1785,12 @@ ${htmlRows}
               ${cells}
             </tr>`;
           }).join('');
-          const stickerColH = withStorage ? ['קרטונים', 'קירור לירוי'] : ['קרטונים'];
+          const stickerColH = withStorage ? ['קרטונים', 'קירור לירוי', 'קירור גב"ש'] : ['קרטונים'];
           const stickerHtml = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:560px;">
             <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #4338ca;">
               <div style="font-size:13px;color:#64748b;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
               <div style="font-size:22px;font-weight:bold;">🏷️ מ.ל./מ.ל.ה</div>
-              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי + קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
             </div>
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
               <thead><tr style="background:#4338ca;color:#ffffff;">
@@ -2022,7 +2064,7 @@ ${htmlRows}
                   <div>
                     <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">תצוגת ייצוא</div>
                     <div className="flex flex-wrap gap-2">
-                      {[['current','🧊 מצב נתון'],['withStorage','🏭 קירור לירוי'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
+                      {[['current','🧊 מצב נתון'],['withStorage','🏭 קירור לירוי + גב"ש'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
                         <label key={val} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportMode === val ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
                           <input type="radio" className="hidden" checked={exportMode === val} onChange={() => setExportMode(val)} />
                           {label}
@@ -2081,10 +2123,10 @@ ${htmlRows}
           )}
 
           {activeTab === 'frozen' && (
-            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} showEntry={showEntry} showWithdrawal={showWithdrawal} appUser={appUser} />
+            <FrozenStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} gvBalance={gvBalance} showEntry={showEntry} showWithdrawal={showWithdrawal} appUser={appUser} />
           )}
           {activeTab === 'sticker' && (
-            <StickerStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} appUser={appUser} />
+            <StickerStockPanel frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} bsBalance={bsBalance} gvBalance={gvBalance} appUser={appUser} />
           )}
 
           {activeTab === 'log' && (
@@ -6050,6 +6092,698 @@ setTimeout(function(){
       );
     };
 
+    const GavashView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
+      const today = new Date().toISOString().split('T')[0];
+      const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
+      const [bsTab, setBsTab] = useState('exits');
+      const [shipments, setShipments] = useState([]);
+      const [withdrawals, setWithdrawals] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
+
+      // Exit form state
+      const [showExitForm, setShowExitForm] = useState(false);
+      const [editingShipmentId, setEditingShipmentId] = useState(null);
+      const [exitDate, setExitDate] = useState(today);
+      const [exitPallets, setExitPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
+      const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
+      const [editingExitProduct, setEditingExitProduct] = useState(null);
+      const exitSkuRef = useRef(null);
+      const [showExitNameDropdown, setShowExitNameDropdown] = useState(false);
+      const [reportDate, setReportDate] = useState(today);
+      const [showAllExits, setShowAllExits] = useState(true);
+
+      // Withdrawal form state
+      const [showWdForm, setShowWdForm] = useState(false);
+      const [wdDate, setWdDate] = useState(today);
+      const [wdProducts, setWdProducts] = useState([]);
+      const [wdForm, setWdForm] = useState({ sku: '', name: '', kashrut: '', cartons: '' });
+      const [wdReportDate, setWdReportDate] = useState(today);
+      const [showAllWithdrawals, setShowAllWithdrawals] = useState(false);
+
+      const loadData = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
+        const [exRes, wdRes] = await Promise.all([
+          db.from('gavash_shipments').select('*').order('date', { ascending: false }),
+          db.from('gavash_withdrawals').select('*').order('date', { ascending: false })
+        ]);
+        if (!exRes.error && exRes.data) setShipments(exRes.data);
+        if (!wdRes.error && wdRes.data) setWithdrawals(wdRes.data);
+        setLoading(false);
+      }, []);
+
+      useEffect(() => {
+        loadData();
+        const onFocus = () => loadData(true);
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
+      }, []);
+
+      const skuLookup = (sku, setForm) => {
+        setForm(p => ({ ...p, sku, name: '', kashrut: '' }));
+        if (sku.length >= 1) {
+          const found = frozenProductsList.find(p => p.sku && p.sku.toString() === sku.toString());
+          if (found) setForm(p => ({ ...p, sku, name: found.name, kashrut: found.kashrut || '' }));
+        }
+      };
+
+      // ── Exit functions ──
+      const addExitPallet = () => setExitPallets(prev => [...prev, { id: Date.now(), number: '', products: [] }]);
+      const removeExitPallet = (id) => setExitPallets(prev => prev.filter(p => p.id !== id));
+      const updateExitPalletNum = (id, number) => setExitPallets(prev => prev.map(p => p.id === id ? { ...p, number } : p));
+
+      const addProductToExitPallet = (palletId) => {
+        if (!exitProductForm.name || !exitProductForm.cartons) return;
+        if (editingExitProduct) {
+          setExitPallets(prev => prev.map(p => p.id === editingExitProduct.palletId
+            ? { ...p, products: p.products.map(pr => pr.id === editingExitProduct.productId ? { ...exitProductForm, id: pr.id } : pr) }
+            : p));
+          setEditingExitProduct(null);
+        } else {
+          const pallet = exitPallets.find(p => p.id === palletId);
+          const total = pallet.products.reduce((s,p) => s + Number(p.cartons||0), 0);
+          if (total + Number(exitProductForm.cartons) > 50) { alert('לא ניתן להוסיף - משטח מוגבל ל-50 קרטון (כרגע: ' + total + ' קרטונים)'); return; }
+          setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...exitProductForm, id: Date.now() }] } : p));
+        }
+        setExitProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
+        setShowExitNameDropdown(false);
+        setTimeout(() => exitSkuRef.current?.focus(), 30);
+      };
+
+      const startEditExitProduct = (palletId, product) => {
+        setEditingExitProduct({ palletId, productId: product.id });
+        setExitProductForm({ sku: product.sku||'', name: product.name||'', kashrut: product.kashrut||'', cartons: product.cartons||'', expiryDate: product.expiryDate||'', dateType: product.dateType||'', weight: product.weight||'' });
+        setShowExitNameDropdown(false);
+        setTimeout(() => exitSkuRef.current?.focus(), 30);
+      };
+
+      const removeExitProduct = (palletId, productId) => {
+        setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
+      };
+
+      const resetExitForm = () => {
+        setShowExitForm(false); setEditingShipmentId(null);
+        setExitDate(today); setExitPallets([{ id: Date.now(), number: '', products: [] }]);
+      };
+
+      const startEditShipment = (shipment) => {
+        setEditingShipmentId(shipment.id);
+        setExitDate(shipment.date);
+        setExitPallets(shipment.pallets && shipment.pallets.length ? shipment.pallets : [{ id: Date.now(), number: '', products: [] }]);
+        setShowExitForm(true);
+        setTimeout(() => scrollToTop(), 50);
+      };
+
+      const saveExit = async () => {
+        if (!exitDate) { alert('נא למלא תאריך'); return; }
+        setSaving(true);
+        const payload = { date: exitDate, pallet_count: exitPallets.length, pallets: exitPallets };
+        if (editingShipmentId) {
+          const { data, error } = await db.from('gavash_shipments').update(payload).eq('id', editingShipmentId).select();
+          if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+          if (data) setShipments(prev => prev.map(s => s.id === editingShipmentId ? data[0] : s));
+        } else {
+          const newItem = { id: Date.now(), ...payload };
+          const { data, error } = await db.from('gavash_shipments').insert([newItem]).select();
+          if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+          if (data) setShipments(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
+        }
+        resetExitForm(); setSaving(false);
+      };
+
+      const deleteExit = async (id) => {
+        if (!window.confirm('למחוק יציאה זו?')) return;
+        const { error } = await db.from('gavash_shipments').delete().eq('id', id);
+        if (!error) setShipments(prev => prev.filter(s => s.id !== id));
+      };
+
+      // ── Withdrawal functions ──
+      const addWdProduct = () => {
+        if (!wdForm.name || !wdForm.cartons) return;
+        setWdProducts(prev => [...prev, { ...wdForm, id: Date.now() }]);
+        setWdForm({ sku: '', name: '', kashrut: '', cartons: '' });
+      };
+
+      const removeWdProduct = (id) => setWdProducts(prev => prev.filter(p => p.id !== id));
+
+      const saveWithdrawal = async () => {
+        if (!wdDate || wdProducts.length === 0) { alert('נא למלא תאריך ולהוסיף לפחות מוצר אחד'); return; }
+        setSaving(true);
+        const newItem = { id: Date.now(), date: wdDate, products: wdProducts };
+        const { data, error } = await db.from('gavash_withdrawals').insert([newItem]).select();
+        if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+        if (data) setWithdrawals(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
+        setWdDate(today); setWdProducts([]); setShowWdForm(false); setSaving(false);
+      };
+
+      const deleteWithdrawal = async (id) => {
+        if (!window.confirm('למחוק משיכה זו?')) return;
+        const { error } = await db.from('gavash_withdrawals').delete().eq('id', id);
+        if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id));
+      };
+
+      // ── Report data ──
+      const reportShipments = showAllExits ? shipments : shipments.filter(s => s.date === reportDate);
+      const allProducts = reportShipments.flatMap(s => s.pallets.flatMap(p => p.products));
+      const totalCartons = allProducts.reduce((sum, p) => sum + Number(p.cartons || 0), 0);
+      const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
+      const totalPallets = reportShipments.reduce((sum, s) => sum + s.pallets.length, 0);
+
+      const wdReportItems = showAllWithdrawals ? withdrawals : withdrawals.filter(w => w.date === wdReportDate);
+      const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
+
+      // ── Inventory calc ──
+      const inventoryMap = useMemo(() => {
+        const map = {};
+        shipments.forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+          const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '') + '|' + (pr.dateType || '');
+          if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', dateType: pr.dateType||'', totalIn: 0, totalOut: 0 };
+          map[key].totalIn += Number(pr.cartons||0);
+        })));
+        withdrawals.forEach(w => w.products.forEach(pr => {
+          const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '') + '|' + (pr.dateType || '');
+          if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', dateType: pr.dateType||'', totalIn: 0, totalOut: 0 };
+          map[key].totalOut += Number(pr.cartons||0);
+        }));
+        return Object.values(map).sort((a,b) => (b.totalIn-b.totalOut) - (a.totalIn-a.totalOut));
+      }, [shipments, withdrawals]);
+
+      const fmtDate = d => d ? d.split('-').reverse().join('/') : '';
+
+      const exportShipmentPDF = (shipment, pallet) => {
+        if (!pallet) pallet = shipment.pallets[0] || { number: '', products: [] };
+        const { jsPDF } = window.jspdf;
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:24px 32px;font-family:Arial,sans-serif;direction:rtl;';
+        const pC = pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0);
+        const pW = pallet.products.reduce((s,p)=>s+Number(p.weight||0),0);
+        let html = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div style="text-align:right;">
+              ${pallet.number ? `<div style="font-size:40px;font-weight:bold;color:#000;line-height:1.1;">משטח מספר: ${pallet.number}</div>` : ''}
+            </div>
+            <div style="text-align:left;font-size:13px;color:#555;">
+              ${companyVat ? `<div style="font-weight:bold;margin-bottom:4px;">ח.פ. ${companyVat}</div>` : ''}
+              <div>תאריך: ${fmtDate(shipment.date)}</div>
+            </div>
+          </div>
+          <h2 style="text-align:center;margin-bottom:14px;font-size:18px;font-weight:bold;">תעודת יציאה - קירור גב"ש</h2>
+          <div style="margin-bottom:18px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#f3f4f6;">
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">מקט</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">מוצר</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">קרטונים</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">משקל</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">תאריך אחרון לשימוש</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">כשרות</th>
+            </tr></thead><tbody>`;
+        pallet.products.forEach(p => {
+          html += `<tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:5px 10px;color:#6b7280;">${p.sku||''}</td>
+            <td style="padding:5px 10px;">${p.name||''}</td>
+            <td style="padding:5px 10px;font-weight:bold;">${p.cartons||''}</td>
+            <td style="padding:5px 10px;">${p.weight ? p.weight+' ק"ג' : '-'}</td>
+            <td style="padding:5px 10px;">${p.expiryDate ? fmtDate(p.expiryDate) : '-'}${p.dateType ? ' ('+p.dateType+')' : ''}</td>
+            <td style="padding:5px 10px;color:#6b7280;">${p.kashrut||'-'}</td>
+          </tr>`;
+        });
+        html += `</tbody><tfoot><tr style="background:#eff6ff;font-weight:bold;">
+          <td colspan="2" style="padding:6px 10px;">סה"כ במשטח</td>
+          <td style="padding:6px 10px;">${pC} קרטונים</td>
+          <td style="padding:6px 10px;">${pW.toFixed(2)} ק"ג</td>
+          <td colspan="2"></td>
+        </tr></tfoot></table></div>`;
+        container.innerHTML = html;
+        document.body.appendChild(container);
+        window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
+          document.body.removeChild(container);
+          const imgData = canvas.toDataURL('image/png');
+          const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+          const pageW = doc.internal.pageSize.getWidth();
+          const pageH = doc.internal.pageSize.getHeight();
+          const topMargin = 45, bottomMargin = 50;
+          const contentH = pageH - topMargin - bottomMargin;
+          const imgW = pageW;
+          const imgH = (canvas.height * imgW) / canvas.width;
+          let posY = 0;
+          while (posY < imgH) {
+            doc.addImage(imgData, 'PNG', 0, topMargin - posY, imgW, imgH);
+            posY += contentH;
+            if (posY < imgH) doc.addPage();
+          }
+          doc.save(`תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
+        });
+      };
+
+      const exportPalletLabel = (shipment, pallet) => {
+        if (!pallet) pallet = shipment.pallets[0] || { number: '', products: [] };
+        const { jsPDF } = window.jspdf;
+        const labelContainer = document.createElement('div');
+        labelContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:40px 50px;font-family:Arial,sans-serif;direction:rtl;';
+        let labelHtml = `<div style="border:4px solid #000;border-radius:16px;padding:40px;">`;
+        if (pallet.number) {
+          labelHtml += `<div style="font-size:72px;font-weight:bold;text-align:center;margin-bottom:28px;line-height:1.1;border-bottom:3px solid #000;padding-bottom:24px;">משטח מספר ${pallet.number}</div>`;
+        }
+        pallet.products.forEach(p => {
+          labelHtml += `<div style="display:flex;font-size:36px;font-weight:bold;padding:16px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
+            <span style="white-space:nowrap;">${p.sku||''}</span>
+            <span style="flex:1;">${p.name||''}</span>
+          </div>`;
+        });
+        labelHtml += `</div>`;
+        // דף מספר משטח בלבד
+        const numberContainer = document.createElement('div');
+        numberContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;height:1123px;background:white;font-family:Arial,sans-serif;direction:rtl;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+        numberContainer.innerHTML = `<svg width="794" height="1123" xmlns="http://www.w3.org/2000/svg">
+          <text x="397" y="620" text-anchor="middle" dominant-baseline="middle"
+            font-size="900" font-weight="bold" font-family="Arial"
+            textLength="740" lengthAdjust="spacingAndGlyphs">${pallet.number||''}</text>
+        </svg>`;
+
+        labelContainer.innerHTML = labelHtml;
+        document.body.appendChild(labelContainer);
+        window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas1 => {
+          document.body.removeChild(labelContainer);
+          document.body.appendChild(numberContainer);
+          window.html2canvas(numberContainer, { scale: 2, useCORS: true }).then(canvas2 => {
+            document.body.removeChild(numberContainer);
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            const imgW = pageW;
+            const imgH1 = (canvas1.height * imgW) / canvas1.width;
+            doc.addImage(canvas1.toDataURL('image/png'), 'PNG', 0, 10, imgW, imgH1);
+            doc.addPage();
+            doc.addImage(canvas2.toDataURL('image/png'), 'PNG', 0, 0, pageW, pageH);
+            doc.save(`תווית-משטח-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
+          });
+        });
+      };
+
+      const exportShipmentExcel = (shipment) => {
+        const pallet = shipment.pallets[0] || { number: '', products: [] };
+        const pC = pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0);
+        const pW = pallet.products.reduce((s,p)=>s+Number(p.weight||0),0);
+        const rows = [
+          ['תעודת יציאה - קירור גב"ש'],
+          [`תאריך: ${fmtDate(shipment.date)}${pallet.number ? '        משטח מספר: ' + pallet.number : ''}`],
+          [],
+          ['מקט','מוצר','קרטונים','משקל (ק"ג)','תאריך אחרון לשימוש','כשרות'],
+        ];
+        pallet.products.forEach(pr => {
+          rows.push([pr.sku||'', pr.name||'', Number(pr.cartons)||0, Number(pr.weight)||0, (pr.expiryDate ? fmtDate(pr.expiryDate) : '')+(pr.dateType ? ' ('+pr.dateType+')' : ''), pr.kashrut||'']);
+        });
+        rows.push(['', 'סה"כ', pC, pW.toFixed(2), '', '']);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{wch:10},{wch:24},{wch:12},{wch:12},{wch:22},{wch:12}];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'תעודת יציאה');
+        wb.Sheets['תעודת יציאה']['!sheetViews'] = [{ rightToLeft: true }];
+        wb.Workbook = { Views: [{ RTL: true }] };
+        XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.xlsx`);
+      };
+
+      if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
+
+      const tabBtn = (id, label, color) => (
+        <button onClick={() => setBsTab(id)} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${bsTab === id ? color + ' text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button>
+      );
+
+
+      return (
+        <div className="animate-in fade-in duration-300 pb-10">
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-3xl font-extrabold text-gray-800">קירור גב"ש</h1>
+              <button onClick={() => loadData(true)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-blue-300 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                רענן
+              </button>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {tabBtn('exits', 'תעודת יציאה', 'bg-blue-600')}
+              {tabBtn('withdrawals', 'תעודת משיכה', 'bg-purple-600')}
+              {tabBtn('inventory', 'מצב מלאי', 'bg-green-600')}
+            </div>
+          </div>
+
+          {/* ══ TAB: דוחות יציאה ══ */}
+          {bsTab === 'exits' && (
+            <div>
+              <div className="flex justify-end mb-4">
+                <button onClick={() => setShowExitForm(!showExitForm)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-700">+ יציאה חדשה</button>
+              </div>
+              {showExitForm && (
+                <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
+                  <h2 className="font-bold text-xl mb-4 text-blue-800">{editingShipmentId ? '✏️ עריכת תעודת יציאה' : 'תעודת יציאה'} — {exitDate}</h2>
+                  <div className="mb-4">
+                    <label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
+                    <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" />
+                  </div>
+                  {exitPallets.map((pallet, pIdx) => (
+                    <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-blue-700">משטח מספר</span>
+                          <input type="text" value={pallet.number} onChange={e => updateExitPalletNum(pallet.id, e.target.value)} placeholder="מס'" className="border-2 border-gray-200 rounded-lg p-1.5 w-20 text-center font-bold text-sm focus:border-blue-400 outline-none bg-white" />
+                        </div>
+                        {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
+                        <div className="flex items-end gap-1 flex-wrap">
+                          <div style={{width:'58px'}}><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                            <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div className="relative" style={{width:'150px'}}><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                            <input type="text" autoComplete="off" value={exitProductForm.name}
+                              onChange={e => { setExitProductForm(p=>({...p,name:e.target.value,sku:'',kashrut:''})); setShowExitNameDropdown(true); }}
+                              onFocus={() => setShowExitNameDropdown(true)}
+                              onBlur={() => setTimeout(() => setShowExitNameDropdown(false), 150)}
+                              placeholder="הקלד לחיפוש..." className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" />
+                            {showExitNameDropdown && exitProductForm.name && !exitProductForm.sku && (() => {
+                              const results = (frozenProductsList || []).filter(p =>
+                                p.name?.includes(exitProductForm.name) || p.name?.toLowerCase().includes(exitProductForm.name.toLowerCase())
+                              ).slice(0, 20);
+                              if (!results.length) return null;
+                              return (
+                                <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
+                                  {results.map((p, i) => (
+                                    <div key={i}
+                                      onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); }}
+                                      className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer">
+                                      <span className="font-bold text-gray-800 text-xs">{p.name}</span>
+                                      <div className="flex items-center gap-1 shrink-0 mr-2">
+                                        <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
+                                        {p.kashrut && (() => { const kc = getKashrutColor(p.kashrut); return (
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'20', color: kc }}>{p.kashrut}</span>
+                                        ); })()}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                            <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+                          <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
+                            <input type="number" value={exitProductForm.weight} onChange={e => setExitProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <div><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
+                            <div className="flex items-center gap-1">
+                              <input type="date" value={exitProductForm.expiryDate} onChange={e => setExitProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1 text-xs focus:border-blue-400 outline-none bg-white" />
+                              <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
+                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל' ? '' : 'מ.ל'}))} className="w-3 h-3 cursor-pointer" />
+                                מ.ל
+                              </label>
+                              <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
+                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל.ה'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל.ה' ? '' : 'מ.ל.ה'}))} className="w-3 h-3 cursor-pointer" />
+                                מ.ל.ה
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <button onClick={() => addProductToExitPallet(pallet.id)} className={`text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן' : 'הוסף'}</button>
+                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); setShowExitNameDropdown(false); }} className="bg-gray-200 text-gray-600 px-2 py-1.5 rounded text-xs font-bold">נקה</button>
+                          </div>
+                        </div>
+                      </div>
+                      {pallet.products.length > 0 && (
+                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                          <thead><tr className="text-xs text-gray-500">
+                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th><th></th>
+                          </tr></thead>
+                          <tbody>{pallet.products.map(pr => (
+                            <tr key={pr.id} className="border-t">
+                              <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                              <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                              <td className="py-1 px-1">{pr.cartons}</td>
+                              <td className="py-1 px-1 whitespace-nowrap">{pr.expiryDate ? <span>{pr.expiryDate}{pr.dateType ? <span className="mr-1 text-blue-600 font-bold text-xs">({pr.dateType})</span> : ''}</span> : '-'}</td>
+                              <td className="py-1 px-1 whitespace-nowrap">{pr.weight ? pr.weight+' ק"ג' : '-'}</td>
+                              <td className="py-1 px-1 flex gap-2"><button onClick={() => startEditExitProduct(pallet.id, pr)} className="text-blue-500 text-xs hover:text-blue-700 font-semibold">ערוך</button><button onClick={() => removeExitProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                            </tr>
+                          ))}</tbody>
+                          <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
+                            <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                            <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
+                            <td></td><td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(2)} ק"ג</td><td></td>
+                          </tr></tfoot>
+                        </table></div>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex gap-3 mt-2">
+                    <button onClick={saveExit} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : editingShipmentId ? 'עדכן תעודה' : 'שמור יציאה'}</button>
+                    <button onClick={resetExitForm} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                  </div>
+                </div>
+              )}
+              <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-bold text-lg text-gray-800">תעודת יציאה</h2>
+                    <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-bold">
+                      <button onClick={() => setShowAllExits(true)} className={`px-3 py-1.5 transition-colors ${showAllExits ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>הכל</button>
+                      <button onClick={() => setShowAllExits(false)} className={`px-3 py-1.5 transition-colors ${!showAllExits ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי תאריך</button>
+                    </div>
+                    {!showAllExits && <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-blue-400 outline-none" />}
+                  </div>
+                </div>
+                {reportShipments.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    <div className="bg-blue-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-blue-700">{totalPallets}</div><div className="text-xs text-blue-600 font-semibold">משטחים</div></div>
+                    <div className="bg-green-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-green-700">{totalCartons}</div><div className="text-xs text-green-600 font-semibold">קרטונים</div></div>
+                    <div className="bg-orange-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-orange-700">{totalWeight.toFixed(2)}</div><div className="text-xs text-orange-600 font-semibold">ק"ג סה"כ</div></div>
+                  </div>
+                )}
+                {reportShipments.length === 0 ? (
+                  <div className="text-center text-gray-400 py-10">{showAllExits ? 'אין יציאות' : `אין יציאות בתאריך ${reportDate}`}</div>
+                ) : (
+                  <div className="space-y-4">{reportShipments.map(shipment => (
+                    <div key={shipment.id}>
+                      {shipment.pallets.map((pallet, pIdx) => (
+                        <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
+                          <div className="flex justify-between items-center mb-2">
+                            <div>
+                              <div className="font-bold text-blue-700">תעודת יציאה {fmtDate(shipment.date)}</div>
+                              {pallet.number && <div className="text-lg font-extrabold text-gray-800 mt-0.5">משטח {pallet.number}</div>}
+                            </div>
+                            <div className="flex gap-1">
+                              <button onClick={() => exportShipmentExcel(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">Excel</button>
+                              <button onClick={() => exportShipmentPDF(shipment, pallet)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">PDF תעודה</button>
+                              <button onClick={() => exportPalletLabel(shipment, pallet)} className="py-1 px-1.5 rounded-md text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-200 transition-colors leading-tight">PDF משטח</button>
+                              <button onClick={() => startEditShipment(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight">✏️</button>
+                              <button onClick={() => deleteExit(shipment.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">🗑️</button>
+                            </div>
+                          </div>
+                          <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                            <thead><tr className="text-xs text-gray-500">
+                              <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th>
+                            </tr></thead>
+                            <tbody>{pallet.products.map(p => {
+                              const kObj = kashrutList.find(k => k.name === p.kashrut);
+                              const kColor = kObj?.color || '#888';
+                              return (
+                              <tr key={p.id} className="border-t" style={{ backgroundColor: kColor + '12' }}>
+                                <td className="py-1 px-1 text-gray-700 text-xs font-medium">{p.sku}</td>
+                                <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
+                                <td className="py-1 px-1">
+                                  {p.kashrut ? <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{p.kashrut}</span> : '-'}
+                                </td>
+                                <td className="py-1 px-1">{p.cartons}</td>
+                                <td className="py-1 px-1 whitespace-nowrap">{p.expiryDate ? <span>{fmtDate(p.expiryDate)}{p.dateType ? <span className="mr-1 text-blue-600 font-bold text-xs">({p.dateType})</span> : ''}</span> : '-'}</td>
+                                <td className="py-1 px-1 whitespace-nowrap">{p.weight ? p.weight+' ק"ג' : '-'}</td>
+                              </tr>
+                              );
+                            })}</tbody>
+                            <tfoot><tr className="border-t font-bold text-xs">
+                              <td colSpan="3" className="pt-1 px-1">סה"כ במשטח</td>
+                              <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td>
+                              <td></td>
+                              <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(2)} ק"ג</td>
+                            </tr></tfoot>
+                          </table></div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══ TAB: דוחות משיכה ══ */}
+          {bsTab === 'withdrawals' && (
+            <div>
+              <div className="flex justify-end mb-4">
+                <button onClick={() => setShowWdForm(!showWdForm)} className="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-purple-700">+ משיכה חדשה</button>
+              </div>
+              {showWdForm && (
+                <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-purple-100">
+                  <h2 className="font-bold text-xl mb-4 text-purple-800">הזנת משיכה חדשה</h2>
+                  <div className="mb-4"><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך משיכה</label>
+                    <input type="date" value={wdDate} onChange={e => setWdDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-purple-400 outline-none" /></div>
+                  <div className="bg-purple-50 rounded-lg p-2 border border-purple-200 mb-3">
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
+                      <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                        <input type="text" value={wdForm.sku} onChange={e => skuLookup(e.target.value, setWdForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-white" /></div>
+                      <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                        <input type="number" value={wdForm.cartons} onChange={e => setWdForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-white" /></div>
+                      <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                        <input type="text" value={wdForm.name} onChange={e => setWdForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-gray-50" /></div>
+                      <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                        <input type="text" value={wdForm.kashrut} onChange={e => setWdForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-gray-50" /></div>
+                      <div className="col-span-2 flex gap-2 sm:col-span-1">
+                        <button onClick={addWdProduct} className="flex-1 bg-purple-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-purple-700">הוסף</button>
+                        <button onClick={() => setWdForm({sku:'',name:'',kashrut:'',cartons:''})} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                      </div>
+                    </div>
+                  </div>
+                  {wdProducts.length > 0 && (
+                    <div className="overflow-x-auto mb-4"><table className="w-full text-sm min-w-max">
+                      <thead><tr className="text-xs text-gray-500">
+                        <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
+                      </tr></thead>
+                      <tbody>{wdProducts.map(pr => (
+                        <tr key={pr.id} className="border-t">
+                          <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                          <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                          <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                          <td className="py-1 px-1 font-bold text-purple-700">{pr.cartons}</td>
+                          <td className="py-1 px-1"><button onClick={() => removeWdProduct(pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                        </tr>
+                      ))}</tbody>
+                      <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
+                        <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                        <td className="py-1 px-1 text-purple-700">{wdProducts.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td><td></td>
+                      </tr></tfoot>
+                    </table></div>
+                  )}
+                  <div className="flex gap-3">
+                    <button onClick={saveWithdrawal} disabled={saving} className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-purple-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור משיכה'}</button>
+                    <button onClick={() => { setShowWdForm(false); setWdProducts([]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                  </div>
+                </div>
+              )}
+              <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
+                <div className="flex items-center gap-2 flex-wrap mb-4">
+                  <h2 className="font-bold text-lg text-gray-800">תעודת משיכה</h2>
+                  <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-bold">
+                    <button onClick={() => setShowAllWithdrawals(false)} className={`px-3 py-1.5 transition-colors ${!showAllWithdrawals ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי תאריך</button>
+                    <button onClick={() => setShowAllWithdrawals(true)} className={`px-3 py-1.5 transition-colors ${showAllWithdrawals ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>הכל</button>
+                  </div>
+                  {!showAllWithdrawals && <input type="date" value={wdReportDate} onChange={e => setWdReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-purple-400 outline-none" />}
+                </div>
+                {wdReportItems.length === 0 ? (
+                  <div className="text-center text-gray-400 py-10">{showAllWithdrawals ? 'אין משיכות' : `אין משיכות בתאריך ${wdReportDate}`}</div>
+                ) : (
+                  <div>
+                    <div className="bg-purple-50 rounded-xl p-3 text-center mb-4 w-40">
+                      <div className="text-2xl font-extrabold text-purple-700">{wdTotalCartons}</div>
+                      <div className="text-xs text-purple-600 font-semibold">קרטונים נמשכו</div>
+                    </div>
+                    <div className="space-y-3">{wdReportItems.map(w => (
+                      <div key={w.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-600">{w.date}</span>
+                          <button onClick={() => deleteWithdrawal(w.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>
+                        </div>
+                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                          <thead><tr className="text-xs text-gray-500">
+                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
+                          </tr></thead>
+                          <tbody>{w.products.map(p => (
+                            <tr key={p.id} className="border-t">
+                              <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
+                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
+                              <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
+                              <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
+                            </tr>
+                          ))}</tbody>
+                        </table></div>
+                      </div>
+                    ))}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══ TAB: מצב מלאי ══ */}
+          {bsTab === 'inventory' && (
+            <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
+              <h2 className="font-bold text-xl mb-2 text-gray-800">מצב מלאי נוכחי</h2>
+              <p className="text-sm text-gray-400 mb-5">מחושב אוטומטית: יציאות פחות משיכות</p>
+              {inventoryMap.length === 0 ? (
+                <div className="text-center text-gray-400 py-10">אין נתוני מלאי עדיין</div>
+              ) : (
+                <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                  <thead><tr className="bg-gray-50 text-xs text-gray-500">
+                    <th className="text-right p-2 rounded-r-lg">מוצר</th>
+                    <th className="text-right p-2">כשרות</th>
+                    <th className="text-right p-2">מקט</th>
+                    <th className="text-right p-2">סימון</th>
+                    <th className="text-right p-2">נכנס</th>
+                    <th className="text-right p-2">נמשך</th>
+                    <th className="text-right p-2 rounded-l-lg">יתרה</th>
+                  </tr></thead>
+                  <tbody>{(() => {
+                    const groups = {};
+                    inventoryMap.forEach(item => {
+                      const k = item.kashrut || '-';
+                      if (!groups[k]) groups[k] = [];
+                      groups[k].push(item);
+                    });
+                    return Object.entries(groups).map(([kashrutName, items]) => {
+                      const kObj = kashrutList.find(k => k.name === kashrutName);
+                      const kColor = kObj?.color || '#888';
+                      return (
+                        <React.Fragment key={kashrutName}>
+                          <tr style={{ backgroundColor: kColor + '22' }}>
+                            <td colSpan="7" className="p-2 font-extrabold text-sm" style={{ color: kColor }}>
+                              {kashrutName === '-' ? 'ללא כשרות' : kashrutName} — {items.length} פריטים
+                            </td>
+                          </tr>
+                          {items.map((item, i) => {
+                            const balance = item.totalIn - item.totalOut;
+                            return (
+                              <tr key={i} className={`border-t ${balance === 0 ? 'opacity-40' : ''}`} style={{ backgroundColor: kColor + '0A' }}>
+                                <td className="p-2 font-semibold whitespace-nowrap">{item.name}</td>
+                                <td className="p-2">
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{item.kashrut||'-'}</span>
+                                </td>
+                                <td className="p-2 text-xs text-gray-700 font-medium">{item.sku||'-'}</td>
+                                <td className="p-2">
+                                  {item.dateType ? <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300">{item.dateType}</span> : <span className="text-xs text-gray-300">—</span>}
+                                </td>
+                                <td className="p-2 text-blue-600 font-bold">{item.totalIn}</td>
+                                <td className="p-2 text-purple-600 font-bold">{item.totalOut}</td>
+                                <td className="p-2">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{balance}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    });
+                  })()}</tbody>
+                  <tfoot><tr className="border-t font-bold text-sm bg-gray-50">
+                    <td colSpan="4" className="p-2">סה"כ</td>
+                    <td className="p-2 text-blue-600">{inventoryMap.reduce((s,p)=>s+p.totalIn,0)}</td>
+                    <td className="p-2 text-purple-600">{inventoryMap.reduce((s,p)=>s+p.totalOut,0)}</td>
+                    <td className="p-2 text-green-700">{inventoryMap.reduce((s,p)=>s+(p.totalIn-p.totalOut),0)}</td>
+                  </tr></tfoot>
+                </table></div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+
     const ListsManagementView = ({ productsList, setProductsList, couriersList, setCouriersList, kashrutList, setKashrutList, butchersList, setButchersList, frozenProductsList, setFrozenProductsList, neighborhoodData, setNeighborhoodData, orderFormSkuMap, setOrderFormSkuMap }) => {
       return (
         <div className="animate-in fade-in duration-300 space-y-6">
@@ -6219,6 +6953,7 @@ setTimeout(function(){
       const [checkNote, setCheckNote] = useState('');
       const [viewArchive, setViewArchive] = useState(null);
       const [bsBalance, setBsBalance] = useState({});
+      const [gvBalance, setGvBalance] = useState({});
 
       useEffect(() => {
         Promise.all([
@@ -6236,6 +6971,25 @@ setTimeout(function(){
           }));
           Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
           setBsBalance(map);
+        });
+      }, []);
+
+      useEffect(() => {
+        Promise.all([
+          db.from('gavash_shipments').select('*'),
+          db.from('gavash_withdrawals').select('*')
+        ]).then(([shRes, wdRes]) => {
+          const map = {};
+          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) + Number(pr.cartons || 0);
+          })));
+          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
+            const key = (pr.name || '') + '|' + (pr.kashrut || '');
+            map[key] = (map[key] || 0) - Number(pr.cartons || 0);
+          }));
+          Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
+          setGvBalance(map);
         });
       }, []);
 
@@ -6259,6 +7013,7 @@ setTimeout(function(){
           savedAt: new Date().toLocaleString('he-IL'),
           frozenStock: { ...frozenStock },
           bsBalance: { ...bsBalance },
+          gvBalance: { ...gvBalance },
           frozenSummary
         };
         setInventoryLog(prev => [snapshot, ...prev]);
@@ -6373,10 +7128,12 @@ setTimeout(function(){
                         {(() => {
                           const snap = entry.frozenStock || {};
                           const snapBs = entry.bsBalance || {};
-                          // איחוד מפתחות מ-frozenStock ומ-bsBalance
+                          const snapGv = entry.gvBalance || {};
+                          // איחוד מפתחות מ-frozenStock, bsBalance ו-gvBalance
                           const allKeys = new Set([
                             ...Object.keys(snap).filter(k => (snap[k] || 0) > 0),
-                            ...Object.keys(snapBs).filter(k => (snapBs[k] || 0) > 0)
+                            ...Object.keys(snapBs).filter(k => (snapBs[k] || 0) > 0),
+                            ...Object.keys(snapGv).filter(k => (snapGv[k] || 0) > 0)
                           ]);
                           const items = Array.from(allKeys).map(key => {
                               const [name, kashrut] = key.split('|');
@@ -6416,6 +7173,7 @@ setTimeout(function(){
                                             <th className="p-2 text-right font-bold">מוצר</th>
                                             <th className="p-2 text-center font-bold">🧊 מצב נתון</th>
                                             <th className="p-2 text-center font-bold">🏭 קירור לירוי</th>
+                                            <th className="p-2 text-center font-bold">🏭 קירור גב"ש</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 bg-white">
@@ -6425,6 +7183,8 @@ setTimeout(function(){
                                             const key = `${item.name}|${item.kashrut}`;
                                             const bsCar = snapBs[key] || 0;
                                             const totalCar = cartons + bsCar;
+                                            const gvCar = snapGv[key] || 0;
+                                            const totalCarGv = cartons + gvCar;
                                             return (
                                               <tr key={item.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                                                 <td className="p-2 font-bold text-gray-900">
@@ -6433,6 +7193,7 @@ setTimeout(function(){
                                                 </td>
                                                 <td className="p-2 text-center text-blue-700 font-black">{cartons}{remainder > 0 ? <span className="text-gray-400 font-normal">+{remainder}</span> : ''} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
                                                 <td className="p-2 text-center font-black text-emerald-700">{totalCar} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
+                                                <td className="p-2 text-center font-black text-teal-700">{totalCarGv} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
                                               </tr>
                                             );
                                           })}
@@ -6466,6 +7227,7 @@ setTimeout(function(){
     const ALL_PAGES = [
       { id: 'inventory',    label: 'מלאי סחורה כללי' },
       { id: 'beit-shemesh', label: 'קירור לירוי' },
+      { id: 'gavash',       label: 'קירור גב"ש' },
       { id: 'orders',       label: 'ניהול הזמנות' },
       { id: 'deliveries',   label: 'מערך משלוחים' },
       { id: 'contacts',     label: 'אנשי קשר' },
@@ -7097,6 +7859,7 @@ setTimeout(function(){
       const menuItems = [
         { id: 'inventory', label: 'מלאי סחורה - כללי', icon: Icons.Package },
         { id: 'beit-shemesh', label: 'קירור לירוי', icon: Icons.Package },
+        { id: 'gavash', label: 'קירור גב"ש', icon: Icons.Package },
         { id: 'orders', label: 'ניהול הזמנות', icon: Icons.ShoppingCart, badge: orders.filter(o => o.status === 'new').length.toString(), badgeColor: 'bg-red-500' },
         { id: 'deliveries', label: 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'contacts', label: 'אנשי קשר', icon: Icons.User },
@@ -7130,6 +7893,8 @@ setTimeout(function(){
             return <StatsView orders={orders} frozenStock={frozenStock} frozenProductsList={frozenProductsList} kashrutList={kashrutList} inventoryLog={inventoryLog} setInventoryLog={setInventoryLog} />;
           case 'beit-shemesh':
             return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
+          case 'gavash':
+            return <GavashView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
           case 'users':
