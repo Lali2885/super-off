@@ -1785,19 +1785,27 @@ ${htmlRows}
         const catOrder = (p) => PRODUCT_CATEGORIES.indexOf(p.category || getProductCategory(p.name));
 
         const W = 780;
-        const pageH = Math.floor(297 * W / 210); // ~1104px
-        const ROW_H = 21;
-        const HEADER_H = 58;
-        const THEAD_H = 40; // 2-row thead
-        const PAD = 26;
+        const pageH = Math.floor(297 * W / 210);
+        const ROW_H = 24;
+        const HEADER_H = 62;
+        const THEAD_H = 44;
+        const PAD = 28;
         const maxRowsPerPage = Math.floor((pageH - HEADER_H - THEAD_H - PAD) / ROW_H);
 
-        // Build flat sorted product list for a kashrut (regular + stickers)
-        const buildList = (kashrutName) => {
+        const chunk = (arr) => {
+          if (!arr.length) return [[]];
+          const res = [];
+          for (let i = 0; i < arr.length; i += maxRowsPerPage) res.push(arr.slice(i, i + maxRowsPerPage));
+          return res;
+        };
+
+        // Build sorted product list for a kashrut filtered by category list
+        const buildList = (kashrutName, filterCats, includeStickers = false) => {
           const prods = frozenProductsList
-            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === kashrutName)
+            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === kashrutName && filterCats.includes(p.category || getProductCategory(p.name)))
             .sort((a, b) => { const d = catOrder(a) - catOrder(b); return d !== 0 ? d : sortBySku(a, b); })
             .map(p => ({ name: p.name, sku: p.sku || '' }));
+          if (!includeStickers) return prods;
           const stickers = Object.keys(frozenStock)
             .filter(k => k.startsWith('STICKER|'))
             .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark, isSticker: true }; })
@@ -1806,44 +1814,49 @@ ${htmlRows}
           return [...prods, ...stickers];
         };
 
-        // Split list into chunks of maxRowsPerPage (each chunk = one column block)
-        const chunk = (arr) => {
-          if (!arr.length) return [[]];
-          const res = [];
-          for (let i = 0; i < arr.length; i += maxRowsPerPage) res.push(arr.slice(i, i + maxRowsPerPage));
-          return res;
+        // Build column blocks for all kashrut given category filter
+        const buildKashrutBlocks = (filterCats, includeStickers = false) => {
+          const blocks = [];
+          for (const k of kashrutList) {
+            chunk(buildList(k.name, filterCats, includeStickers))
+              .forEach(items => blocks.push({ label: k.name, color: k.color || '#1e293b', items }));
+          }
+          return blocks;
         };
 
-        // All kashrut blocks: [{label, color, items:[...]}]
-        const allBlocks = [];
-        for (const k of kashrutList) {
-          chunk(buildList(k.name)).forEach(items => allBlocks.push({ label: k.name, color: k.color || '#1e293b', items }));
-        }
+        // Page definitions
+        const PAGE_CATS = [
+          { cats: ['עוף', 'הודו', 'מתובלים', 'קפואים', 'טחונים'], title: 'עוף, הודו, מתובלים, טחונים', stickers: false },
+          { cats: ['בשר'],                                           title: 'בשר',                        stickers: true  },
+        ];
 
-        // Fish blocks (always page 2)
+        const pageBlocks = PAGE_CATS.map(p => buildKashrutBlocks(p.cats, p.stickers));
+
         const fishList = frozenProductsList
           .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי')
           .sort(sortBySku)
           .map(p => ({ name: p.name, sku: p.sku || '' }));
-        const fishBlocks = chunk(fishList);
+        const fishChunks = chunk(fishList);
+
+        // Max block count across all pages (for consistent column width)
+        const refN = Math.max(...pageBlocks.map(pb => pb.length), fishChunks.length);
 
         // Build HTML table for a set of column blocks
-        // refN = total number of blocks used for column width reference (for fish page to match kashrut page)
-        const buildTable = (blocks, refN = null) => {
+        const buildTable = (blocks, widthBasis) => {
           const n = blocks.length;
-          const widthBasis = refN || n; // width per block = 100% / widthBasis
+          const wB = widthBasis || n;
           const totalRows = Math.max(...blocks.map(b => b.items.length), 0);
-          const bp = 100 / widthBasis; // block width %
+          const bp = 100 / wB;
           const pw = (f) => `${(bp * f).toFixed(1)}%`;
-          const fs = widthBasis <= 2 ? 9 : widthBasis <= 4 ? 8 : 7;
+          const fs = wB <= 2 ? 11 : wB <= 4 ? 9 : 8;
 
           const thead = `<thead>
-            <tr>${blocks.map(b => `<th colspan="3" style="padding:3px 5px;text-align:center;font-size:${fs+1}px;font-weight:bold;color:#fff;background:${b.color};">${b.label}</th>`).join('')}</tr>
+            <tr>${blocks.map(b => `<th colspan="3" style="padding:4px 6px;text-align:center;font-size:${fs+2}px;font-weight:bold;color:#fff;background:${b.color || '#94a3b8'};">${b.label}</th>`).join('')}</tr>
             <tr style="background:#334155;color:#fff;font-size:${fs}px;">
-              ${blocks.map((b, bi) => `
-                <th style="padding:3px 4px;text-align:right;width:${pw(0.62)};">מוצר</th>
-                <th style="padding:3px 2px;text-align:center;width:${pw(0.18)};">מקט</th>
-                <th style="padding:3px 2px;text-align:center;width:${pw(0.20)};">כמות</th>
+              ${blocks.map(() => `
+                <th style="padding:4px 5px;text-align:right;width:${pw(0.62)};">מוצר</th>
+                <th style="padding:4px 3px;text-align:center;width:${pw(0.18)};">מקט</th>
+                <th style="padding:4px 3px;text-align:center;width:${pw(0.20)};">כמות</th>
               `).join('')}
             </tr>
           </thead>`;
@@ -1854,9 +1867,9 @@ ${htmlRows}
             const cells = blocks.map((b, bi) => {
               const p = b.items[ri] || null;
               const sep = bi < n - 1 ? 'border-left:2px solid #94a3b8;' : '';
-              if (!p) return `<td colspan="3" style="background:${ri%2===0?'#f8fafc':'#f1f5f9'};height:${ROW_H-2}px;${sep}"></td>`;
+              if (!p) return `<td colspan="3" style="background:${ri%2===0?'#f8fafc':'#f1f5f9'};height:${ROW_H-3}px;${sep}"></td>`;
               const nm = p.isSticker ? `${p.name} (${p.mark})` : p.name;
-              return `<td style="padding:3px 4px;font-size:${fs}px;">${nm}</td><td style="padding:3px 2px;text-align:center;font-size:${fs-1}px;color:#555;">${p.sku}</td><td style="padding:2px;border:1px solid #bbb;background:#fefce8;height:${ROW_H-4}px;${sep}"></td>`;
+              return `<td style="padding:4px 5px;font-size:${fs}px;">${nm}</td><td style="padding:4px 3px;text-align:center;font-size:${fs-1}px;color:#555;">${p.sku}</td><td style="padding:3px;border:1px solid #bbb;background:#fefce8;height:${ROW_H-5}px;${sep}"></td>`;
             }).join('');
             bodyRows.push(`<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">${cells}</tr>`);
           }
@@ -1864,7 +1877,7 @@ ${htmlRows}
         };
 
         const wrapPage = (headerHtml, tableInner) =>
-          `<div style="font-family:Arial,sans-serif;direction:rtl;padding:10px 12px;width:${W}px;">
+          `<div style="font-family:Arial,sans-serif;direction:rtl;padding:12px 14px;width:${W}px;">
             ${headerHtml}
             <table style="width:100%;border-collapse:collapse;">${tableInner}</table>
           </div>`;
@@ -1882,26 +1895,30 @@ ${htmlRows}
           doc.addImage(imgData, 'PNG', 0, 0, pw, (canvas.height * pw) / canvas.width);
         };
 
-        const header1 = `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:7px;">
-          <div style="font-size:13px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
-          <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
-        </div>`;
-        const header2 = `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0ea5e9;padding-bottom:5px;margin-bottom:7px;">
-          <div style="font-size:13px;font-weight:bold;color:#0ea5e9;">🐟 ספירת מלאי — דגים</div>
-          <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
-        </div>`;
+        const makeHeader = (title, color = '#000') =>
+          `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:8px;">
+            <div style="font-size:14px;font-weight:bold;color:${color};">📋 ספירת מלאי — ${title}</div>
+            <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
+          </div>`;
 
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-        const numKashrutBlocks = allBlocks.length;
-        await renderToDoc(wrapPage(header1, buildTable(allBlocks)), doc, 0);
-        if (fishList.length > 0) {
-          // Fish blocks padded with empty blocks to match kashrut page column width
-          const fishDisplayBlocks = [
-            ...fishBlocks.map(items => ({ label: 'דגים', color: '#0ea5e9', items })),
-            ...Array.from({ length: Math.max(0, numKashrutBlocks - fishBlocks.length) }, () => ({ label: '', color: '#e2e8f0', items: [] })),
-          ];
-          await renderToDoc(wrapPage(header2, buildTable(fishDisplayBlocks, numKashrutBlocks)), doc, 1);
+        let docPageIdx = 0;
+
+        for (const [i, pageDef] of PAGE_CATS.entries()) {
+          const blocks = pageBlocks[i];
+          // Pad with empty blocks to match refN column width
+          const padded = [...blocks, ...Array.from({ length: Math.max(0, refN - blocks.length) }, () => ({ label: '', color: '#e2e8f0', items: [] }))];
+          await renderToDoc(wrapPage(makeHeader(pageDef.title), buildTable(padded, refN)), doc, docPageIdx++);
         }
+
+        if (fishList.length > 0) {
+          const fishBlocks2 = [
+            ...fishChunks.map(items => ({ label: 'דגים', color: '#0ea5e9', items })),
+            ...Array.from({ length: Math.max(0, refN - fishChunks.length) }, () => ({ label: '', color: '#e2e8f0', items: [] })),
+          ];
+          await renderToDoc(wrapPage(makeHeader('דגים', '#0ea5e9'), buildTable(fishBlocks2, refN)), doc, docPageIdx++);
+        }
+
         doc.save(`ספירת-מלאי-${date}.pdf`);
       };
 
