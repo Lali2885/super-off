@@ -1828,12 +1828,14 @@ ${htmlRows}
         const fishBlocks = chunk(fishList);
 
         // Build HTML table for a set of column blocks
-        const buildTable = (blocks) => {
+        // refN = total number of blocks used for column width reference (for fish page to match kashrut page)
+        const buildTable = (blocks, refN = null) => {
           const n = blocks.length;
+          const widthBasis = refN || n; // width per block = 100% / widthBasis
           const totalRows = Math.max(...blocks.map(b => b.items.length), 0);
-          const bp = 100 / n; // block width %
+          const bp = 100 / widthBasis; // block width %
           const pw = (f) => `${(bp * f).toFixed(1)}%`;
-          const fs = n <= 2 ? 9 : n <= 4 ? 8 : 7;
+          const fs = widthBasis <= 2 ? 9 : widthBasis <= 4 ? 8 : 7;
 
           const thead = `<thead>
             <tr>${blocks.map(b => `<th colspan="3" style="padding:3px 5px;text-align:center;font-size:${fs+1}px;font-weight:bold;color:#fff;background:${b.color};">${b.label}</th>`).join('')}</tr>
@@ -1890,9 +1892,15 @@ ${htmlRows}
         </div>`;
 
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        const numKashrutBlocks = allBlocks.length;
         await renderToDoc(wrapPage(header1, buildTable(allBlocks)), doc, 0);
         if (fishList.length > 0) {
-          await renderToDoc(wrapPage(header2, buildTable(fishBlocks.map(items => ({ label: 'דגים', color: '#0ea5e9', items })))), doc, 1);
+          // Fish blocks padded with empty blocks to match kashrut page column width
+          const fishDisplayBlocks = [
+            ...fishBlocks.map(items => ({ label: 'דגים', color: '#0ea5e9', items })),
+            ...Array.from({ length: Math.max(0, numKashrutBlocks - fishBlocks.length) }, () => ({ label: '', color: '#e2e8f0', items: [] })),
+          ];
+          await renderToDoc(wrapPage(header2, buildTable(fishDisplayBlocks, numKashrutBlocks)), doc, 1);
         }
         doc.save(`ספירת-מלאי-${date}.pdf`);
       };
