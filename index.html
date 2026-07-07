@@ -1532,6 +1532,11 @@
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(p);
         });
+        // Always include fish (kashrut === 'כללי') that have stock
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && ((frozenStock[`${p.name}|כללי`] || 0) > 0 || (bsBalance[`${p.name}|כללי`] || 0) > 0)).forEach(p => {
+          if (!grouped['דגים']) grouped['דגים'] = [];
+          grouped['דגים'].push(p);
+        });
         const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
 
         const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1580,6 +1585,27 @@
           htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
         });
 
+        // מ.ל./מ.ל.ה section
+        const stickerExcelRows = Object.keys(frozenStock)
+          .filter(k => k.startsWith('STICKER|'))
+          .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark, key: k }; })
+          .filter(s => selectedNames.has(s.kashrut));
+        if (stickerExcelRows.length) {
+          htmlRows += `<tr><td colspan="${cs}" style="font-size:13pt;font-weight:bold;background:#4338ca;color:#fff;padding:6px 8px;">${esc('🏷️ מ.ל./מ.ל.ה')}</td></tr>`;
+          const stickerColH = withStorage ? ['מוצר', 'סימון', 'קרטונים', 'כולל אחסנה'] : ['מוצר', 'סימון', 'קרטונים'];
+          htmlRows += `<tr>${stickerColH.map(h => `<th style="background:#4f46e5;color:#fff;font-weight:bold;padding:5px 8px;text-align:center;border:1px solid #3730a3;">${esc(h)}</th>`).join('')}</tr>`;
+          stickerExcelRows.forEach((s, i) => {
+            const cartons = frozenStock[s.key] || 0;
+            const cells = [s.name, s.mark, cartons];
+            if (withStorage) cells.push(cartons + (bsBalance[s.key] || 0));
+            const bg = i % 2 === 0 ? '#ffffff' : '#f5f3ff';
+            htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
+              `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
+            ).join('')}</tr>`;
+          });
+          htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
+        }
+
         const sheetName = withStorage ? 'מלאי כולל אחסנה' : 'מצב נתון';
         const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
@@ -1616,6 +1642,11 @@ ${htmlRows}
           const cat = p.category || getProductCategory(p.name);
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(p);
+        });
+        // Always include fish (kashrut === 'כללי') that have stock
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && ((frozenStock[`${p.name}|כללי`] || 0) > 0 || (bsBalance[`${p.name}|כללי`] || 0) > 0)).forEach(p => {
+          if (!grouped['דגים']) grouped['דגים'] = [];
+          grouped['דגים'].push(p);
         });
         const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
 
@@ -1689,6 +1720,51 @@ ${htmlRows}
           doc.addImage(imgData, 'PNG', 0, 0, pageW, imgH);
         }
 
+        // מ.ל./מ.ל.ה section
+        const stickerPdfRows = Object.keys(frozenStock)
+          .filter(k => k.startsWith('STICKER|'))
+          .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark, key: k }; })
+          .filter(s => selectedNames.has(s.kashrut));
+        if (stickerPdfRows.length) {
+          const stickerRowsHtml = stickerPdfRows.map((s, i) => {
+            const cartons = frozenStock[s.key] || 0;
+            const cells = withStorage
+              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${cartons + (bsBalance[s.key] || 0)}</td>`
+              : `<td style="padding:6px 10px;text-align:center;font-weight:bold;">${cartons}</td>`;
+            return `<tr style="background:${i%2===0?'#ffffff':'#f5f3ff'};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:6px 10px;font-weight:bold;">${s.name}</td>
+              <td style="padding:6px 10px;text-align:center;color:#4f46e5;font-weight:bold;">${s.mark}</td>
+              ${cells}
+            </tr>`;
+          }).join('');
+          const stickerColH = withStorage ? ['קרטונים', 'כולל אחסנה'] : ['קרטונים'];
+          const stickerHtml = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:560px;">
+            <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #4338ca;">
+              <div style="font-size:13px;color:#64748b;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
+              <div style="font-size:22px;font-weight:bold;">🏷️ מ.ל./מ.ל.ה</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'כולל אחסנה' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="background:#4338ca;color:#ffffff;">
+                <th style="padding:7px 10px;text-align:right;">מוצר</th>
+                <th style="padding:7px 10px;text-align:center;">סימון</th>
+                ${stickerColH.map(h=>`<th style="padding:7px 10px;text-align:center;">${h}</th>`).join('')}
+              </tr></thead>
+              <tbody>${stickerRowsHtml}</tbody>
+            </table>
+          </div>`;
+          const stickerEl = document.createElement('div');
+          stickerEl.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+          stickerEl.innerHTML = stickerHtml;
+          document.body.appendChild(stickerEl);
+          const stickerCanvas = await window.html2canvas(stickerEl, { scale: 2, useCORS: true });
+          document.body.removeChild(stickerEl);
+          doc.addPage();
+          const stickerImg = stickerCanvas.toDataURL('image/png');
+          const pw = doc.internal.pageSize.getWidth();
+          doc.addImage(stickerImg, 'PNG', 0, 0, pw, (stickerCanvas.height * pw) / stickerCanvas.width);
+        }
+
         doc.save(`מלאי-סופר-עוף-${date}.pdf`);
       };
 
@@ -1710,6 +1786,11 @@ ${htmlRows}
             if (!grouped[cat]) grouped[cat] = [];
             grouped[cat].push(p);
           });
+        // Always include fish (kashrut === 'כללי')
+        frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי').forEach(p => {
+          if (!grouped['דגים']) grouped['דגים'] = [];
+          grouped['דגים'].push(p);
+        });
         const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
 
         // Build flat row definitions
@@ -1718,6 +1799,15 @@ ${htmlRows}
           rowDefs.push({ type: 'cat', cat });
           for (const p of [...grouped[cat]].sort(sortBySku))
             rowDefs.push({ type: 'prod', p });
+        }
+        // Add מ.ל./מ.ל.ה section
+        const stickerRowsCount = Object.keys(frozenStock)
+          .filter(k => k.startsWith('STICKER|'))
+          .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark }; })
+          .filter(s => selectedNames.has(s.kashrut));
+        if (stickerRowsCount.length) {
+          rowDefs.push({ type: 'cat', cat: '🏷️ מ.ל./מ.ל.ה' });
+          stickerRowsCount.forEach(s => rowDefs.push({ type: 'sticker', s }));
         }
 
         const theadHtml = `<thead><tr style="background:#1e293b;color:#ffffff;">
@@ -1732,6 +1822,16 @@ ${htmlRows}
           if (r.type === 'cat') {
             const emoji = CAT_EMOJI[r.cat] || '';
             return `<tr style="background:#e2e8f0;"><td colspan="5" style="padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #cbd5e1;">${emoji} ${r.cat}</td></tr>`;
+          }
+          if (r.type === 'sticker') {
+            const bg = prodIdx % 2 === 0 ? '#ffffff' : '#f5f3ff';
+            return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:8px 10px;font-weight:bold;">${r.s.name}</td>
+              <td style="padding:8px 10px;text-align:center;color:#64748b;font-size:11px;"></td>
+              <td style="padding:8px 10px;text-align:center;font-size:11px;color:#4f46e5;font-weight:bold;">${r.s.mark}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;background:#fffbeb;"></td>
+              <td style="padding:8px 10px;border:1px solid #e2e8f0;background:#f8fafc;"></td>
+            </tr>`;
           }
           const bg = prodIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
           return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">
