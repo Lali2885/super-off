@@ -1413,7 +1413,7 @@
       const [exportMode, setExportMode] = useState('current');
       const [countSheetCats, setCountSheetCats] = useState(() => {
         const obj = {};
-        [...PRODUCT_CATEGORIES, 'דגים', 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = true; });
+        [...PRODUCT_CATEGORIES, 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = false; });
         return obj;
       });
       const [bsBalance, setBsBalance] = useState({});
@@ -1795,11 +1795,12 @@ ${htmlRows}
             if (!countSheetCats[cat]) return;
             const key = `${cat}|${p.name}`;
             if (!prodIndex[key]) {
-              prodIndex[key] = { name: p.name, skuByK: {} };
+              prodIndex[key] = { name: p.name, sku: p.sku || '', skuByK: {} };
               if (!grouped[cat]) grouped[cat] = [];
               grouped[cat].push(prodIndex[key]);
             }
             prodIndex[key].skuByK[p.kashrut] = p.sku || '';
+            if (!prodIndex[key].sku && p.sku) prodIndex[key].sku = p.sku;
           });
 
         // Fish (כללי) — single fill column regardless of kashrut
@@ -1889,7 +1890,7 @@ ${htmlRows}
           } else {
             cells = kashrutNames.map(k => `
               <td style="padding:4px 7px;font-size:10px;">${r.name}</td>
-              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#666;">${r.skuByK?.[k] || ''}</td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#666;">${r.skuByK?.[k] || r.sku || ''}</td>
               <td style="padding:4px 3px;text-align:center;font-size:9px;color:#6d28d9;font-weight:bold;">${k}</td>
               <td style="padding:3px;border:1px solid #bbb;background:#fefce8;height:19px;"></td>
             `).join('');
@@ -1977,7 +1978,7 @@ ${htmlRows}
             </div>
             <div className="flex gap-2">
               {showExport && (
-                <button onClick={() => setExportModal(true)}
+                <button onClick={() => { setExportKashrut(() => { const obj = {}; kashrutList.forEach(k => { obj[k.name] = false; }); return obj; }); setExportModal(true); }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
                   <span>⬇️</span> ייצוא מלאי
                 </button>
@@ -2116,10 +2117,10 @@ ${htmlRows}
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs font-extrabold text-gray-500 uppercase">קטגוריות להדפסה</div>
-                        <button onClick={() => setCountSheetCats(prev => { const allTrue = Object.values(prev).every(Boolean); const obj = {}; [...PRODUCT_CATEGORIES, 'דגים', 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = !allTrue; }); return obj; })} className="text-xs text-gray-400 hover:text-gray-600 underline">הכל / כלום</button>
+                        <button onClick={() => setCountSheetCats(prev => { const allTrue = Object.values(prev).every(Boolean); const obj = {}; [...PRODUCT_CATEGORIES, 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = !allTrue; }); return obj; })} className="text-xs text-gray-400 hover:text-gray-600 underline">הכל / כלום</button>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {[...PRODUCT_CATEGORIES, 'דגים', 'מ.ל./מ.ל.ה'].map(cat => (
+                        {[...PRODUCT_CATEGORIES, 'מ.ל./מ.ל.ה'].map(cat => (
                           <label key={cat} className="cursor-pointer">
                             <input type="checkbox" className="hidden" checked={!!countSheetCats[cat]}
                               onChange={e => setCountSheetCats(p => ({ ...p, [cat]: e.target.checked }))} />
