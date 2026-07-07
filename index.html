@@ -1783,62 +1783,46 @@ ${htmlRows}
           return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
         };
 
-        // Build column groups: one per selected kashrut + optional fish group
-        const groups = selectedKashrut.map(k => ({
+        // Column groups: all kashrut from kashrutList + fish group
+        const groups = kashrutList.map(k => ({
           label: k.name, color: k.color || '#6d28d9', isFish: false,
         }));
-        if (countSheetCats['דגים']) groups.push({ label: 'דגים', color: '#0ea5e9', isFish: true });
+        groups.push({ label: 'דגים', color: '#0ea5e9', isFish: true });
         const numGroups = groups.length;
-        if (numGroups === 0) return;
         const totalCols = numGroups * 4;
         const W = 760;
 
-        // For each category + each group: get sorted product list
-        const activeCats = PRODUCT_CATEGORIES.filter(c => countSheetCats[c]);
-        // Per category, per group: list of products
-        const catGroupProds = {}; // cat -> [group0prods, group1prods, ...]
-        for (const cat of activeCats) {
-          catGroupProds[cat] = groups.map(g => {
-            if (g.isFish) {
-              // fish only in דגים category
-              return cat === 'דגים'
-                ? frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי').sort(sortBySku)
-                : [];
-            }
-            return frozenProductsList
-              .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === g.label && (p.category || getProductCategory(p.name)) === cat)
-              .sort(sortBySku);
-          });
-        }
+        const catOrder = (p) => PRODUCT_CATEGORIES.indexOf(p.category || getProductCategory(p.name));
 
-        // Stickers per kashrut group
-        const stickersByGroup = groups.map(g => {
-          if (!countSheetCats['מ.ל./מ.ל.ה'] || g.isFish) return [];
-          return Object.keys(frozenStock)
+        // Flat product list per group, sorted by category then SKU — no category headers
+        const groupProducts = groups.map(g => {
+          if (g.isFish) {
+            return frozenProductsList
+              .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי')
+              .sort(sortBySku);
+          }
+          return frozenProductsList
+            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === g.label)
+            .sort((a, b) => { const d = catOrder(a) - catOrder(b); return d !== 0 ? d : sortBySku(a, b); });
+        });
+
+        // Stickers appended to each kashrut group
+        groups.forEach((g, gi) => {
+          if (g.isFish) return;
+          const stickers = Object.keys(frozenStock)
             .filter(k => k.startsWith('STICKER|'))
-            .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark }; })
+            .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark, isSticker: true }; })
             .filter(s => s.kashrut === g.label)
             .sort((a, b) => a.name.localeCompare(b.name));
+          groupProducts[gi].push(...stickers);
         });
-        const hasStickers = stickersByGroup.some(sg => sg.length > 0);
 
-        // Build render units: category header rows + product rows (zipped across groups)
+        const maxRows = Math.max(...groupProducts.map(gp => gp.length), 0);
+
+        // Build render units — only product rows, no category headers
         const renderUnits = [];
-        for (const cat of activeCats) {
-          const groupLists = catGroupProds[cat];
-          const maxLen = Math.max(...groupLists.map(gl => gl.length));
-          if (maxLen === 0) continue;
-          renderUnits.push({ type: 'cat', cat });
-          for (let ri = 0; ri < maxLen; ri++) {
-            renderUnits.push({ type: 'prodrow', cells: groupLists.map(gl => gl[ri] || null) });
-          }
-        }
-        if (hasStickers) {
-          const maxStickerLen = Math.max(...stickersByGroup.map(sg => sg.length));
-          renderUnits.push({ type: 'cat', cat: 'מ.ל./מ.ל.ה' });
-          for (let ri = 0; ri < maxStickerLen; ri++) {
-            renderUnits.push({ type: 'stickerrow', cells: stickersByGroup.map(sg => sg[ri] || null) });
-          }
+        for (let ri = 0; ri < maxRows; ri++) {
+          renderUnits.push({ type: 'prodrow', cells: groupProducts.map(gp => gp[ri] || null) });
         }
 
         // Thead
@@ -1860,10 +1844,12 @@ ${htmlRows}
         const prodCells = (p, g, gi, isLast) => {
           if (!p) return emptyCells(gi);
           const fillStyle = `padding:2px;border:1px solid #bbb;background:#fefce8;height:18px;${isLast ? '' : 'border-left:2px solid #94a3b8;'}`;
+          const kashrutLabel = g.isFish ? '' : g.label;
+          const kashrutColor = g.isFish ? '' : g.color;
           return `
             <td style="padding:3px 5px;font-size:9px;border-left:none;">${p.name}</td>
             <td style="padding:3px 2px;text-align:center;font-size:8px;color:#666;">${p.sku || ''}</td>
-            <td style="padding:3px 2px;text-align:center;font-size:8px;color:${g.color};font-weight:bold;">${g.label}</td>
+            <td style="padding:3px 2px;text-align:center;font-size:8px;color:${kashrutColor};font-weight:bold;">${kashrutLabel}</td>
             <td style="${fillStyle}"></td>
           `;
         };
@@ -1880,15 +1866,10 @@ ${htmlRows}
         };
 
         const unitToHtml = (u, idx) => {
-          if (u.type === 'cat') {
-            const emoji = CAT_EMOJI[u.cat] || '🏷️';
-            return `<tr style="background:#d1d5db;"><td colspan="${totalCols}" style="padding:3px 8px;font-weight:bold;font-size:10px;border-bottom:1px solid #9ca3af;">${emoji} ${u.cat}</td></tr>`;
-          }
           const bg = idx % 2 === 0 ? '#fff' : '#f9fafb';
           const cells = u.cells.map((cell, gi) => {
-            const isLast = gi === numGroups - 1;
-            if (u.type === 'stickerrow') return stickerCells(cell, groups[gi], gi, isLast);
-            return prodCells(cell, groups[gi], gi, isLast);
+            if (cell?.isSticker) return stickerCells(cell, groups[gi], gi, gi === numGroups - 1);
+            return prodCells(cell, groups[gi], gi, gi === numGroups - 1);
           }).join('');
           return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">${cells}</tr>`;
         };
@@ -2086,7 +2067,8 @@ ${htmlRows}
                   </div>
                   )}
 
-                  {/* כשרויות */}
+                  {/* כשרויות — רק בייצוא רגיל, לא בטופס ספירה */}
+                  {exportMode !== 'countSheet' && (
                   <div>
                     <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">כשרויות לכלול</div>
                     <div className="flex flex-wrap gap-2">
@@ -2104,33 +2086,13 @@ ${htmlRows}
                       ))}
                     </div>
                   </div>
-
-                  {/* קטגוריות — רק בספירת מלאי */}
-                  {exportMode === 'countSheet' && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs font-extrabold text-gray-500 uppercase">קטגוריות להדפסה</div>
-                        <button onClick={() => setCountSheetCats(prev => { const allTrue = Object.values(prev).every(Boolean); const obj = {}; [...PRODUCT_CATEGORIES, 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = !allTrue; }); return obj; })} className="text-xs text-gray-400 hover:text-gray-600 underline">הכל / כלום</button>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[...PRODUCT_CATEGORIES, 'מ.ל./מ.ל.ה'].map(cat => (
-                          <label key={cat} className="cursor-pointer">
-                            <input type="checkbox" className="hidden" checked={!!countSheetCats[cat]}
-                              onChange={e => setCountSheetCats(p => ({ ...p, [cat]: e.target.checked }))} />
-                            <span className={`inline-block px-2.5 py-1 rounded-lg border-2 font-bold text-xs transition-all ${countSheetCats[cat] ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-400 border-gray-200'}`}>
-                              {CAT_EMOJI[cat] || '🏷️'} {cat}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
                   )}
                 </div>
 
                 <div className="p-4 border-t border-gray-100 flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setExportModal(false)}>ביטול</Button>
                   <button onClick={runExport}
-                    disabled={(exportMode !== 'countSheet' && !exportFormat) || selectedKashrut.length === 0}
+                    disabled={exportMode !== 'countSheet' && (!exportFormat || selectedKashrut.length === 0)}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white bg-gray-800 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                     {exportMode === 'countSheet' ? '📋 הורד ספירת מלאי' : exportFormat === 'excel' ? '📊 הורד קובץ' : '📄 הורד קובץ'}
                   </button>
