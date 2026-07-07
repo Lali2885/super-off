@@ -1512,7 +1512,8 @@
 
       const runExport = () => {
         const date = new Date().toLocaleDateString('he-IL').replace(/\//g, '-');
-        if (exportFormat === 'excel') doExcelExport(date);
+        if (exportMode === 'countSheet') doCountSheetPdf(date);
+        else if (exportFormat === 'excel') doExcelExport(date);
         else doPdfExport(date);
         setExportModal(false);
       };
@@ -1691,6 +1692,141 @@ ${htmlRows}
         doc.save(`מלאי-סופר-עוף-${date}.pdf`);
       };
 
+      const doCountSheetPdf = async (date) => {
+        const { jsPDF } = window.jspdf;
+        const selectedNames = new Set(selectedKashrut.map(k => k.name));
+        const sortBySku = (a, b) => {
+          const sa = a.sku || '', sb = b.sku || '';
+          if (!sa && !sb) return 0; if (!sa) return 1; if (!sb) return -1;
+          return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+        };
+
+        // Build grouped data
+        const grouped = {};
+        frozenProductsList
+          .filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut))
+          .forEach(p => {
+            const cat = p.category || getProductCategory(p.name);
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(p);
+          });
+        const cats = PRODUCT_CATEGORIES.filter(c => grouped[c]?.length);
+
+        // Build flat row definitions
+        const rowDefs = [];
+        for (const cat of cats) {
+          rowDefs.push({ type: 'cat', cat });
+          for (const p of [...grouped[cat]].sort(sortBySku))
+            rowDefs.push({ type: 'prod', p });
+        }
+
+        const theadHtml = `<thead><tr style="background:#1e293b;color:#ffffff;">
+          <th style="padding:7px 10px;text-align:right;width:38%;">מוצר</th>
+          <th style="padding:7px 10px;text-align:center;width:12%;">מקט</th>
+          <th style="padding:7px 10px;text-align:center;width:13%;">כשרות</th>
+          <th style="padding:7px 10px;text-align:center;width:19%;">קרטונים</th>
+          <th style="padding:7px 10px;text-align:center;width:18%;">הערות</th>
+        </tr></thead>`;
+
+        const rowToHtml = (r, prodIdx) => {
+          if (r.type === 'cat') {
+            const emoji = CAT_EMOJI[r.cat] || '';
+            return `<tr style="background:#e2e8f0;"><td colspan="5" style="padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #cbd5e1;">${emoji} ${r.cat}</td></tr>`;
+          }
+          const bg = prodIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
+          return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">
+            <td style="padding:8px 10px;font-weight:bold;">${r.p.name}</td>
+            <td style="padding:8px 10px;text-align:center;color:#64748b;font-size:11px;">${r.p.sku || ''}</td>
+            <td style="padding:8px 10px;text-align:center;font-size:11px;color:#7c3aed;font-weight:bold;">${r.p.kashrut}</td>
+            <td style="padding:8px 10px;border:1px solid #cbd5e1;background:#fffbeb;"></td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;background:#f8fafc;"></td>
+          </tr>`;
+        };
+
+        // Measure actual row heights from DOM
+        const measureEl = document.createElement('div');
+        measureEl.style.cssText = 'position:fixed;top:-99999px;right:0;visibility:hidden;width:616px;font-family:Arial,sans-serif;';
+        let pi = 0;
+        measureEl.innerHTML = `<table style="font-size:12px;border-collapse:collapse;width:100%;"><tbody>${rowDefs.map(r => rowToHtml(r, r.type === 'prod' ? pi++ : 0)).join('')}</tbody></table>`;
+        document.body.appendChild(measureEl);
+        await new Promise(r => setTimeout(r, 50));
+        const measuredHeights = Array.from(measureEl.querySelectorAll('tr')).map(tr => tr.offsetHeight);
+        document.body.removeChild(measureEl);
+
+        // A4 in CSS px: container=616px fills page width 210mm → 1px = 210/616 mm → pageH = 297*616/210 ≈ 871px
+        const pageHeightPx = Math.floor(297 * 616 / 210);
+        const FIRST_HEADER_PX = 95;  // title block
+        const CONT_HEADER_PX  = 45;  // continuation mini-header
+        const THEAD_PX        = 36;  // table header row
+        const PADDING_PX      = 40;  // top+bottom padding
+
+        // Split row definitions into pages at row boundaries
+        const pages = [];
+        let i = 0, isFirst = true;
+        while (i < rowDefs.length) {
+          const headerPx = isFirst ? FIRST_HEADER_PX : CONT_HEADER_PX;
+          const available = pageHeightPx - PADDING_PX - headerPx - THEAD_PX;
+          let used = 0, start = i;
+          while (i < rowDefs.length) {
+            const h = measuredHeights[i] || 36;
+            if (used + h > available && i > start) break;
+            used += h;
+            i++;
+          }
+          pages.push({ start, end: i, isFirst });
+          isFirst = false;
+        }
+
+        // Render each page as its own canvas
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        const totalPages = pages.length;
+
+        for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+          const { start, end, isFirst: first } = pages[pageIdx];
+          let prodCounter = 0;
+          const rowsHtml = rowDefs.slice(start, end).map(r => rowToHtml(r, r.type === 'prod' ? prodCounter++ : 0)).join('');
+
+          const headerHtml = first
+            ? `<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:3px solid #1e293b;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                  <div style="font-size:22px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
+                  <div style="font-size:12px;color:#64748b;margin-top:4px;">${selectedKashrut.map(k=>k.name).join(' | ')}</div>
+                </div>
+                <div style="text-align:left;">
+                  <div style="font-size:12px;color:#64748b;">תאריך: <strong>${date}</strong></div>
+                  <div style="font-size:12px;color:#64748b;margin-top:8px;">נספר ע"י: _______________</div>
+                </div>
+              </div>`
+            : `<div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">
+                <div style="font-size:13px;font-weight:bold;color:#475569;">📋 ספירת מלאי — המשך</div>
+                <div style="font-size:11px;color:#94a3b8;">עמוד ${pageIdx+1} מתוך ${totalPages} | ${date}</div>
+              </div>`;
+
+          const html = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:20px 28px;width:560px;">
+            ${headerHtml}
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              ${theadHtml}
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>`;
+
+          const container = document.createElement('div');
+          container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+          container.innerHTML = html;
+          document.body.appendChild(container);
+          const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
+          document.body.removeChild(container);
+
+          if (pageIdx > 0) doc.addPage();
+          const imgData = canvas.toDataURL('image/png');
+          const pageW = doc.internal.pageSize.getWidth();
+          const imgH = (canvas.height * pageW) / canvas.width;
+          doc.addImage(imgData, 'PNG', 0, 0, pageW, imgH);
+        }
+
+        doc.save(`ספירת-מלאי-${date}.pdf`);
+      };
+
       return (
         <div className="animate-in fade-in duration-300">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
@@ -1787,7 +1923,21 @@ ${htmlRows}
                 </div>
 
                 <div className="p-5 space-y-5">
-                  {/* פורמט */}
+                  {/* תצוגת ייצוא */}
+                  <div>
+                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">תצוגת ייצוא</div>
+                    <div className="flex flex-wrap gap-2">
+                      {[['current','🧊 מצב נתון'],['withStorage','🏭 כולל אחסנה'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
+                        <label key={val} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportMode === val ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                          <input type="radio" className="hidden" checked={exportMode === val} onChange={() => setExportMode(val)} />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* פורמט קובץ — רק כשלא ספירת מלאי */}
+                  {exportMode !== 'countSheet' && (
                   <div>
                     <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">פורמט קובץ</div>
                     <div className="flex gap-3">
@@ -1799,19 +1949,7 @@ ${htmlRows}
                       ))}
                     </div>
                   </div>
-
-                  {/* תצוגת ייצוא */}
-                  <div>
-                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">תצוגת ייצוא</div>
-                    <div className="flex gap-3">
-                      {[['current','🧊 מצב נתון'],['withStorage','🏭 כולל אחסנה']].map(([val, label]) => (
-                        <label key={val} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportMode === val ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                          <input type="radio" className="hidden" checked={exportMode === val} onChange={() => setExportMode(val)} />
-                          {label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                  )}
 
                   {/* כשרויות */}
                   <div>
@@ -1836,9 +1974,9 @@ ${htmlRows}
                 <div className="p-4 border-t border-gray-100 flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setExportModal(false)}>ביטול</Button>
                   <button onClick={runExport}
-                    disabled={!exportFormat || selectedKashrut.length === 0}
+                    disabled={(exportMode !== 'countSheet' && !exportFormat) || selectedKashrut.length === 0}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white bg-gray-800 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                    {exportFormat === 'excel' ? '📊' : '📄'} הורד קובץ
+                    {exportMode === 'countSheet' ? '📋 הורד ספירת מלאי' : exportFormat === 'excel' ? '📊 הורד קובץ' : '📄 הורד קובץ'}
                   </button>
                 </div>
               </div>
