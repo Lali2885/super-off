@@ -1785,37 +1785,47 @@ ${htmlRows}
           return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
         };
 
-        // Build unique products per category (deduplicated by name)
-        const grouped = {};
-        const seen = {};
+        // Build unique products per category, with SKU per kashrut
+        const grouped = {}; // cat -> [{name, skuByK: {kashrut: sku}}]
+        const prodIndex = {};
         frozenProductsList
           .filter(p => p.storageTypes?.includes('frozen') && kashrutNames.includes(p.kashrut))
           .forEach(p => {
             const cat = p.category || getProductCategory(p.name);
             if (!countSheetCats[cat]) return;
-            if (!grouped[cat]) grouped[cat] = [];
-            if (!seen[`${cat}|${p.name}`]) { seen[`${cat}|${p.name}`] = true; grouped[cat].push({ name: p.name, sku: p.sku }); }
+            const key = `${cat}|${p.name}`;
+            if (!prodIndex[key]) {
+              prodIndex[key] = { name: p.name, skuByK: {} };
+              if (!grouped[cat]) grouped[cat] = [];
+              grouped[cat].push(prodIndex[key]);
+            }
+            prodIndex[key].skuByK[p.kashrut] = p.sku || '';
           });
 
-        // Fish (כללי) — single column
+        // Fish (כללי) — single fill column regardless of kashrut
         if (countSheetCats['דגים']) {
           frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי').forEach(p => {
-            if (!grouped['דגים']) grouped['דגים'] = [];
-            if (!seen[`דגים|${p.name}`]) { seen[`דגים|${p.name}`] = true; grouped['דגים'].push({ name: p.name, sku: p.sku, isFish: true }); }
+            const key = `דגים|${p.name}`;
+            if (!prodIndex[key]) {
+              prodIndex[key] = { name: p.name, skuByK: { 'כללי': p.sku || '' }, isFish: true };
+              if (!grouped['דגים']) grouped['דגים'] = [];
+              grouped['דגים'].push(prodIndex[key]);
+            }
           });
         }
 
         const allCats = [...PRODUCT_CATEGORIES, 'דגים'];
         const cats = allCats.filter(c => grouped[c]?.length);
 
-        // Stickers — group by name+mark (one row per unique product+mark)
+        // Stickers
         const stickerMap = {};
         if (countSheetCats['מ.ל./מ.ל.ה']) {
           Object.keys(frozenStock).filter(k => k.startsWith('STICKER|')).forEach(k => {
             const [, name, kashrut, mark] = k.split('|');
             if (!kashrutNames.includes(kashrut)) return;
             const key = `${name}|${mark}`;
-            if (!stickerMap[key]) stickerMap[key] = { name, mark };
+            if (!stickerMap[key]) stickerMap[key] = { name, mark, kashruts: new Set() };
+            stickerMap[key].kashruts.add(kashrut);
           });
         }
         const stickerList = Object.values(stickerMap);
@@ -1824,26 +1834,33 @@ ${htmlRows}
         const rowDefs = [];
         for (const cat of cats) {
           rowDefs.push({ type: 'cat', cat });
-          [...grouped[cat]].sort(sortBySku).forEach(p => rowDefs.push({ type: 'prod', name: p.name, isFish: !!p.isFish }));
+          [...grouped[cat]].sort(sortBySku).forEach(p => rowDefs.push({ type: 'prod', ...p }));
         }
         if (stickerList.length) {
           rowDefs.push({ type: 'cat', cat: 'מ.ל./מ.ל.ה' });
           stickerList.forEach(s => rowDefs.push({ type: 'sticker', name: s.name, mark: s.mark }));
         }
 
-        const totalCols = 1 + numK + 1; // מוצר + כשרויות + הערות
-        const W = 740;
+        // Layout: each kashrut block = מוצר | מקט | כשרות | כמות
+        // Total cols = numK * 4
+        const totalCols = numK * 4;
+        const W = 760;
 
-        // Column widths
-        const kColW = numK === 1 ? '22%' : numK === 2 ? '17%' : '13%';
-        const notesW = '15%';
-        const prodW = `calc(100% - ${numK * (numK === 2 ? 17 : numK === 1 ? 22 : 13)}% - ${notesW})`;
+        // Per-kashrut column widths (% each block)
+        // Block = 100% / numK. Within block: prod=45%, sku=15%, kashrut=20%, qty=20%
+        const blockPct = 100 / numK;
+        const mkv = (pct) => `${(blockPct * pct / 100).toFixed(1)}%`;
 
-        const theadHtml = `<thead><tr style="background:#1e293b;color:#fff;font-size:10px;">
-          <th style="padding:5px 8px;text-align:right;width:${prodW};">מוצר</th>
-          ${kashrutNames.map(k => `<th style="padding:5px 4px;text-align:center;width:${kColW};">${k}</th>`).join('')}
-          <th style="padding:5px 4px;text-align:center;width:${notesW};">הערות</th>
-        </tr></thead>`;
+        const theadHtml = `<thead>
+          <tr style="background:#1e293b;color:#fff;font-size:10px;">
+            ${kashrutNames.map((k, ki) => `
+              <th style="padding:5px 7px;text-align:right;width:${mkv(44)};">מוצר</th>
+              <th style="padding:5px 3px;text-align:center;width:${mkv(14)};">מקט</th>
+              <th style="padding:5px 3px;text-align:center;width:${mkv(18)};">כשרות</th>
+              <th style="padding:5px 3px;text-align:center;width:${mkv(24)};">${ki < kashrutNames.length - 1 ? 'כמות' : 'ריקה'}</th>
+            `).join('')}
+          </tr>
+        </thead>`;
 
         const rowToHtml = (r, idx) => {
           if (r.type === 'cat') {
@@ -1851,32 +1868,50 @@ ${htmlRows}
             return `<tr style="background:#d1d5db;"><td colspan="${totalCols}" style="padding:4px 8px;font-weight:bold;font-size:11px;border-bottom:1px solid #9ca3af;">${emoji} ${r.cat}</td></tr>`;
           }
           const bg = idx % 2 === 0 ? '#fff' : '#f9fafb';
-          const fillCols = r.isFish
-            ? `<td colspan="${numK}" style="padding:4px;border:1px solid #aaa;background:#fefce8;height:20px;"></td>`
-            : kashrutNames.map(() => `<td style="padding:4px;border:1px solid #aaa;background:#fefce8;height:20px;"></td>`).join('');
-          const label = r.type === 'sticker'
-            ? `${r.name} <span style="color:#6366f1;font-size:9px;">(${r.mark})</span>`
-            : r.name;
-          return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">
-            <td style="padding:4px 8px;font-size:11px;">${label}</td>
-            ${fillCols}
-            <td style="padding:4px;border:1px solid #ddd;height:20px;"></td>
-          </tr>`;
+
+          let cells = '';
+          if (r.type === 'sticker') {
+            // sticker: show in each kashrut block only if that kashrut has this sticker
+            cells = kashrutNames.map(k => `
+              <td style="padding:4px 7px;font-size:10px;">${r.name}</td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#666;"></td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#6d28d9;font-weight:bold;">${r.mark}</td>
+              <td style="padding:3px;border:1px solid #bbb;background:#fefce8;height:19px;"></td>
+            `).join('');
+          } else if (r.isFish) {
+            // Fish: show once spanning all kashrut blocks (single fill cell)
+            cells = `
+              <td style="padding:4px 7px;font-size:10px;">${r.name}</td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#666;">${r.skuByK?.['כללי'] || ''}</td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#6d28d9;font-weight:bold;">כללי</td>
+              <td colspan="${numK * 4 - 3}" style="padding:3px;border:1px solid #bbb;background:#fefce8;height:19px;"></td>
+            `;
+          } else {
+            cells = kashrutNames.map(k => `
+              <td style="padding:4px 7px;font-size:10px;">${r.name}</td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#666;">${r.skuByK?.[k] || ''}</td>
+              <td style="padding:4px 3px;text-align:center;font-size:9px;color:#6d28d9;font-weight:bold;">${k}</td>
+              <td style="padding:3px;border:1px solid #bbb;background:#fefce8;height:19px;"></td>
+            `).join('');
+          }
+
+          return `<tr style="background:${bg};border-bottom:1px solid #e5e7eb;">${cells}</tr>`;
         };
 
         // Measure heights
+        const W_MEASURE = W;
         const measureEl = document.createElement('div');
-        measureEl.style.cssText = `position:fixed;top:-99999px;right:0;visibility:hidden;width:${W}px;font-family:Arial,sans-serif;`;
+        measureEl.style.cssText = `position:fixed;top:-99999px;right:0;visibility:hidden;width:${W_MEASURE}px;font-family:Arial,sans-serif;`;
         let pi = 0;
-        measureEl.innerHTML = `<table style="font-size:11px;border-collapse:collapse;width:100%;"><tbody>${rowDefs.map(r => rowToHtml(r, r.type !== 'cat' ? pi++ : -1)).join('')}</tbody></table>`;
+        measureEl.innerHTML = `<table style="font-size:10px;border-collapse:collapse;width:100%;"><tbody>${rowDefs.map(r => rowToHtml(r, r.type !== 'cat' ? pi++ : -1)).join('')}</tbody></table>`;
         document.body.appendChild(measureEl);
         await new Promise(r => setTimeout(r, 60));
         const measuredHeights = Array.from(measureEl.querySelectorAll('tr')).map(tr => tr.offsetHeight);
         document.body.removeChild(measureEl);
 
-        // A4 page splitting: W px wide, height = 297 * W / 210
+        // A4 portrait: W px → height = 297 * W / 210
         const pageH = Math.floor(297 * W / 210);
-        const FIRST_H = 60; const CONT_H = 32; const TH_H = 26; const PAD = 36;
+        const FIRST_H = 55; const CONT_H = 30; const TH_H = 24; const PAD = 32;
 
         const pages = [];
         let i = 0, isFirst = true;
@@ -1884,7 +1919,7 @@ ${htmlRows}
           const avail = pageH - PAD - (isFirst ? FIRST_H : CONT_H) - TH_H;
           let used = 0, start = i;
           while (i < rowDefs.length) {
-            const h = measuredHeights[i] || 24;
+            const h = measuredHeights[i] || 23;
             if (used + h > avail && i > start) break;
             used += h; i++;
           }
@@ -1901,18 +1936,18 @@ ${htmlRows}
           const rowsHtml = rowDefs.slice(start, end).map(r => rowToHtml(r, r.type !== 'cat' ? pc++ : -1)).join('');
 
           const headerHtml = first
-            ? `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px;">
-                <div style="font-size:14px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
+            ? `<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:7px;">
+                <div style="font-size:13px;font-weight:bold;">📋 ספירת מלאי — מקררים</div>
                 <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
               </div>`
-            : `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #999;padding-bottom:3px;margin-bottom:6px;">
-                <div style="font-size:11px;font-weight:bold;">📋 המשך ספירת מלאי</div>
+            : `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #999;padding-bottom:3px;margin-bottom:5px;">
+                <div style="font-size:11px;font-weight:bold;">📋 המשך</div>
                 <div style="font-size:9px;color:#666;">עמוד ${pageIdx+1}/${totalPages} | ${date}</div>
               </div>`;
 
-          const html = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:12px 18px;width:${W}px;">
+          const html = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:10px 16px;width:${W}px;">
             ${headerHtml}
-            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <table style="width:100%;border-collapse:collapse;font-size:10px;">
               ${theadHtml}<tbody>${rowsHtml}</tbody>
             </table>
           </div>`;
