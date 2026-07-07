@@ -844,8 +844,8 @@
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={simple ? 1 : 2}>כניסה למלאי</th>}
             {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={simple ? 1 : 2}>משיכה ממלאי</th>}
             <th className="p-2.5 font-black text-base text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }} colSpan={simple ? 1 : 2}>מצב נתון</th>
-            {!simple && <th className="p-2.5 font-black text-base text-center bg-indigo-100 text-indigo-800" style={{ borderRight: '1px solid #c7d2fe', borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
-            {!simple && <th className="p-2.5 font-black text-base text-center bg-teal-100 text-teal-800" style={{ borderBottom: '1px solid #99f6e4' }} colSpan={1}>קירור גב"ש</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderRight: '1px solid #c7d2fe', borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800" style={{ borderBottom: '1px solid #99f6e4' }} colSpan={1}>קירור גב"ש</th>}
           </tr>
           <tr>
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
@@ -854,8 +854,8 @@
             {showWithdrawal && !simple && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             <th className="p-2.5 font-black text-base text-center bg-gray-100 text-gray-400" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>מגשים</th>
             {!simple && <th className="p-2.5 font-black text-base text-center bg-blue-50 text-blue-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            {!simple && <th className="p-2.5 font-black text-base text-center bg-indigo-50 text-indigo-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            {!simple && <th className="p-2.5 font-black text-base text-center bg-teal-50 text-teal-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-teal-50 text-teal-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
           </tr>
         </thead>
       );
@@ -922,12 +922,12 @@
             )}
             {!simple && (
               <td className="p-2.5 text-center bg-indigo-50/40">
-                <span className="font-black text-indigo-700 text-2xl">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
+                <span className="font-black text-indigo-700 text-lg">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
               </td>
             )}
             {!simple && (
               <td className="p-2.5 text-center bg-teal-50/40">
-                <span className="font-black text-teal-700 text-2xl">{gvBalance[`${p.name}|${kashrut}`] || 0}</span>
+                <span className="font-black text-teal-700 text-lg">{gvBalance[`${p.name}|${kashrut}`] || 0}</span>
               </td>
             )}
           </tr>
@@ -1067,8 +1067,8 @@
                             <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e' }}>כניסה (קרטונים)</th>
                             <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
                             <th className="p-2.5 font-black text-base text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון (קרטונים)</th>
-                            <th className="p-2.5 font-black text-base text-center bg-indigo-100 text-indigo-800">קירור לירוי (קרטונים)</th>
-                            <th className="p-2.5 font-black text-base text-center bg-teal-100 text-teal-800">קירור גב"ש (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">קירור לירוי (קרטונים)</th>
+                            <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800">קירור גב"ש (קרטונים)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -1098,10 +1098,10 @@
                                   <span className="font-black text-blue-700 text-2xl">{cartons}</span>
                                 </td>
                                 <td className="p-2.5 text-center bg-indigo-50/40">
-                                  <span className="font-black text-indigo-700 text-2xl">{bsBalance[p.key] || 0}</span>
+                                  <span className="font-black text-indigo-700 text-lg">{bsBalance[p.key] || 0}</span>
                                 </td>
                                 <td className="p-2.5 text-center bg-teal-50/40">
-                                  <span className="font-black text-teal-700 text-2xl">{gvBalance[p.key] || 0}</span>
+                                  <span className="font-black text-teal-700 text-lg">{gvBalance[p.key] || 0}</span>
                                 </td>
                               </tr>
                             );
@@ -1280,8 +1280,8 @@
             <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e' }}>כניסה (קרטונים)</th>
             <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444' }}>משיכה (קרטונים)</th>
             <th className="p-2.5 font-black text-base text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6' }}>מצב נתון</th>
-            <th className="p-2.5 font-black text-base text-center bg-indigo-100 text-indigo-800">קירור לירוי</th>
-            <th className="p-2.5 font-black text-base text-center bg-teal-100 text-teal-800">קירור גב"ש</th>
+            <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800">קירור לירוי</th>
+            <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800">קירור גב"ש</th>
           </tr>
         </thead>
       );
@@ -1313,10 +1313,10 @@
               <span className="font-black text-blue-700 text-2xl">{cartons}</span>
             </td>
             <td className="p-2.5 text-center bg-indigo-50/40">
-              <span className="font-black text-indigo-700 text-2xl">{bsBalance[key] || 0}</span>
+              <span className="font-black text-indigo-700 text-lg">{bsBalance[key] || 0}</span>
             </td>
             <td className="p-2.5 text-center bg-teal-50/40">
-              <span className="font-black text-teal-700 text-2xl">{gvBalance[key] || 0}</span>
+              <span className="font-black text-teal-700 text-lg">{gvBalance[key] || 0}</span>
             </td>
           </tr>
         );
@@ -1564,11 +1564,15 @@
       };
 
       const doExcelExport = (date) => {
-        const withStorage = exportMode === 'withStorage';
+        const withLeroy = exportMode === 'withStorage';
+        const withGavash = exportMode === 'withGavash';
+        const withStorage = withLeroy || withGavash;
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
-        const numCols = withStorage ? 6 : 4;
-        const colHeaders = withStorage
-          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור לירוי', 'קירור גב"ש']
+        const numCols = withStorage ? 5 : 4;
+        const colHeaders = withLeroy
+          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור לירוי']
+          : withGavash
+          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור גב"ש']
           : ['מוצר', 'מקט', 'מגשים', 'קרטונים'];
 
         const grouped = {};
@@ -1589,7 +1593,7 @@
 
         let htmlRows = '';
         htmlRows += `<tr><td colspan="${cs}" style="font-size:14pt;font-weight:bold;background:#1e293b;color:#fff;padding:8px;">${esc(`דוח מלאי סופר עוף — נכון לתאריך ${date}`)}</td></tr>`;
-        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withStorage ? 'קירור לירוי + קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
+        htmlRows += `<tr><td colspan="${cs}" style="font-size:10pt;color:#64748b;padding:4px 8px;">${esc(`${withLeroy ? 'קירור לירוי' : withGavash ? 'קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k => k.name).join(', ')}`)}</td></tr>`;
         htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
 
         const sortBySku = (a, b) => {
@@ -1612,7 +1616,8 @@
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
             const cells = [p.name, p.sku || '', t, c];
-            if (withStorage) { cells.push(bsBalance[key] || 0); cells.push(gvBalance[key] || 0); }
+            if (withLeroy) cells.push(bsBalance[key] || 0);
+            else if (withGavash) cells.push(gvBalance[key] || 0);
             const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
               `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
@@ -1622,10 +1627,8 @@
           const totalT = products.reduce((s, p) => s + (frozenStock[`${p.name}|${p.kashrut}`] || 0), 0);
           const totalC = products.reduce((s, p) => s + Math.floor((frozenStock[`${p.name}|${p.kashrut}`] || 0) / TRAYS_PER_CARTON), 0);
           const totCells = ['סה"כ', '', totalT, totalC];
-          if (withStorage) {
-            totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (bsBalance[key]||0); }, 0));
-            totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (gvBalance[key]||0); }, 0));
-          }
+          if (withLeroy) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (bsBalance[key]||0); }, 0));
+          else if (withGavash) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (gvBalance[key]||0); }, 0));
           htmlRows += `<tr style="background:#f1f5f9;font-weight:bold;">${totCells.map((v, ci) =>
             `<td style="padding:5px 8px;border-top:2px solid #94a3b8;border:1px solid #cbd5e1;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
           ).join('')}</tr>`;
@@ -1640,12 +1643,13 @@
           .filter(s => selectedNames.has(s.kashrut));
         if (stickerExcelRows.length) {
           htmlRows += `<tr><td colspan="${cs}" style="font-size:13pt;font-weight:bold;background:#4338ca;color:#fff;padding:6px 8px;">${esc('🏷️ מ.ל./מ.ל.ה')}</td></tr>`;
-          const stickerColH = withStorage ? ['מוצר', 'סימון', 'קרטונים', 'קירור לירוי', 'קירור גב"ש'] : ['מוצר', 'סימון', 'קרטונים'];
+          const stickerColH = withLeroy ? ['מוצר', 'סימון', 'קרטונים', 'קירור לירוי'] : withGavash ? ['מוצר', 'סימון', 'קרטונים', 'קירור גב"ש'] : ['מוצר', 'סימון', 'קרטונים'];
           htmlRows += `<tr>${stickerColH.map(h => `<th style="background:#4f46e5;color:#fff;font-weight:bold;padding:5px 8px;text-align:center;border:1px solid #3730a3;">${esc(h)}</th>`).join('')}</tr>`;
           stickerExcelRows.forEach((s, i) => {
             const cartons = frozenStock[s.key] || 0;
             const cells = [s.name, s.mark, cartons];
-            if (withStorage) { cells.push(bsBalance[s.key] || 0); cells.push(gvBalance[s.key] || 0); }
+            if (withLeroy) cells.push(bsBalance[s.key] || 0);
+            else if (withGavash) cells.push(gvBalance[s.key] || 0);
             const bg = i % 2 === 0 ? '#ffffff' : '#f5f3ff';
             htmlRows += `<tr style="background:${bg};">${cells.map((v, ci) =>
               `<td style="padding:4px 8px;border:1px solid #e2e8f0;${ci > 1 ? 'text-align:center;' : ''}">${esc(v)}</td>`
@@ -1654,7 +1658,7 @@
           htmlRows += `<tr><td colspan="${cs}">&nbsp;</td></tr>`;
         }
 
-        const sheetName = withStorage ? 'מלאי קירור לירוי וגבש' : 'מצב נתון';
+        const sheetName = withLeroy ? 'מלאי קירור לירוי' : withGavash ? 'מלאי קירור גבש' : 'מצב נתון';
         const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
 <!--[if gte mso 9]><xml>
@@ -1681,9 +1685,11 @@ ${htmlRows}
 
       const doPdfExport = async (date) => {
         const { jsPDF } = window.jspdf;
-        const withStorage = exportMode === 'withStorage';
+        const withLeroy = exportMode === 'withStorage';
+        const withGavash = exportMode === 'withGavash';
+        const withStorage = withLeroy || withGavash;
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
-        const colHeaders = withStorage ? ['מגשים', 'קרטונים', 'קירור לירוי', 'קירור גב"ש'] : ['מגשים', 'קרטונים'];
+        const colHeaders = withLeroy ? ['מגשים', 'קרטונים', 'קירור לירוי'] : withGavash ? ['מגשים', 'קרטונים', 'קירור גב"ש'] : ['מגשים', 'קרטונים'];
 
         const grouped = {};
         frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0 || (gvBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
@@ -1716,8 +1722,10 @@ ${htmlRows}
             const key = `${p.name}|${p.kashrut}`;
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
-            const cells = withStorage
-              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[key] || 0}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0f766e;">${gvBalance[key] || 0}</td>`
+            const cells = withLeroy
+              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[key] || 0}</td>`
+              : withGavash
+              ? `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0f766e;">${gvBalance[key] || 0}</td>`
               : `<td style="padding:6px 10px;text-align:center;">${t}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">${c}</td>`;
             return `<tr style="background:${i%2===0?'#ffffff':'#f8fafc'};border-bottom:1px solid #e5e7eb;">
               <td style="padding:6px 10px;font-weight:bold;">${p.name}</td>
@@ -1731,7 +1739,7 @@ ${htmlRows}
               <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #1e293b;">
                 <div style="font-size:13px;color:#64748b;font-weight:normal;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
                 <div style="font-size:22px;font-weight:bold;">${emoji} ${cat}</div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי + קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">${withLeroy ? 'קירור לירוי' : withGavash ? 'קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
               </div>
               <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
@@ -1747,7 +1755,8 @@ ${htmlRows}
                     <td style="padding:6px 10px;" colspan="2">סה"כ</td>
                     <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+(frozenStock[`${p.name}|${p.kashrut}`]||0),0)}</td>
                     <td style="padding:6px 10px;text-align:center;">${products.reduce((s,p)=>s+Math.floor((frozenStock[`${p.name}|${p.kashrut}`]||0)/TRAYS_PER_CARTON),0)}</td>
-                    ${withStorage?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(bsBalance[key]||0);},0)}</td><td style="padding:6px 10px;text-align:center;color:#0f766e;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(gvBalance[key]||0);},0)}</td>`:''}
+                    ${withLeroy?`<td style="padding:6px 10px;text-align:center;color:#4338ca;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(bsBalance[key]||0);},0)}</td>`:''}
+                    ${withGavash?`<td style="padding:6px 10px;text-align:center;color:#0f766e;">${products.reduce((s,p)=>{const key=`${p.name}|${p.kashrut}`;return s+(gvBalance[key]||0);},0)}</td>`:''}
                   </tr>
                 </tfoot>
               </table>
@@ -1776,8 +1785,10 @@ ${htmlRows}
         if (stickerPdfRows.length) {
           const stickerRowsHtml = stickerPdfRows.map((s, i) => {
             const cartons = frozenStock[s.key] || 0;
-            const cells = withStorage
-              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[s.key] || 0}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0f766e;">${gvBalance[s.key] || 0}</td>`
+            const cells = withLeroy
+              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#4338ca;">${bsBalance[s.key] || 0}</td>`
+              : withGavash
+              ? `<td style="padding:6px 10px;text-align:center;">${cartons}</td><td style="padding:6px 10px;text-align:center;font-weight:bold;color:#0f766e;">${gvBalance[s.key] || 0}</td>`
               : `<td style="padding:6px 10px;text-align:center;font-weight:bold;">${cartons}</td>`;
             return `<tr style="background:${i%2===0?'#ffffff':'#f5f3ff'};border-bottom:1px solid #e5e7eb;">
               <td style="padding:6px 10px;font-weight:bold;">${s.name}</td>
@@ -1785,12 +1796,12 @@ ${htmlRows}
               ${cells}
             </tr>`;
           }).join('');
-          const stickerColH = withStorage ? ['קרטונים', 'קירור לירוי', 'קירור גב"ש'] : ['קרטונים'];
+          const stickerColH = withLeroy ? ['קרטונים', 'קירור לירוי'] : withGavash ? ['קרטונים', 'קירור גב"ש'] : ['קרטונים'];
           const stickerHtml = `<div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:560px;">
             <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid #4338ca;">
               <div style="font-size:13px;color:#64748b;margin-bottom:4px;">דוח מלאי — נכון לתאריך ${date}</div>
               <div style="font-size:22px;font-weight:bold;">🏷️ מ.ל./מ.ל.ה</div>
-              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withStorage ? 'קירור לירוי + קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">${withLeroy ? 'קירור לירוי' : withGavash ? 'קירור גב"ש' : 'מצב נתון'} | ${selectedKashrut.map(k=>k.name).join(', ')}</div>
             </div>
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
               <thead><tr style="background:#4338ca;color:#ffffff;">
@@ -2064,7 +2075,7 @@ ${htmlRows}
                   <div>
                     <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">תצוגת ייצוא</div>
                     <div className="flex flex-wrap gap-2">
-                      {[['current','🧊 מצב נתון'],['withStorage','🏭 קירור לירוי + גב"ש'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
+                      {[['current','🧊 מצב נתון'],['withStorage','🏭 קירור לירוי'],['withGavash','🏭 קירור גב"ש'],['countSheet','📋 ספירת מלאי']].map(([val, label]) => (
                         <label key={val} className={`flex-1 cursor-pointer border-2 rounded-xl p-3 text-center font-bold text-sm transition-all flex items-center justify-center gap-2 ${exportMode === val ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
                           <input type="radio" className="hidden" checked={exportMode === val} onChange={() => setExportMode(val)} />
                           {label}
