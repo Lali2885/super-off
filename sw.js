@@ -1,4 +1,4 @@
-const CACHE = 'super-off-v9';
+const CACHE = 'super-off-v10';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
