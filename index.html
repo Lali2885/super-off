@@ -5668,6 +5668,7 @@ setTimeout(function(){
           labelHtml += `<div style="display:flex;font-size:36px;font-weight:bold;padding:16px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
             <span style="white-space:nowrap;">${p.sku||''}</span>
             <span style="flex:1;">${p.name||''}</span>
+            ${p.kashrut ? `<span style="white-space:nowrap;font-size:28px;color:#555;">${p.kashrut}</span>` : ''}
           </div>`;
         });
         labelHtml += `</div>`;
@@ -6360,6 +6361,7 @@ setTimeout(function(){
           labelHtml += `<div style="display:flex;font-size:36px;font-weight:bold;padding:16px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
             <span style="white-space:nowrap;">${p.sku||''}</span>
             <span style="flex:1;">${p.name||''}</span>
+            ${p.kashrut ? `<span style="white-space:nowrap;font-size:28px;color:#555;">${p.kashrut}</span>` : ''}
           </div>`;
         });
         labelHtml += `</div>`;
