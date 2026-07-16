@@ -1532,12 +1532,8 @@
         const { isSticker, name, kashrut } = parseStockKey(k);
         if (resetCategory === 'מ.ל./מ.ל.ה') {
           if (!isSticker) return false;
-        } else if (resetCategory === 'דגים') {
-          // דגים מזוהים לפי כשרות 'כללי' (כמו בכל שאר המערכת) ולא לפי שדה category,
-          // כי חלק ממוצרי הדגים (למשל טחונים) מתויגים בקטגוריה אחרת בטעות
-          if (isSticker || kashrut !== 'כללי') return false;
         } else if (resetCategory !== 'all') {
-          if (isSticker || kashrut === 'כללי' || nameToCategory[name] !== resetCategory) return false;
+          if (isSticker || nameToCategory[name] !== resetCategory) return false;
         }
         if (resetKashrut !== 'all' && kashrut !== resetKashrut) return false;
         return true;
