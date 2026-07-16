@@ -1427,6 +1427,8 @@
       const [resetPassword, setResetPassword] = useState('');
       const [resetError, setResetError] = useState('');
       const [resetScope, setResetScope] = useState('frozen');
+      const [resetKashrut, setResetKashrut] = useState('all');
+      const [resetCategory, setResetCategory] = useState('all');
       const [exportMode, setExportMode] = useState('current');
       const [countSheetCats, setCountSheetCats] = useState(() => {
         const obj = {};
@@ -1511,40 +1513,58 @@
         window.XLSX.writeFile(wb, `יומן-מלאי-${logDate}.xlsx`);
       };
 
+      const nameToCategory = useMemo(() => {
+        const map = {};
+        (frozenProductsList || []).forEach(p => { map[p.name] = p.category; });
+        return map;
+      }, [frozenProductsList]);
+
+      const parseStockKey = (k) => {
+        const isSticker = k.startsWith('STICKER|');
+        if (isSticker) {
+          const parts = k.split('|');
+          return { isSticker, name: parts[1] || '', kashrut: parts[2] || '' };
+        }
+        const idx = k.lastIndexOf('|');
+        return { isSticker, name: idx >= 0 ? k.slice(0, idx) : k, kashrut: idx >= 0 ? k.slice(idx + 1) : '' };
+      };
+
+      const shouldResetKey = (k) => {
+        const { isSticker, name, kashrut } = parseStockKey(k);
+        const matchesScope = resetScope === 'both' || (resetScope === 'frozen' && !isSticker) || (resetScope === 'sticker' && isSticker);
+        if (!matchesScope) return false;
+        if (resetKashrut !== 'all' && kashrut !== resetKashrut) return false;
+        if (resetCategory !== 'all' && nameToCategory[name] !== resetCategory) return false;
+        return true;
+      };
+
       const handleReset = async () => {
         if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
         const today = new Date().toISOString().split('T')[0];
+        const isFullReset = resetScope !== 'sticker' && resetKashrut === 'all' && resetCategory === 'all';
         setFrozenStock(prev => {
           const next = { ...prev };
-          Object.keys(next).forEach(k => {
-            const isSticker = k.startsWith('STICKER|');
-            if (resetScope === 'both') { delete next[k]; }
-            else if (resetScope === 'frozen' && !isSticker) { delete next[k]; }
-            else if (resetScope === 'sticker' && isSticker) { delete next[k]; }
-          });
+          Object.keys(next).forEach(k => { if (shouldResetKey(k)) delete next[k]; });
           return next;
         });
-        if (resetScope !== 'sticker') {
+        if (isFullReset) {
           setLogEntries(prev => prev.filter(e => e.date !== today));
         }
         await Promise.all([
           db.from('frozen_stock').select('*').eq('id', 'main').single().then(({ data }) => {
             const cur = data?.data || {};
             const next = { ...cur };
-            Object.keys(next).forEach(k => {
-              const isSticker = k.startsWith('STICKER|');
-              if (resetScope === 'both') { delete next[k]; }
-              else if (resetScope === 'frozen' && !isSticker) { delete next[k]; }
-              else if (resetScope === 'sticker' && isSticker) { delete next[k]; }
-            });
+            Object.keys(next).forEach(k => { if (shouldResetKey(k)) delete next[k]; });
             return db.from('frozen_stock').upsert({ id: 'main', data: next, updated_at: new Date().toISOString() });
           }),
-          ...(resetScope !== 'sticker' ? [db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today)] : [])
+          ...(isFullReset ? [db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today)] : [])
         ]);
         setResetModal(false);
         setResetPassword('');
         setResetError('');
         setResetScope('frozen');
+        setResetKashrut('all');
+        setResetCategory('all');
       };
 
       const seenFresh = new Set();
@@ -2028,6 +2048,22 @@ ${htmlRows}
                       ))}
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">כשרות ספציפית (אופציונלי):</label>
+                    <select value={resetKashrut} onChange={e => setResetKashrut(e.target.value)}
+                      className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400 bg-white">
+                      <option value="all">כל הכשרויות</option>
+                      {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">קטגוריה ספציפית (אופציונלי):</label>
+                    <select value={resetCategory} onChange={e => setResetCategory(e.target.value)}
+                      className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400 bg-white">
+                      <option value="all">כל הקטגוריות</option>
+                      {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
                   <p className="text-xs text-gray-500">פעולה זו לא ניתנת לביטול. <span className="font-bold text-red-600">הנתונים יימחקו לצמיתות.</span></p>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">סיסמא לאישור:</label>
@@ -2044,7 +2080,7 @@ ${htmlRows}
                   </div>
                 </div>
                 <div className="p-4 border-t border-gray-100 flex gap-3">
-                  <button onClick={() => { setResetModal(false); setResetPassword(''); setResetError(''); setResetScope('frozen'); }} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                  <button onClick={() => { setResetModal(false); setResetPassword(''); setResetError(''); setResetScope('frozen'); setResetKashrut('all'); setResetCategory('all'); }} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
                   <button onClick={handleReset} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm">אפס</button>
                 </div>
               </div>
