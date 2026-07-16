@@ -2046,7 +2046,7 @@ ${htmlRows}
                     <select value={resetCategory} onChange={e => setResetCategory(e.target.value)}
                       className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400 bg-white">
                       <option value="all">כל הקטגוריות (כל המלאי הקפוא)</option>
-                      {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{CAT_EMOJI[c]} {c}</option>)}
                       <option value="מ.ל./מ.ל.ה">🏷️ מ.ל / מ.ל.ה</option>
                     </select>
                   </div>
