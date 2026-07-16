@@ -1514,7 +1514,7 @@
 
       const nameToCategory = useMemo(() => {
         const map = {};
-        (frozenProductsList || []).forEach(p => { map[p.name] = p.category; });
+        (frozenProductsList || []).forEach(p => { map[p.name] = p.category || getProductCategory(p.name); });
         return map;
       }, [frozenProductsList]);
 
