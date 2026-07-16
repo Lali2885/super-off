@@ -1426,7 +1426,6 @@
       const [resetModal, setResetModal] = useState(false);
       const [resetPassword, setResetPassword] = useState('');
       const [resetError, setResetError] = useState('');
-      const [resetScope, setResetScope] = useState('frozen');
       const [resetKashrut, setResetKashrut] = useState('all');
       const [resetCategory, setResetCategory] = useState('all');
       const [exportMode, setExportMode] = useState('current');
@@ -1531,17 +1530,19 @@
 
       const shouldResetKey = (k) => {
         const { isSticker, name, kashrut } = parseStockKey(k);
-        const matchesScope = resetScope === 'both' || (resetScope === 'frozen' && !isSticker) || (resetScope === 'sticker' && isSticker);
-        if (!matchesScope) return false;
+        if (resetCategory === 'מ.ל./מ.ל.ה') {
+          if (!isSticker) return false;
+        } else if (resetCategory !== 'all') {
+          if (isSticker || nameToCategory[name] !== resetCategory) return false;
+        }
         if (resetKashrut !== 'all' && kashrut !== resetKashrut) return false;
-        if (resetCategory !== 'all' && nameToCategory[name] !== resetCategory) return false;
         return true;
       };
 
       const handleReset = async () => {
         if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
         const today = new Date().toISOString().split('T')[0];
-        const isFullReset = resetScope !== 'sticker' && resetKashrut === 'all' && resetCategory === 'all';
+        const isFullReset = resetKashrut === 'all' && resetCategory === 'all';
         setFrozenStock(prev => {
           const next = { ...prev };
           Object.keys(next).forEach(k => { if (shouldResetKey(k)) delete next[k]; });
@@ -1562,7 +1563,6 @@
         setResetModal(false);
         setResetPassword('');
         setResetError('');
-        setResetScope('frozen');
         setResetKashrut('all');
         setResetCategory('all');
       };
@@ -2034,21 +2034,6 @@ ${htmlRows}
                 </div>
                 <div className="p-5 space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-2">מה לאפס?</label>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        ['frozen',  '🧊 מלאי קפוא בלבד'],
-                        ['sticker', '🏷️ מלאי מ.ל / מ.ל.ה בלבד'],
-                        ['both',    '🗑️ הכל (קפוא + מ.ל / מ.ל.ה)'],
-                      ].map(([val, lbl]) => (
-                        <label key={val} className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all ${resetScope === val ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                          <input type="radio" className="accent-red-500" checked={resetScope === val} onChange={() => setResetScope(val)} />
-                          <span className="font-bold text-sm text-gray-700">{lbl}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">כשרות ספציפית (אופציונלי):</label>
                     <select value={resetKashrut} onChange={e => setResetKashrut(e.target.value)}
                       className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400 bg-white">
@@ -2060,8 +2045,9 @@ ${htmlRows}
                     <label className="block text-xs font-bold text-gray-500 mb-1">קטגוריה ספציפית (אופציונלי):</label>
                     <select value={resetCategory} onChange={e => setResetCategory(e.target.value)}
                       className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400 bg-white">
-                      <option value="all">כל הקטגוריות</option>
+                      <option value="all">כל הקטגוריות (כל המלאי הקפוא)</option>
                       {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      <option value="מ.ל./מ.ל.ה">🏷️ מ.ל / מ.ל.ה</option>
                     </select>
                   </div>
                   <p className="text-xs text-gray-500">פעולה זו לא ניתנת לביטול. <span className="font-bold text-red-600">הנתונים יימחקו לצמיתות.</span></p>
@@ -2080,7 +2066,7 @@ ${htmlRows}
                   </div>
                 </div>
                 <div className="p-4 border-t border-gray-100 flex gap-3">
-                  <button onClick={() => { setResetModal(false); setResetPassword(''); setResetError(''); setResetScope('frozen'); setResetKashrut('all'); setResetCategory('all'); }} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
+                  <button onClick={() => { setResetModal(false); setResetPassword(''); setResetError(''); setResetKashrut('all'); setResetCategory('all'); }} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50">ביטול</button>
                   <button onClick={handleReset} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm">אפס</button>
                 </div>
               </div>
