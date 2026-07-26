@@ -824,7 +824,12 @@
       const applyWithdraw = (key) => {
         const delta = withdrawTrays[key] || 0;
         if (!delta) return;
-        setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
+        const current = frozenStock[key] || 0;
+        if (delta > current) {
+          alert(`אי אפשר למשוך ${delta} מגשים — במלאי יש רק ${current} מגשים`);
+          return;
+        }
+        setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
         setWithdrawTrays(prev => ({ ...prev, [key]: 0 }));
         logAction('משיכה', key, delta);
       };
@@ -1036,7 +1041,12 @@
             const applyStickerWithdraw = (key) => {
               const delta = stickerWithdraw[key] || 0;
               if (!delta) return;
-              setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
+              const current = frozenStock[key] || 0;
+              if (delta > current) {
+                alert(`אי אפשר למשוך ${delta} קרטונים — במלאי יש רק ${current} קרטונים`);
+                return;
+              }
+              setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
               setStickerWithdraw(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
               db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
@@ -1251,7 +1261,12 @@
       const applyWithdraw = (key) => {
         const delta = withdrawCartons[key] || 0;
         if (!delta) return;
-        setFrozenStock(prev => ({ ...prev, [key]: Math.max(0, (prev[key] || 0) - delta) }));
+        const current = frozenStock[key] || 0;
+        if (delta > current) {
+          alert(`אי אפשר למשוך ${delta} קרטונים — במלאי יש רק ${current} קרטונים`);
+          return;
+        }
+        setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
         setWithdrawCartons(prev => ({ ...prev, [key]: 0 }));
         logAction('משיכה-מדבקה', key, delta);
       };
