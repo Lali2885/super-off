@@ -6072,6 +6072,7 @@ setTimeout(function(){
                                     <div className="flex-1 min-w-0">
                                       <span className="text-sm font-semibold">{pr.name}</span>
                                       {pr.sku && <span className="text-xs text-gray-400 mr-1">({pr.sku})</span>}
+                                      {pr.kashrut && <span className="text-xs font-semibold mr-1" style={{color: getKashrutColor(pr.kashrut)}}>{pr.kashrut}</span>}
                                     </div>
                                     <span className="text-xs text-gray-400 shrink-0">זמין: {pr.available}</span>
                                     <input type="number" value={s.qty} min="0" max={pr.available} disabled={!s.checked}
