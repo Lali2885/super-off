@@ -5595,7 +5595,7 @@ setTimeout(function(){
         if (ref) {
           const prods = getWdPalletProducts(ref);
           const sel = {};
-          prods.forEach(pr => { const k = pr.sku || pr.name; sel[k] = { checked: pr.available > 0, qty: pr.available }; });
+          prods.forEach(pr => { const k = pr.sku || pr.name; sel[k] = { checked: false, qty: pr.available }; });
           setWdSelections(prev => ({ ...prev, [id]: sel }));
         }
       };
@@ -6065,7 +6065,7 @@ setTimeout(function(){
                             <React.Fragment>
                               {palletProds.map(pr => {
                                 const k = pr.sku || pr.name;
-                                const s = sel[k] !== undefined ? sel[k] : { checked: pr.available > 0, qty: pr.available };
+                                const s = sel[k] !== undefined ? sel[k] : { checked: false, qty: pr.available };
                                 return (
                                   <div key={k} className="flex items-center gap-2 py-1.5 border-b border-purple-100 last:border-0">
                                     <input type="checkbox" checked={s.checked} onChange={e => setWdSelections(prev => ({ ...prev, [pallet.id]: { ...(prev[pallet.id]||{}), [k]: { ...s, checked: e.target.checked } } }))} className="w-4 h-4 cursor-pointer accent-purple-600" />
