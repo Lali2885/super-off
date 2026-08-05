@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
@@ -6021,8 +6021,6 @@ setTimeout(function(){
                         <div className="flex items-end gap-1 flex-wrap">
                           <div style={{width:'58px'}}><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
                             <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                           <div className="relative" style={{width:'150px'}}><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
                             <input type="text" autoComplete="off" value={exitProductForm.name}
                               onChange={e => { setExitProductForm(p=>({...p,name:e.target.value,sku:'',kashrut:''})); setShowExitNameDropdown(true); }}
@@ -6053,6 +6051,8 @@ setTimeout(function(){
                               );
                             })()}
                           </div>
+                          <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                           <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
                             <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
                           <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
@@ -6858,8 +6858,6 @@ setTimeout(function(){
                       <div className="flex items-end gap-1 flex-wrap">
                         <div style={{width:'58px'}}><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
                           <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                        <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                          <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                         <div className="relative" style={{width:'150px'}}><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
                           <input type="text" autoComplete="off" value={exitProductForm.name}
                             onChange={e => { setExitProductForm(p=>({...p,name:e.target.value,sku:'',kashrut:''})); setShowExitNameDropdown(true); }}
@@ -6890,6 +6888,8 @@ setTimeout(function(){
                             );
                           })()}
                         </div>
+                        <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                          <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                         <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
                           <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
                         <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
