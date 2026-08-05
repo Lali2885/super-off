@@ -5477,6 +5477,7 @@ setTimeout(function(){
       const [wdReportDate, setWdReportDate] = useState(today);
       const [showAllWithdrawals, setShowAllWithdrawals] = useState(false);
       const [wdSelections, setWdSelections] = useState({});
+      const [wdConfirmed, setWdConfirmed] = useState(new Set());
 
       const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
@@ -5614,6 +5615,7 @@ setTimeout(function(){
           return { ...pr, cartons: s ? Number(s.qty) : pr.available, id: Date.now() + i };
         });
         setWdPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: selected } : p));
+        setWdConfirmed(prev => new Set([...prev, palletId]));
       };
 
       const removeWdProduct = (palletId, productId) => setWdPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
@@ -5626,7 +5628,7 @@ setTimeout(function(){
         const { data, error } = await db.from('beit_shemesh_withdrawals').insert([newItem]).select();
         if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
         if (data) setWithdrawals(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
-        setWdDate(today); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setShowWdForm(false); setSaving(false);
+        setWdDate(today); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setWdConfirmed(new Set()); setShowWdForm(false); setSaving(false);
       };
 
       const deleteWithdrawal = async (id) => {
@@ -6054,7 +6056,7 @@ setTimeout(function(){
                         </div>
                         {wdPallets.length > 1 && <button onClick={() => removeWdPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
                       </div>
-                      {pallet.palletRef && (
+                      {pallet.palletRef && !wdConfirmed.has(pallet.id) && (
                         <div className="bg-purple-50 rounded-lg p-3 border border-purple-200 mb-3">
                           <div className="text-xs font-bold text-purple-700 mb-2">בחר מוצרים למשיכה:</div>
                           {palletProds.length === 0 ? (
@@ -6085,24 +6087,29 @@ setTimeout(function(){
                         </div>
                       )}
                       {pallet.products.length > 0 && (
-                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
-                          <thead><tr className="text-xs text-gray-500">
-                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
-                          </tr></thead>
-                          <tbody>{pallet.products.map(pr => (
-                            <tr key={pr.id} className="border-t">
-                              <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
-                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
-                              <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
-                              <td className="py-1 px-1 font-bold text-purple-700">{pr.cartons}</td>
-                              <td className="py-1 px-1"><button onClick={() => removeWdProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
-                            </tr>
-                          ))}</tbody>
-                          <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
-                            <td colSpan="3" className="py-1 px-1">סה"כ</td>
-                            <td className="py-1 px-1 text-purple-700">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td><td></td>
-                          </tr></tfoot>
-                        </table></div>
+                        <React.Fragment>
+                          {wdConfirmed.has(pallet.id) && (
+                            <button onClick={() => setWdConfirmed(prev => { const s = new Set(prev); s.delete(pallet.id); return s; })} className="text-xs text-purple-500 hover:text-purple-700 underline mb-2 block">ערוך בחירה</button>
+                          )}
+                          <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                            <thead><tr className="text-xs text-gray-500">
+                              <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
+                            </tr></thead>
+                            <tbody>{pallet.products.map(pr => (
+                              <tr key={pr.id} className="border-t">
+                                <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                                <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                                <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                                <td className="py-1 px-1 font-bold text-purple-700">{pr.cartons}</td>
+                                <td className="py-1 px-1"><button onClick={() => removeWdProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                              </tr>
+                            ))}</tbody>
+                            <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
+                              <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                              <td className="py-1 px-1 text-purple-700">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td><td></td>
+                            </tr></tfoot>
+                          </table></div>
+                        </React.Fragment>
                       )}
                     </div>
                     );
@@ -6112,7 +6119,7 @@ setTimeout(function(){
                   </div>
                   <div className="flex gap-3">
                     <button onClick={saveWithdrawal} disabled={saving} className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-purple-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור משיכה'}</button>
-                    <button onClick={() => { setShowWdForm(false); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                    <button onClick={() => { setShowWdForm(false); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setWdConfirmed(new Set()); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
                   </div>
                 </div>
               )}
