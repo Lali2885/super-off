@@ -5466,6 +5466,7 @@ setTimeout(function(){
       const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
       const [editingExitProduct, setEditingExitProduct] = useState(null);
       const exitSkuRef = useRef(null);
+      const exitCartonsRef = useRef(null);
       const [showExitNameDropdown, setShowExitNameDropdown] = useState(false);
       const [reportDate, setReportDate] = useState(today);
       const [showAllExits, setShowAllExits] = useState(true);
@@ -6036,7 +6037,7 @@ setTimeout(function(){
                                 <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
                                   {results.map((p, i) => (
                                     <div key={i}
-                                      onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); }}
+                                      onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); setTimeout(() => exitCartonsRef.current?.focus(), 50); }}
                                       className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer">
                                       <span className="font-bold text-gray-800 text-xs">{p.name}</span>
                                       <div className="flex items-center gap-1 shrink-0 mr-2">
@@ -6052,7 +6053,7 @@ setTimeout(function(){
                             })()}
                           </div>
                           <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} ref={exitCartonsRef} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                           <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
                             <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
                           <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
@@ -6519,6 +6520,7 @@ setTimeout(function(){
       const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
       const [editingExitProduct, setEditingExitProduct] = useState(null);
       const exitSkuRef = useRef(null);
+      const exitCartonsRef = useRef(null);
       const [showExitNameDropdown, setShowExitNameDropdown] = useState(false);
       const [reportDate, setReportDate] = useState(today);
       const [showAllExits, setShowAllExits] = useState(true);
@@ -6873,7 +6875,7 @@ setTimeout(function(){
                               <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
                                 {results.map((p, i) => (
                                   <div key={i}
-                                    onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); }}
+                                    onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); setTimeout(() => exitCartonsRef.current?.focus(), 50); }}
                                     className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer">
                                     <span className="font-bold text-gray-800 text-xs">{p.name}</span>
                                     <div className="flex items-center gap-1 shrink-0 mr-2">
@@ -6889,7 +6891,7 @@ setTimeout(function(){
                           })()}
                         </div>
                         <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                          <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                          <input ref={exitCartonsRef} type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
                         <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
                           <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
                         <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
