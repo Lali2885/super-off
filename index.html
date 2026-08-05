@@ -5478,6 +5478,7 @@ setTimeout(function(){
       const [showAllWithdrawals, setShowAllWithdrawals] = useState(false);
       const [wdSelections, setWdSelections] = useState({});
       const [wdConfirmed, setWdConfirmed] = useState(new Set());
+      const [editingWithdrawalId, setEditingWithdrawalId] = useState(null);
 
       const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
@@ -5584,7 +5585,7 @@ setTimeout(function(){
         return allProds.map(pr => {
           const withdrawn = withdrawals
             .flatMap(w => (w.pallets||[]).filter(wp => wp.palletRef === palletRef).flatMap(wp => wp.products))
-            .filter(wp => (wp.sku && wp.sku === pr.sku) || (!wp.sku && wp.name === pr.name))
+            .filter(wp => ((wp.sku && wp.sku === pr.sku) || (!wp.sku && wp.name === pr.name)) && (wp.dateType||'') === (pr.dateType||''))
             .reduce((s, wp) => s + Number(wp.cartons||0), 0);
           return { ...pr, available: Math.max(0, Number(pr.cartons||0) - withdrawn) };
         });
@@ -5595,7 +5596,7 @@ setTimeout(function(){
         if (ref) {
           const prods = getWdPalletProducts(ref);
           const sel = {};
-          prods.forEach(pr => { const k = pr.sku || pr.name; sel[k] = { checked: false, qty: pr.available }; });
+          prods.forEach(pr => { const k = (pr.sku || pr.name) + '|' + (pr.dateType||''); sel[k] = { checked: false, qty: pr.available }; });
           setWdSelections(prev => ({ ...prev, [id]: sel }));
         }
       };
@@ -5606,11 +5607,11 @@ setTimeout(function(){
         const prods = getWdPalletProducts(pallet.palletRef);
         const sel = wdSelections[palletId] || {};
         const selected = prods.filter(pr => {
-          const k = pr.sku || pr.name;
+          const k = (pr.sku || pr.name) + '|' + (pr.dateType||'');
           const s = sel[k];
           return s ? (s.checked && Number(s.qty) > 0) : pr.available > 0;
         }).map((pr, i) => {
-          const k = pr.sku || pr.name;
+          const k = (pr.sku || pr.name) + '|' + (pr.dateType||'');
           const s = sel[k];
           return { ...pr, cartons: s ? Number(s.qty) : pr.available, id: Date.now() + i };
         });
@@ -5620,14 +5621,32 @@ setTimeout(function(){
 
       const removeWdProduct = (palletId, productId) => setWdPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
 
+      const startEditWithdrawal = (w) => {
+        setEditingWithdrawalId(w.id);
+        setWdDate(w.date);
+        const pallets = w.pallets && w.pallets.length ? w.pallets : [{ id: Date.now(), palletRef: '', products: [] }];
+        setWdPallets(pallets);
+        setWdSelections({});
+        setWdConfirmed(new Set(pallets.map(p => p.id).filter(Boolean)));
+        setShowWdForm(true);
+      };
+
       const saveWithdrawal = async () => {
         const hasProducts = wdPallets.some(p => p.products.length > 0);
         if (!wdDate || !hasProducts) { alert('נא למלא תאריך ולהוסיף לפחות מוצר אחד'); return; }
         setSaving(true);
-        const newItem = { id: Date.now(), date: wdDate, pallets: wdPallets };
-        const { data, error } = await db.from('beit_shemesh_withdrawals').insert([newItem]).select();
-        if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
-        if (data) setWithdrawals(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
+        const payload = { date: wdDate, pallets: wdPallets };
+        if (editingWithdrawalId) {
+          const { data, error } = await db.from('beit_shemesh_withdrawals').update(payload).eq('id', editingWithdrawalId).select();
+          if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+          if (data) setWithdrawals(prev => prev.map(w => w.id === editingWithdrawalId ? data[0] : w).sort((a,b) => b.date.localeCompare(a.date)));
+        } else {
+          const newItem = { id: Date.now(), ...payload };
+          const { data, error } = await db.from('beit_shemesh_withdrawals').insert([newItem]).select();
+          if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
+          if (data) setWithdrawals(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
+        }
+        setEditingWithdrawalId(null);
         setWdDate(today); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setWdConfirmed(new Set()); setShowWdForm(false); setSaving(false);
       };
 
@@ -5635,6 +5654,73 @@ setTimeout(function(){
         if (!window.confirm('למחוק משיכה זו?')) return;
         const { error } = await db.from('beit_shemesh_withdrawals').delete().eq('id', id);
         if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id));
+      };
+
+      const exportWithdrawalPDF = (w) => {
+        const { jsPDF } = window.jspdf;
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:24px 32px;font-family:Arial,sans-serif;direction:rtl;';
+        const pallets = w.pallets || [{ palletRef: '', products: w.products || [] }];
+        const allProds = pallets.flatMap(p => p.products);
+        const totalC = allProds.reduce((s,p) => s + Number(p.cartons||0), 0);
+        let html = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div></div>
+            <div style="text-align:left;font-size:13px;color:#555;">
+              ${companyVat ? `<div style="font-weight:bold;margin-bottom:4px;">ח.פ. ${companyVat}</div>` : ''}
+              <div>תאריך: ${fmtDate(w.date)}</div>
+            </div>
+          </div>
+          <h2 style="text-align:center;margin-bottom:16px;font-size:18px;font-weight:bold;">תעודת משיכה - קירור לירוי</h2>`;
+        pallets.forEach(wp => {
+          const palletC = wp.products.reduce((s,p) => s + Number(p.cartons||0), 0);
+          html += `<div style="margin-bottom:16px;border:1px solid #ddd;border-radius:8px;overflow:hidden;">`;
+          if (wp.palletRef) html += `<div style="background:#ede9fe;padding:6px 12px;font-weight:bold;font-size:14px;color:#5b21b6;">משטח מספר ${wp.palletRef}</div>`;
+          html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#f3f4f6;">
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">מקט</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">מוצר</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">כשרות</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">סימון</th>
+              <th style="padding:6px 10px;text-align:right;border-bottom:1px solid #e5e7eb;">קרטונים</th>
+            </tr></thead><tbody>`;
+          wp.products.forEach(p => {
+            html += `<tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:5px 10px;color:#6b7280;">${p.sku||''}</td>
+              <td style="padding:5px 10px;">${p.name||''}</td>
+              <td style="padding:5px 10px;color:#6b7280;">${p.kashrut||'-'}</td>
+              <td style="padding:5px 10px;color:#6b7280;">${p.dateType||'-'}</td>
+              <td style="padding:5px 10px;font-weight:bold;">${p.cartons||''}</td>
+            </tr>`;
+          });
+          html += `</tbody><tfoot><tr style="background:#eff6ff;font-weight:bold;">
+            <td colspan="4" style="padding:6px 10px;">סה"כ משטח</td>
+            <td style="padding:6px 10px;">${palletC} קרטונים</td>
+          </tr></tfoot></table></div>`;
+        });
+        if (pallets.length > 1) {
+          html += `<div style="text-align:left;font-size:14px;font-weight:bold;margin-top:4px;">סה"כ כללי: ${totalC} קרטונים</div>`;
+        }
+        container.innerHTML = html;
+        document.body.appendChild(container);
+        window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
+          document.body.removeChild(container);
+          const imgData = canvas.toDataURL('image/png');
+          const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+          const pageW = doc.internal.pageSize.getWidth();
+          const pageH = doc.internal.pageSize.getHeight();
+          const topMargin = 45, bottomMargin = 50;
+          const contentH = pageH - topMargin - bottomMargin;
+          const imgW = pageW;
+          const imgH = (canvas.height * imgW) / canvas.width;
+          let posY = 0;
+          while (posY < imgH) {
+            doc.addImage(imgData, 'PNG', 0, topMargin - posY, imgW, imgH);
+            posY += contentH;
+            if (posY < imgH) doc.addPage();
+          }
+          doc.save(`תעודת-משיכה-${w.date}.pdf`);
+        });
       };
 
       // ── Report data ──
@@ -5817,6 +5903,72 @@ setTimeout(function(){
         wb.Sheets['תעודת יציאה']['!sheetViews'] = [{ rightToLeft: true }];
         wb.Workbook = { Views: [{ RTL: true }] };
         XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.xlsx`);
+      };
+
+      const exportWithdrawalExcel = (w) => {
+        const pallets = w.pallets || [{ palletRef: '', products: w.products || [] }];
+        const totalC = pallets.flatMap(p => p.products).reduce((s,p) => s + Number(p.cartons||0), 0);
+        const rows = [['תעודת משיכה - קירור לירוי'], [`תאריך: ${fmtDate(w.date)}`], []];
+        pallets.forEach(wp => {
+          if (wp.palletRef) rows.push([`משטח מספר ${wp.palletRef}`]);
+          rows.push(['מקט','מוצר','כשרות','סימון','קרטונים']);
+          wp.products.forEach(pr => rows.push([pr.sku||'', pr.name||'', pr.kashrut||'', pr.dateType||'', Number(pr.cartons)||0]));
+          rows.push(['','סה"כ משטח','','', wp.products.reduce((s,p)=>s+Number(p.cartons||0),0)]);
+          rows.push([]);
+        });
+        if (pallets.length > 1) rows.push(['','סה"כ כללי','','',totalC]);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{wch:10},{wch:24},{wch:12},{wch:12},{wch:12}];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'תעודת משיכה');
+        wb.Sheets['תעודת משיכה']['!sheetViews'] = [{ rightToLeft: true }];
+        wb.Workbook = { Views: [{ RTL: true }] };
+        XLSX.writeFile(wb, `תעודת-משיכה-${w.date}.xlsx`);
+      };
+
+      const exportWithdrawalLabel = (w, wp) => {
+        const { jsPDF } = window.jspdf;
+        const products = wp ? wp.products : (w.pallets ? w.pallets.flatMap(p => p.products) : (w.products || []));
+        const dateStr = fmtDate(w.date);
+        const labelContainer = document.createElement('div');
+        labelContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:40px 50px;font-family:Arial,sans-serif;direction:rtl;';
+        let labelHtml = `<div style="border:4px solid #000;border-radius:16px;padding:40px;">
+          <div style="font-size:72px;font-weight:bold;text-align:center;margin-bottom:28px;line-height:1.1;border-bottom:3px solid #000;padding-bottom:24px;">${dateStr}</div>`;
+        if (wp && wp.palletRef) {
+          labelHtml += `<div style="font-size:36px;font-weight:bold;text-align:center;margin-bottom:20px;color:#555;">משטח ${wp.palletRef}</div>`;
+        }
+        products.forEach(p => {
+          labelHtml += `<div style="display:flex;font-size:36px;font-weight:bold;padding:16px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
+            <span style="white-space:nowrap;">${p.sku||''}</span>
+            <span style="flex:1;">${p.name||''}</span>
+            ${p.kashrut ? `<span style="white-space:nowrap;font-size:28px;color:#555;">${p.kashrut}</span>` : ''}
+          </div>`;
+        });
+        labelHtml += `</div>`;
+        const numberContainer = document.createElement('div');
+        numberContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;height:1123px;background:white;font-family:Arial,sans-serif;direction:rtl;display:flex;align-items:center;justify-content:center;';
+        numberContainer.innerHTML = `<svg width="794" height="1123" xmlns="http://www.w3.org/2000/svg">
+          <text x="397" y="561" text-anchor="middle" dominant-baseline="middle"
+            font-size="900" font-weight="bold" font-family="Arial"
+            textLength="740" lengthAdjust="spacingAndGlyphs">${dateStr}</text>
+        </svg>`;
+        labelContainer.innerHTML = labelHtml;
+        document.body.appendChild(labelContainer);
+        window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas1 => {
+          document.body.removeChild(labelContainer);
+          document.body.appendChild(numberContainer);
+          window.html2canvas(numberContainer, { scale: 2, useCORS: true }).then(canvas2 => {
+            document.body.removeChild(numberContainer);
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            const imgH1 = (canvas1.height * pageW) / canvas1.width;
+            doc.addImage(canvas1.toDataURL('image/png'), 'PNG', 0, 10, pageW, imgH1);
+            doc.addPage();
+            doc.addImage(canvas2.toDataURL('image/png'), 'PNG', 0, 0, pageW, pageH);
+            doc.save(`תווית-משיכה-${w.date}.pdf`);
+          });
+        });
       };
 
       if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
@@ -6037,7 +6189,7 @@ setTimeout(function(){
               </div>
               {showWdForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-purple-100">
-                  <h2 className="font-bold text-xl mb-4 text-purple-800">הזנת משיכה חדשה</h2>
+                  <h2 className="font-bold text-xl mb-4 text-purple-800">{editingWithdrawalId ? '✏️ עריכת תעודת משיכה' : 'הזנת משיכה חדשה'}</h2>
                   <div className="mb-4"><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך משיכה</label>
                     <input type="date" value={wdDate} onChange={e => setWdDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-purple-400 outline-none" /></div>
                   {wdPallets.map((pallet) => {
@@ -6048,11 +6200,21 @@ setTimeout(function(){
                     <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-purple-700">בחר משטח</span>
-                          <select value={pallet.palletRef} onChange={e => updateWdPalletRef(pallet.id, e.target.value)} className="border-2 border-gray-200 rounded-lg p-1.5 font-bold text-sm focus:border-purple-400 outline-none bg-white">
-                            <option value="">-- בחר --</option>
-                            {availPallets.map(num => <option key={num} value={num}>משטח {num}</option>)}
-                          </select>
+                          {wdConfirmed.has(pallet.id) ? (
+                            <React.Fragment>
+                              <span className="text-sm font-bold text-purple-700">משטח מספר</span>
+                              <span className="text-lg font-extrabold text-purple-900">{pallet.palletRef}</span>
+                              <button onClick={() => setWdConfirmed(prev => { const s = new Set(prev); s.delete(pallet.id); return s; })} className="text-xs text-purple-400 hover:text-purple-600 underline mr-1">שנה</button>
+                            </React.Fragment>
+                          ) : (
+                            <React.Fragment>
+                              <span className="text-sm font-bold text-purple-700">בחר משטח</span>
+                              <select value={pallet.palletRef} onChange={e => updateWdPalletRef(pallet.id, e.target.value)} className="border-2 border-gray-200 rounded-lg p-1.5 font-bold text-sm focus:border-purple-400 outline-none bg-white">
+                                <option value="">-- בחר --</option>
+                                {availPallets.map(num => <option key={num} value={num}>משטח {num}</option>)}
+                              </select>
+                            </React.Fragment>
+                          )}
                         </div>
                         {wdPallets.length > 1 && <button onClick={() => removeWdPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
                       </div>
@@ -6064,7 +6226,7 @@ setTimeout(function(){
                           ) : (
                             <React.Fragment>
                               {palletProds.map(pr => {
-                                const k = pr.sku || pr.name;
+                                const k = (pr.sku || pr.name) + '|' + (pr.dateType||'');
                                 const s = sel[k] !== undefined ? sel[k] : { checked: false, qty: pr.available };
                                 return (
                                   <div key={k} className="flex items-center gap-2 py-1.5 border-b border-purple-100 last:border-0">
@@ -6073,6 +6235,7 @@ setTimeout(function(){
                                       <span className="text-sm font-semibold">{pr.name}</span>
                                       {pr.sku && <span className="text-xs text-gray-400 mr-1">({pr.sku})</span>}
                                       {pr.kashrut && <span className="text-xs font-semibold mr-1" style={{color: getKashrutColor(pr.kashrut)}}>{pr.kashrut}</span>}
+                                      {pr.dateType && <span className="text-xs text-gray-500 mr-1">{pr.dateType}</span>}
                                     </div>
                                     <span className="text-xs text-gray-400 shrink-0">זמין: {pr.available}</span>
                                     <input type="number" value={s.qty} min="0" max={pr.available} disabled={!s.checked}
@@ -6089,9 +6252,6 @@ setTimeout(function(){
                       )}
                       {pallet.products.length > 0 && (
                         <React.Fragment>
-                          {wdConfirmed.has(pallet.id) && (
-                            <button onClick={() => setWdConfirmed(prev => { const s = new Set(prev); s.delete(pallet.id); return s; })} className="text-xs text-purple-500 hover:text-purple-700 underline mb-2 block">ערוך בחירה</button>
-                          )}
                           <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
                             <thead><tr className="text-xs text-gray-500">
                               <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
@@ -6120,7 +6280,7 @@ setTimeout(function(){
                   </div>
                   <div className="flex gap-3">
                     <button onClick={saveWithdrawal} disabled={saving} className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-purple-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור משיכה'}</button>
-                    <button onClick={() => { setShowWdForm(false); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setWdConfirmed(new Set()); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                    <button onClick={() => { setShowWdForm(false); setEditingWithdrawalId(null); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setWdConfirmed(new Set()); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
                   </div>
                 </div>
               )}
@@ -6133,59 +6293,69 @@ setTimeout(function(){
                   </div>
                   {!showAllWithdrawals && <input type="date" value={wdReportDate} onChange={e => setWdReportDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2 focus:border-purple-400 outline-none" />}
                 </div>
+                {wdReportItems.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="bg-purple-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-purple-700">{wdReportItems.reduce((sum,w)=>sum+(w.pallets?w.pallets.length:1),0)}</div><div className="text-xs text-purple-600 font-semibold">משטחים</div></div>
+                    <div className="bg-indigo-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-indigo-700">{wdTotalCartons}</div><div className="text-xs text-indigo-600 font-semibold">קרטונים</div></div>
+                  </div>
+                )}
                 {wdReportItems.length === 0 ? (
                   <div className="text-center text-gray-400 py-10">{showAllWithdrawals ? 'אין משיכות' : `אין משיכות בתאריך ${wdReportDate}`}</div>
                 ) : (
-                  <div>
-                    <div className="bg-purple-50 rounded-xl p-3 text-center mb-4 w-40">
-                      <div className="text-2xl font-extrabold text-purple-700">{wdTotalCartons}</div>
-                      <div className="text-xs text-purple-600 font-semibold">קרטונים נמשכו</div>
-                    </div>
-                    <div className="space-y-3">{wdReportItems.map(w => (
-                      <div key={w.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-sm font-semibold text-gray-600">{w.date}</span>
-                          <button onClick={() => deleteWithdrawal(w.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>
-                        </div>
-                        {w.pallets ? w.pallets.map(wp => (
-                          <div key={wp.id} className="mb-3">
-                            {wp.palletRef && <div className="text-xs font-bold text-purple-700 mb-1 bg-purple-50 px-2 py-1 rounded inline-block">משטח מספר {wp.palletRef}</div>}
+                  <div className="space-y-4">{wdReportItems.map(w => {
+                    const wdPalletsList = w.pallets && w.pallets.length ? w.pallets : [{ id: w.id, palletRef: '', products: w.products || [] }];
+                    return (
+                      <div key={w.id}>
+                        {wdPalletsList.map((wp, wpIdx) => (
+                          <div key={wp.id || wpIdx} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
+                            <div className="flex justify-between items-center mb-2">
+                              <div>
+                                <div className="font-bold text-purple-700">תעודת משיכה {fmtDate(w.date)}</div>
+                                {wp.palletRef && <div className="text-lg font-extrabold text-gray-800 mt-0.5">משטח {wp.palletRef}</div>}
+                              </div>
+                              {wpIdx === 0 && (
+                                <div className="flex gap-1">
+                                  <button onClick={() => exportWithdrawalExcel(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">Excel</button>
+                                  <button onClick={() => exportWithdrawalPDF(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight">PDF תעודה</button>
+                                  <button onClick={() => exportWithdrawalLabel(w, wp)} className="py-1 px-1.5 rounded-md text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-200 transition-colors leading-tight">PDF משטח</button>
+                                  <button onClick={() => startEditWithdrawal(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-200 transition-colors leading-tight">✏️</button>
+                                  <button onClick={() => deleteWithdrawal(w.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">🗑️</button>
+                                </div>
+                              )}
+                            </div>
                             <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
                               <thead><tr className="text-xs text-gray-500">
-                                <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
+                                <th className="text-right pb-1 px-1">מקט</th>
+                                <th className="text-right pb-1 px-1">מוצר</th>
+                                <th className="text-right pb-1 px-1">כשרות</th>
+                                <th className="text-right pb-1 px-1">סימון</th>
+                                <th className="text-right pb-1 px-1">קרטונים</th>
                               </tr></thead>
-                              <tbody>{wp.products.map(p => (
-                                <tr key={p.id} className="border-t">
-                                  <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
-                                  <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
-                                  <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
-                                  <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
-                                </tr>
-                              ))}</tbody>
-                              <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
-                                <td colSpan="3" className="py-1 px-1">סה"כ משטח</td>
-                                <td className="py-1 px-1 text-purple-700">{wp.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
+                              <tbody>{wp.products.map(p => {
+                                const kObj = kashrutList.find(k => k.name === p.kashrut);
+                                const kColor = kObj?.color || '#888';
+                                return (
+                                  <tr key={p.id} className="border-t" style={{ backgroundColor: kColor + '12' }}>
+                                    <td className="py-1 px-1 text-gray-700 text-xs font-medium">{p.sku}</td>
+                                    <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
+                                    <td className="py-1 px-1">
+                                      {p.kashrut ? <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{p.kashrut}</span> : '-'}
+                                    </td>
+                                    <td className="py-1 px-1">{p.dateType ? <span className="text-blue-600 font-bold text-xs">({p.dateType})</span> : '-'}</td>
+                                    <td className="py-1 px-1 font-bold">{p.cartons}</td>
+                                  </tr>
+                                );
+                              })}</tbody>
+                              <tfoot><tr className="border-t font-bold text-xs">
+                                <td colSpan="4" className="pt-1 px-1">סה"כ במשטח</td>
+                                <td className="px-1">{wp.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td>
                               </tr></tfoot>
                             </table></div>
                           </div>
-                        )) : (
-                          <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
-                            <thead><tr className="text-xs text-gray-500">
-                              <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
-                            </tr></thead>
-                            <tbody>{(w.products||[]).map(p => (
-                              <tr key={p.id} className="border-t">
-                                <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
-                                <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
-                                <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
-                                <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
-                              </tr>
-                            ))}</tbody>
-                          </table></div>
-                        )}
+                        ))}
                       </div>
-                    ))}</div>
-                  </div>
+                    );
+                  })}</div>
                 )}
               </div>
             </div>
