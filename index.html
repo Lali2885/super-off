@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
@@ -6514,7 +6514,8 @@ setTimeout(function(){
       const [showExitForm, setShowExitForm] = useState(false);
       const [editingShipmentId, setEditingShipmentId] = useState(null);
       const [exitDate, setExitDate] = useState(today);
-      const [exitPallets, setExitPallets] = useState([{ id: Date.now(), number: '', products: [] }]);
+      const [exitDocNumber, setExitDocNumber] = useState('');
+      const [exitProducts, setExitProducts] = useState([]);
       const [exitProductForm, setExitProductForm] = useState({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
       const [editingExitProduct, setEditingExitProduct] = useState(null);
       const exitSkuRef = useRef(null);
@@ -6557,56 +6558,47 @@ setTimeout(function(){
       };
 
       // ── Exit functions ──
-      const addExitPallet = () => setExitPallets(prev => [...prev, { id: Date.now(), number: '', products: [] }]);
-      const removeExitPallet = (id) => setExitPallets(prev => prev.filter(p => p.id !== id));
-      const updateExitPalletNum = (id, number) => setExitPallets(prev => prev.map(p => p.id === id ? { ...p, number } : p));
-
-      const addProductToExitPallet = (palletId) => {
+      const addProductToExit = () => {
         if (!exitProductForm.name || !exitProductForm.cartons) return;
         if (editingExitProduct) {
-          setExitPallets(prev => prev.map(p => p.id === editingExitProduct.palletId
-            ? { ...p, products: p.products.map(pr => pr.id === editingExitProduct.productId ? { ...exitProductForm, id: pr.id } : pr) }
-            : p));
+          setExitProducts(prev => prev.map(pr => pr.id === editingExitProduct ? { ...exitProductForm, id: pr.id } : pr));
           setEditingExitProduct(null);
         } else {
-          const pallet = exitPallets.find(p => p.id === palletId);
-          const total = pallet.products.reduce((s,p) => s + Number(p.cartons||0), 0);
-          if (total + Number(exitProductForm.cartons) > 50) { alert('לא ניתן להוסיף - משטח מוגבל ל-50 קרטון (כרגע: ' + total + ' קרטונים)'); return; }
-          setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: [...p.products, { ...exitProductForm, id: Date.now() }] } : p));
+          setExitProducts(prev => [...prev, { ...exitProductForm, id: Date.now() }]);
         }
         setExitProductForm({ sku: '', name: '', kashrut: '', cartons: '', expiryDate: '', dateType: '', weight: '' });
         setShowExitNameDropdown(false);
         setTimeout(() => exitSkuRef.current?.focus(), 30);
       };
 
-      const startEditExitProduct = (palletId, product) => {
-        setEditingExitProduct({ palletId, productId: product.id });
+      const startEditExitProduct = (product) => {
+        setEditingExitProduct(product.id);
         setExitProductForm({ sku: product.sku||'', name: product.name||'', kashrut: product.kashrut||'', cartons: product.cartons||'', expiryDate: product.expiryDate||'', dateType: product.dateType||'', weight: product.weight||'' });
         setShowExitNameDropdown(false);
         setTimeout(() => exitSkuRef.current?.focus(), 30);
       };
 
-      const removeExitProduct = (palletId, productId) => {
-        setExitPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
-      };
+      const removeExitProduct = (id) => setExitProducts(prev => prev.filter(p => p.id !== id));
 
       const resetExitForm = () => {
         setShowExitForm(false); setEditingShipmentId(null);
-        setExitDate(today); setExitPallets([{ id: Date.now(), number: '', products: [] }]);
+        setExitDate(today); setExitDocNumber(''); setExitProducts([]);
       };
 
       const startEditShipment = (shipment) => {
         setEditingShipmentId(shipment.id);
         setExitDate(shipment.date);
-        setExitPallets(shipment.pallets && shipment.pallets.length ? shipment.pallets : [{ id: Date.now(), number: '', products: [] }]);
+        const p = shipment.pallets && shipment.pallets[0] ? shipment.pallets[0] : { number: '', products: [] };
+        setExitDocNumber(p.number || '');
+        setExitProducts(p.products || []);
         setShowExitForm(true);
         setTimeout(() => scrollToTop(), 50);
       };
 
       const saveExit = async () => {
-        if (!exitDate) { alert('נא למלא תאריך'); return; }
+        if (!exitDate || exitProducts.length === 0) { alert('נא למלא תאריך ולהוסיף לפחות מוצר אחד'); return; }
         setSaving(true);
-        const payload = { date: exitDate, pallet_count: exitPallets.length, pallets: exitPallets };
+        const payload = { date: exitDate, pallets: [{ id: Date.now(), number: exitDocNumber, products: exitProducts }] };
         if (editingShipmentId) {
           const { data, error } = await db.from('gavash_shipments').update(payload).eq('id', editingShipmentId).select();
           if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
@@ -6656,7 +6648,6 @@ setTimeout(function(){
       const allProducts = reportShipments.flatMap(s => s.pallets.flatMap(p => p.products));
       const totalCartons = allProducts.reduce((sum, p) => sum + Number(p.cartons || 0), 0);
       const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
-      const totalPallets = reportShipments.reduce((sum, s) => sum + s.pallets.length, 0);
 
       const wdReportItems = showAllWithdrawals ? withdrawals : withdrawals.filter(w => w.date === wdReportDate);
       const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
@@ -6677,6 +6668,11 @@ setTimeout(function(){
         return Object.values(map).sort((a,b) => (b.totalIn-b.totalOut) - (a.totalIn-a.totalOut));
       }, [shipments, withdrawals]);
 
+      const nextDocNumber = useMemo(() => {
+        const nums = shipments.map(s => Number((s.pallets && s.pallets[0] && s.pallets[0].number) || 0)).filter(n => !isNaN(n) && n > 0);
+        return nums.length > 0 ? String(Math.max(...nums) + 1) : '1';
+      }, [shipments]);
+
       const fmtDate = d => d ? d.split('-').reverse().join('/') : '';
 
       const exportShipmentPDF = (shipment, pallet) => {
@@ -6689,7 +6685,7 @@ setTimeout(function(){
         let html = `
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
             <div style="text-align:right;">
-              ${pallet.number ? `<div style="font-size:40px;font-weight:bold;color:#000;line-height:1.1;">משטח מספר: ${pallet.number}</div>` : ''}
+              ${pallet.number ? `<div style="font-size:40px;font-weight:bold;color:#000;line-height:1.1;">מספר יציאה: ${pallet.number}</div>` : ''}
             </div>
             <div style="text-align:left;font-size:13px;color:#555;">
               ${companyVat ? `<div style="font-weight:bold;margin-bottom:4px;">ח.פ. ${companyVat}</div>` : ''}
@@ -6718,7 +6714,7 @@ setTimeout(function(){
           </tr>`;
         });
         html += `</tbody><tfoot><tr style="background:#eff6ff;font-weight:bold;">
-          <td colspan="2" style="padding:6px 10px;">סה"כ במשטח</td>
+          <td colspan="2" style="padding:6px 10px;">סה"כ</td>
           <td></td>
           <td style="padding:6px 10px;">${pC} קרטונים</td>
           <td style="padding:6px 10px;">${pW.toFixed(2)} ק"ג</td>
@@ -6742,7 +6738,7 @@ setTimeout(function(){
             posY += contentH;
             if (posY < imgH) doc.addPage();
           }
-          doc.save(`תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
+          doc.save(`תעודת-יציאה-${shipment.date}${pallet.number ? '-יציאה'+pallet.number : ''}.pdf`);
         });
       };
 
@@ -6753,7 +6749,7 @@ setTimeout(function(){
         labelContainer.style.cssText = 'position:fixed;top:-9999px;right:-9999px;width:794px;background:white;padding:40px 50px;font-family:Arial,sans-serif;direction:rtl;';
         let labelHtml = `<div style="border:4px solid #000;border-radius:16px;padding:40px;">`;
         if (pallet.number) {
-          labelHtml += `<div style="font-size:72px;font-weight:bold;text-align:center;margin-bottom:28px;line-height:1.1;border-bottom:3px solid #000;padding-bottom:24px;">משטח מספר ${pallet.number}</div>`;
+          labelHtml += `<div style="font-size:72px;font-weight:bold;text-align:center;margin-bottom:28px;line-height:1.1;border-bottom:3px solid #000;padding-bottom:24px;">מספר יציאה ${pallet.number}</div>`;
         }
         pallet.products.forEach(p => {
           labelHtml += `<div style="display:flex;font-size:36px;font-weight:bold;padding:16px 0;border-bottom:1px solid #e5e7eb;align-items:baseline;gap:24px;">
@@ -6787,7 +6783,7 @@ setTimeout(function(){
             doc.addImage(canvas1.toDataURL('image/png'), 'PNG', 0, 10, imgW, imgH1);
             doc.addPage();
             doc.addImage(canvas2.toDataURL('image/png'), 'PNG', 0, 0, pageW, pageH);
-            doc.save(`תווית-משטח-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.pdf`);
+            doc.save(`תווית-יציאה-${shipment.date}${pallet.number ? '-יציאה'+pallet.number : ''}.pdf`);
           });
         });
       };
@@ -6798,7 +6794,7 @@ setTimeout(function(){
         const pW = pallet.products.reduce((s,p)=>s+Number(p.weight||0),0);
         const rows = [
           ['תעודת יציאה - קירור גב"ש'],
-          [`תאריך: ${fmtDate(shipment.date)}${pallet.number ? '        משטח מספר: ' + pallet.number : ''}`],
+          [`תאריך: ${fmtDate(shipment.date)}${pallet.number ? '        מספר יציאה: ' + pallet.number : ''}`],
           [],
           ['מקט','מוצר','קרטונים','משקל (ק"ג)','תאריך אחרון לשימוש','כשרות'],
         ];
@@ -6812,7 +6808,7 @@ setTimeout(function(){
         XLSX.utils.book_append_sheet(wb, ws, 'תעודת יציאה');
         wb.Sheets['תעודת יציאה']['!sheetViews'] = [{ rightToLeft: true }];
         wb.Workbook = { Views: [{ RTL: true }] };
-        XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-משטח'+pallet.number : ''}.xlsx`);
+        XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-יציאה'+pallet.number : ''}.xlsx`);
       };
 
       if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
@@ -6852,99 +6848,95 @@ setTimeout(function(){
                     <label className="text-sm font-semibold text-gray-600 block mb-1">תאריך יציאה</label>
                     <input type="date" value={exitDate} onChange={e => setExitDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-blue-400 outline-none" />
                   </div>
-                  {exitPallets.map((pallet, pIdx) => (
-                    <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-blue-700">משטח מספר</span>
-                          <input type="text" value={pallet.number} onChange={e => updateExitPalletNum(pallet.id, e.target.value)} placeholder="מס'" className="border-2 border-gray-200 rounded-lg p-1.5 w-20 text-center font-bold text-sm focus:border-blue-400 outline-none bg-white" />
-                        </div>
-                        {exitPallets.length > 1 && <button onClick={() => removeExitPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
-                        <div className="flex items-end gap-1 flex-wrap">
-                          <div style={{width:'58px'}}><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
-                            <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                            <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" max="50" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div className="relative" style={{width:'150px'}}><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-                            <input type="text" autoComplete="off" value={exitProductForm.name}
-                              onChange={e => { setExitProductForm(p=>({...p,name:e.target.value,sku:'',kashrut:''})); setShowExitNameDropdown(true); }}
-                              onFocus={() => setShowExitNameDropdown(true)}
-                              onBlur={() => setTimeout(() => setShowExitNameDropdown(false), 150)}
-                              placeholder="הקלד לחיפוש..." className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" />
-                            {showExitNameDropdown && exitProductForm.name && !exitProductForm.sku && (() => {
-                              const results = (frozenProductsList || []).filter(p =>
-                                p.name?.includes(exitProductForm.name) || p.name?.toLowerCase().includes(exitProductForm.name.toLowerCase())
-                              ).slice(0, 20);
-                              if (!results.length) return null;
-                              return (
-                                <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
-                                  {results.map((p, i) => (
-                                    <div key={i}
-                                      onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); }}
-                                      className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer">
-                                      <span className="font-bold text-gray-800 text-xs">{p.name}</span>
-                                      <div className="flex items-center gap-1 shrink-0 mr-2">
-                                        <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
-                                        {p.kashrut && (() => { const kc = getKashrutColor(p.kashrut); return (
-                                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'20', color: kc }}>{p.kashrut}</span>
-                                        ); })()}
-                                      </div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-sm font-bold text-blue-700">מספר יציאה</span>
+                    <input type="text" value={exitDocNumber} onChange={e => setExitDocNumber(e.target.value)} placeholder={nextDocNumber} className="border-2 border-gray-200 rounded-lg p-1.5 w-24 text-center font-bold text-sm focus:border-blue-400 outline-none bg-white" />
+                    <span className="text-xs text-gray-400">(מוצע: {nextDocNumber})</span>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+                    <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 mb-3">
+                      <div className="flex items-end gap-1 flex-wrap">
+                        <div style={{width:'58px'}}><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
+                          <input ref={exitSkuRef} type="text" value={exitProductForm.sku} onChange={e => skuLookup(e.target.value, setExitProductForm)} placeholder="מקט" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                        <div style={{width:'52px'}}><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
+                          <input type="number" value={exitProductForm.cartons} onChange={e => setExitProductForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                        <div className="relative" style={{width:'150px'}}><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
+                          <input type="text" autoComplete="off" value={exitProductForm.name}
+                            onChange={e => { setExitProductForm(p=>({...p,name:e.target.value,sku:'',kashrut:''})); setShowExitNameDropdown(true); }}
+                            onFocus={() => setShowExitNameDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowExitNameDropdown(false), 150)}
+                            placeholder="הקלד לחיפוש..." className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" />
+                          {showExitNameDropdown && exitProductForm.name && !exitProductForm.sku && (() => {
+                            const results = (frozenProductsList || []).filter(p =>
+                              p.name?.includes(exitProductForm.name) || p.name?.toLowerCase().includes(exitProductForm.name.toLowerCase())
+                            ).slice(0, 20);
+                            if (!results.length) return null;
+                            return (
+                              <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-blue-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
+                                {results.map((p, i) => (
+                                  <div key={i}
+                                    onMouseDown={() => { skuLookup(p.sku, setExitProductForm); setShowExitNameDropdown(false); }}
+                                    className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer">
+                                    <span className="font-bold text-gray-800 text-xs">{p.name}</span>
+                                    <div className="flex items-center gap-1 shrink-0 mr-2">
+                                      <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
+                                      {p.kashrut && (() => { const kc = getKashrutColor(p.kashrut); return (
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'20', color: kc }}>{p.kashrut}</span>
+                                      ); })()}
                                     </div>
-                                  ))}
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
-                            <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
-                          <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
-                            <input type="number" value={exitProductForm.weight} onChange={e => setExitProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
-                          <div><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
-                            <div className="flex items-center gap-1">
-                              <input type="date" value={exitProductForm.expiryDate} onChange={e => setExitProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1 text-xs focus:border-blue-400 outline-none bg-white" />
-                              <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
-                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל' ? '' : 'מ.ל'}))} className="w-3 h-3 cursor-pointer" />
-                                מ.ל
-                              </label>
-                              <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
-                                <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל.ה'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל.ה' ? '' : 'מ.ל.ה'}))} className="w-3 h-3 cursor-pointer" />
-                                מ.ל.ה
-                              </label>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <button onClick={() => addProductToExitPallet(pallet.id)} className={`text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן' : 'הוסף'}</button>
-                            <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); setShowExitNameDropdown(false); }} className="bg-gray-200 text-gray-600 px-2 py-1.5 rounded text-xs font-bold">נקה</button>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <div style={{width:'62px'}}><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
+                          <input type="text" value={exitProductForm.kashrut} onChange={e => setExitProductForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-gray-50" /></div>
+                        <div style={{width:'56px'}}><label className="text-xs text-gray-400 block mb-0.5">משקל ק"ג</label>
+                          <input type="number" value={exitProductForm.weight} onChange={e => setExitProductForm(p=>({...p,weight:e.target.value}))} placeholder="משקל" className="border rounded p-1 w-full text-xs focus:border-blue-400 outline-none bg-white" /></div>
+                        <div><label className="text-xs text-gray-400 block mb-0.5">תאריך אחרון לשימוש</label>
+                          <div className="flex items-center gap-1">
+                            <input type="date" value={exitProductForm.expiryDate} onChange={e => setExitProductForm(p=>({...p,expiryDate:e.target.value}))} className="border rounded p-1 text-xs focus:border-blue-400 outline-none bg-white" />
+                            <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
+                              <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל' ? '' : 'מ.ל'}))} className="w-3 h-3 cursor-pointer" />
+                              מ.ל
+                            </label>
+                            <label className="flex items-center gap-0.5 text-xs font-semibold cursor-pointer select-none whitespace-nowrap">
+                              <input type="checkbox" checked={exitProductForm.dateType === 'מ.ל.ה'} onChange={() => setExitProductForm(p=>({...p, dateType: p.dateType === 'מ.ל.ה' ? '' : 'מ.ל.ה'}))} className="w-3 h-3 cursor-pointer" />
+                              מ.ל.ה
+                            </label>
                           </div>
                         </div>
+                        <div className="flex gap-1">
+                          <button onClick={addProductToExit} className={`text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap ${editingExitProduct ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{editingExitProduct ? 'עדכן' : 'הוסף'}</button>
+                          <button onClick={() => { setExitProductForm({sku:'',name:'',kashrut:'',cartons:'',expiryDate:'',dateType:'',weight:''}); setEditingExitProduct(null); setShowExitNameDropdown(false); }} className="bg-gray-200 text-gray-600 px-2 py-1.5 rounded text-xs font-bold">נקה</button>
+                        </div>
                       </div>
-                      {pallet.products.length > 0 && (
-                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
-                          <thead><tr className="text-xs text-gray-500">
-                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th><th></th>
-                          </tr></thead>
-                          <tbody>{pallet.products.map(pr => (
-                            <tr key={pr.id} className="border-t">
-                              <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
-                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
-                              <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
-                              <td className="py-1 px-1">{pr.cartons}</td>
-                              <td className="py-1 px-1 whitespace-nowrap">{pr.expiryDate ? <span>{pr.expiryDate}{pr.dateType ? <span className="mr-1 text-blue-600 font-bold text-xs">({pr.dateType})</span> : ''}</span> : '-'}</td>
-                              <td className="py-1 px-1 whitespace-nowrap">{pr.weight ? pr.weight+' ק"ג' : '-'}</td>
-                              <td className="py-1 px-1 flex gap-2"><button onClick={() => startEditExitProduct(pallet.id, pr)} className="text-blue-500 text-xs hover:text-blue-700 font-semibold">ערוך</button><button onClick={() => removeExitProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
-                            </tr>
-                          ))}</tbody>
-                          <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
-                            <td colSpan="3" className="py-1 px-1">סה"כ</td>
-                            <td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
-                            <td></td><td className="py-1 px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(2)} ק"ג</td><td></td>
-                          </tr></tfoot>
-                        </table></div>
-                      )}
                     </div>
-                  ))}
+                    {exitProducts.length > 0 && (
+                      <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                        <thead><tr className="text-xs text-gray-500">
+                          <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th className="text-right pb-1 px-1">תאריך אחרון לשימוש</th><th className="text-right pb-1 px-1">משקל</th><th></th>
+                        </tr></thead>
+                        <tbody>{exitProducts.map(pr => (
+                          <tr key={pr.id} className="border-t">
+                            <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                            <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                            <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                            <td className="py-1 px-1">{pr.cartons}</td>
+                            <td className="py-1 px-1 whitespace-nowrap">{pr.expiryDate ? <span>{pr.expiryDate}{pr.dateType ? <span className="mr-1 text-blue-600 font-bold text-xs">({pr.dateType})</span> : ''}</span> : '-'}</td>
+                            <td className="py-1 px-1 whitespace-nowrap">{pr.weight ? pr.weight+' ק"ג' : '-'}</td>
+                            <td className="py-1 px-1 flex gap-2"><button onClick={() => startEditExitProduct(pr)} className="text-blue-500 text-xs hover:text-blue-700 font-semibold">ערוך</button><button onClick={() => removeExitProduct(pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                          </tr>
+                        ))}</tbody>
+                        <tfoot><tr className="border-t font-bold text-xs bg-blue-50">
+                          <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                          <td className="py-1 px-1">{exitProducts.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
+                          <td></td><td className="py-1 px-1">{exitProducts.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(2)} ק"ג</td><td></td>
+                        </tr></tfoot>
+                      </table></div>
+                    )}
+                  </div>
                   <div className="flex gap-3 mt-2">
                     <button onClick={saveExit} disabled={saving} className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-green-700 disabled:opacity-60">{saving ? 'שומר...' : editingShipmentId ? 'עדכן תעודה' : 'שמור יציאה'}</button>
                     <button onClick={resetExitForm} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
@@ -6964,7 +6956,7 @@ setTimeout(function(){
                 </div>
                 {reportShipments.length > 0 && (
                   <div className="grid grid-cols-3 gap-3 mb-5">
-                    <div className="bg-blue-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-blue-700">{totalPallets}</div><div className="text-xs text-blue-600 font-semibold">משטחים</div></div>
+                    <div className="bg-blue-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-blue-700">{reportShipments.length}</div><div className="text-xs text-blue-600 font-semibold">תעודות</div></div>
                     <div className="bg-green-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-green-700">{totalCartons}</div><div className="text-xs text-green-600 font-semibold">קרטונים</div></div>
                     <div className="bg-orange-50 rounded-xl p-3 text-center"><div className="text-2xl font-extrabold text-orange-700">{totalWeight.toFixed(2)}</div><div className="text-xs text-orange-600 font-semibold">ק"ג סה"כ</div></div>
                   </div>
@@ -6974,12 +6966,14 @@ setTimeout(function(){
                 ) : (
                   <div className="space-y-4">{reportShipments.map(shipment => (
                     <div key={shipment.id}>
-                      {shipment.pallets.map((pallet, pIdx) => (
-                        <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
+                      {(() => {
+                        const pallet = shipment.pallets && shipment.pallets[0] ? shipment.pallets[0] : { number: '', products: [] };
+                        return (
+                        <div className="bg-gray-50 rounded-xl p-4 mb-3 border border-gray-100">
                           <div className="flex justify-between items-center mb-2">
                             <div>
                               <div className="font-bold text-blue-700">תעודת יציאה {fmtDate(shipment.date)}</div>
-                              {pallet.number && <div className="text-lg font-extrabold text-gray-800 mt-0.5">משטח {pallet.number}</div>}
+                              {pallet.number && <div className="text-lg font-extrabold text-gray-800 mt-0.5">מספר יציאה {pallet.number}</div>}
                             </div>
                             <div className="flex gap-1">
                               <button onClick={() => exportShipmentExcel(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">Excel</button>
@@ -7010,14 +7004,15 @@ setTimeout(function(){
                               );
                             })}</tbody>
                             <tfoot><tr className="border-t font-bold text-xs">
-                              <td colSpan="3" className="pt-1 px-1">סה"כ במשטח</td>
+                              <td colSpan="3" className="pt-1 px-1">סה"כ</td>
                               <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td>
                               <td></td>
                               <td className="px-1">{pallet.products.reduce((s,p)=>s+Number(p.weight||0),0).toFixed(2)} ק"ג</td>
                             </tr></tfoot>
                           </table></div>
                         </div>
-                      ))}
+                        );
+                      })()}
                     </div>
                   ))}</div>
                 )}
