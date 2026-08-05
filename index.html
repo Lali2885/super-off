@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
@@ -5452,6 +5452,7 @@ setTimeout(function(){
       const today = new Date().toISOString().split('T')[0];
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       const [bsTab, setBsTab] = useState('exits');
+      const [invTab, setInvTab] = useState('products');
       const [shipments, setShipments] = useState([]);
       const [withdrawals, setWithdrawals] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -5472,10 +5473,10 @@ setTimeout(function(){
       // Withdrawal form state
       const [showWdForm, setShowWdForm] = useState(false);
       const [wdDate, setWdDate] = useState(today);
-      const [wdProducts, setWdProducts] = useState([]);
-      const [wdForm, setWdForm] = useState({ sku: '', name: '', kashrut: '', cartons: '' });
+      const [wdPallets, setWdPallets] = useState([{ id: Date.now(), palletRef: '', products: [] }]);
       const [wdReportDate, setWdReportDate] = useState(today);
       const [showAllWithdrawals, setShowAllWithdrawals] = useState(false);
+      const [wdSelections, setWdSelections] = useState({});
 
       const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
@@ -5574,22 +5575,58 @@ setTimeout(function(){
       };
 
       // ── Withdrawal functions ──
-      const addWdProduct = () => {
-        if (!wdForm.name || !wdForm.cartons) return;
-        setWdProducts(prev => [...prev, { ...wdForm, id: Date.now() }]);
-        setWdForm({ sku: '', name: '', kashrut: '', cartons: '' });
+      const addWdPallet = () => setWdPallets(prev => [...prev, { id: Date.now(), palletRef: '', products: [] }]);
+      const removeWdPallet = (id) => setWdPallets(prev => prev.filter(p => p.id !== id));
+      const getWdPalletProducts = (palletRef) => {
+        const allProds = [];
+        shipments.forEach(s => s.pallets.filter(p => p.number === palletRef).forEach(p => p.products.forEach(pr => allProds.push({ ...pr }))));
+        return allProds.map(pr => {
+          const withdrawn = withdrawals
+            .flatMap(w => (w.pallets||[]).filter(wp => wp.palletRef === palletRef).flatMap(wp => wp.products))
+            .filter(wp => (wp.sku && wp.sku === pr.sku) || (!wp.sku && wp.name === pr.name))
+            .reduce((s, wp) => s + Number(wp.cartons||0), 0);
+          return { ...pr, available: Math.max(0, Number(pr.cartons||0) - withdrawn) };
+        });
       };
 
-      const removeWdProduct = (id) => setWdProducts(prev => prev.filter(p => p.id !== id));
+      const updateWdPalletRef = (id, ref) => {
+        setWdPallets(prev => prev.map(p => p.id === id ? { ...p, palletRef: ref, products: [] } : p));
+        if (ref) {
+          const prods = getWdPalletProducts(ref);
+          const sel = {};
+          prods.forEach(pr => { const k = pr.sku || pr.name; sel[k] = { checked: pr.available > 0, qty: pr.available }; });
+          setWdSelections(prev => ({ ...prev, [id]: sel }));
+        }
+      };
+
+      const applyWdSelection = (palletId) => {
+        const pallet = wdPallets.find(p => p.id === palletId);
+        if (!pallet) return;
+        const prods = getWdPalletProducts(pallet.palletRef);
+        const sel = wdSelections[palletId] || {};
+        const selected = prods.filter(pr => {
+          const k = pr.sku || pr.name;
+          const s = sel[k];
+          return s ? (s.checked && Number(s.qty) > 0) : pr.available > 0;
+        }).map((pr, i) => {
+          const k = pr.sku || pr.name;
+          const s = sel[k];
+          return { ...pr, cartons: s ? Number(s.qty) : pr.available, id: Date.now() + i };
+        });
+        setWdPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: selected } : p));
+      };
+
+      const removeWdProduct = (palletId, productId) => setWdPallets(prev => prev.map(p => p.id === palletId ? { ...p, products: p.products.filter(pr => pr.id !== productId) } : p));
 
       const saveWithdrawal = async () => {
-        if (!wdDate || wdProducts.length === 0) { alert('נא למלא תאריך ולהוסיף לפחות מוצר אחד'); return; }
+        const hasProducts = wdPallets.some(p => p.products.length > 0);
+        if (!wdDate || !hasProducts) { alert('נא למלא תאריך ולהוסיף לפחות מוצר אחד'); return; }
         setSaving(true);
-        const newItem = { id: Date.now(), date: wdDate, products: wdProducts };
+        const newItem = { id: Date.now(), date: wdDate, pallets: wdPallets };
         const { data, error } = await db.from('beit_shemesh_withdrawals').insert([newItem]).select();
         if (error) { alert('שגיאה בשמירה: ' + error.message); setSaving(false); return; }
         if (data) setWithdrawals(prev => [data[0], ...prev].sort((a,b) => b.date.localeCompare(a.date)));
-        setWdDate(today); setWdProducts([]); setShowWdForm(false); setSaving(false);
+        setWdDate(today); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); setShowWdForm(false); setSaving(false);
       };
 
       const deleteWithdrawal = async (id) => {
@@ -5605,8 +5642,9 @@ setTimeout(function(){
       const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
       const totalPallets = reportShipments.reduce((sum, s) => sum + s.pallets.length, 0);
 
+      const getWdAllProducts = (w) => w.pallets ? w.pallets.flatMap(p => p.products) : (w.products || []);
       const wdReportItems = showAllWithdrawals ? withdrawals : withdrawals.filter(w => w.date === wdReportDate);
-      const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
+      const wdTotalCartons = wdReportItems.flatMap(w => getWdAllProducts(w)).reduce((sum,p) => sum + Number(p.cartons||0), 0);
 
       // ── Inventory calc ──
       const inventoryMap = useMemo(() => {
@@ -5616,12 +5654,29 @@ setTimeout(function(){
           if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', dateType: pr.dateType||'', totalIn: 0, totalOut: 0 };
           map[key].totalIn += Number(pr.cartons||0);
         })));
-        withdrawals.forEach(w => w.products.forEach(pr => {
+        withdrawals.forEach(w => (w.pallets ? w.pallets.flatMap(p => p.products) : (w.products||[])).forEach(pr => {
           const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '') + '|' + (pr.dateType || '');
           if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', dateType: pr.dateType||'', totalIn: 0, totalOut: 0 };
           map[key].totalOut += Number(pr.cartons||0);
         }));
         return Object.values(map).sort((a,b) => (b.totalIn-b.totalOut) - (a.totalIn-a.totalOut));
+      }, [shipments, withdrawals]);
+
+      const palletInventoryMap = useMemo(() => {
+        const map = {};
+        shipments.forEach(s => s.pallets.forEach(p => {
+          const key = p.number || '?';
+          if (!map[key]) map[key] = { palletRef: key, date: s.date, productsIn: [], totalIn: 0, totalOut: 0, withdrawnProducts: [] };
+          p.products.forEach(pr => { map[key].productsIn.push(pr); map[key].totalIn += Number(pr.cartons||0); });
+        }));
+        withdrawals.forEach(w => {
+          (w.pallets || []).forEach(wp => {
+            const key = wp.palletRef || '?';
+            if (!map[key]) map[key] = { palletRef: key, date: '', productsIn: [], totalIn: 0, totalOut: 0, withdrawnProducts: [] };
+            wp.products.forEach(pr => { map[key].totalOut += Number(pr.cartons||0); map[key].withdrawnProducts.push({ ...pr, withdrawDate: w.date }); });
+          });
+        });
+        return Object.values(map).sort((a,b) => b.date.localeCompare(a.date));
       }, [shipments, withdrawals]);
 
       const fmtDate = d => d ? d.split('-').reverse().join('/') : '';
@@ -5983,45 +6038,81 @@ setTimeout(function(){
                   <h2 className="font-bold text-xl mb-4 text-purple-800">הזנת משיכה חדשה</h2>
                   <div className="mb-4"><label className="text-sm font-semibold text-gray-600 block mb-1">תאריך משיכה</label>
                     <input type="date" value={wdDate} onChange={e => setWdDate(e.target.value)} className="border-2 border-gray-200 rounded-xl p-2.5 focus:border-purple-400 outline-none" /></div>
-                  <div className="bg-purple-50 rounded-lg p-2 border border-purple-200 mb-3">
-                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-1">
-                      <div><label className="text-xs text-gray-400 block mb-0.5">מקט</label>
-                        <input type="text" value={wdForm.sku} onChange={e => skuLookup(e.target.value, setWdForm)} placeholder="מקט" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-white" /></div>
-                      <div><label className="text-xs text-gray-400 block mb-0.5">קרטונים</label>
-                        <input type="number" value={wdForm.cartons} onChange={e => setWdForm(p=>({...p,cartons:e.target.value}))} placeholder="כמות" min="1" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-white" /></div>
-                      <div className="col-span-2 sm:col-span-1"><label className="text-xs text-gray-400 block mb-0.5">שם מוצר</label>
-                        <input type="text" value={wdForm.name} onChange={e => setWdForm(p=>({...p,name:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-gray-50" /></div>
-                      <div><label className="text-xs text-gray-400 block mb-0.5">כשרות</label>
-                        <input type="text" value={wdForm.kashrut} onChange={e => setWdForm(p=>({...p,kashrut:e.target.value}))} placeholder="אוטומטי" className="border rounded p-1.5 w-full text-xs focus:border-purple-400 outline-none bg-gray-50" /></div>
-                      <div className="col-span-2 flex gap-2 sm:col-span-1">
-                        <button onClick={addWdProduct} className="flex-1 bg-purple-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-purple-700">הוסף</button>
-                        <button onClick={() => setWdForm({sku:'',name:'',kashrut:'',cartons:''})} className="flex-1 bg-gray-200 text-gray-600 px-3 py-2 rounded text-xs font-bold">נקה</button>
+                  {wdPallets.map((pallet) => {
+                    const availPallets = shipments.flatMap(s => s.pallets.map(p => p.number)).filter(Boolean).filter((v,i,a) => a.indexOf(v) === i).sort((a,b) => Number(a)-Number(b));
+                    const palletProds = pallet.palletRef ? getWdPalletProducts(pallet.palletRef) : [];
+                    const sel = wdSelections[pallet.id] || {};
+                    return (
+                    <div key={pallet.id} className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-purple-700">בחר משטח</span>
+                          <select value={pallet.palletRef} onChange={e => updateWdPalletRef(pallet.id, e.target.value)} className="border-2 border-gray-200 rounded-lg p-1.5 font-bold text-sm focus:border-purple-400 outline-none bg-white">
+                            <option value="">-- בחר --</option>
+                            {availPallets.map(num => <option key={num} value={num}>משטח {num}</option>)}
+                          </select>
+                        </div>
+                        {wdPallets.length > 1 && <button onClick={() => removeWdPallet(pallet.id)} className="text-red-400 text-sm font-semibold hover:text-red-600">הסר</button>}
                       </div>
+                      {pallet.palletRef && (
+                        <div className="bg-purple-50 rounded-lg p-3 border border-purple-200 mb-3">
+                          <div className="text-xs font-bold text-purple-700 mb-2">בחר מוצרים למשיכה:</div>
+                          {palletProds.length === 0 ? (
+                            <div className="text-xs text-gray-400">אין מוצרים במשטח זה</div>
+                          ) : (
+                            <React.Fragment>
+                              {palletProds.map(pr => {
+                                const k = pr.sku || pr.name;
+                                const s = sel[k] !== undefined ? sel[k] : { checked: pr.available > 0, qty: pr.available };
+                                return (
+                                  <div key={k} className="flex items-center gap-2 py-1.5 border-b border-purple-100 last:border-0">
+                                    <input type="checkbox" checked={s.checked} onChange={e => setWdSelections(prev => ({ ...prev, [pallet.id]: { ...(prev[pallet.id]||{}), [k]: { ...s, checked: e.target.checked } } }))} className="w-4 h-4 cursor-pointer accent-purple-600" />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm font-semibold">{pr.name}</span>
+                                      {pr.sku && <span className="text-xs text-gray-400 mr-1">({pr.sku})</span>}
+                                    </div>
+                                    <span className="text-xs text-gray-400 shrink-0">זמין: {pr.available}</span>
+                                    <input type="number" value={s.qty} min="0" max={pr.available} disabled={!s.checked}
+                                      onChange={e => setWdSelections(prev => ({ ...prev, [pallet.id]: { ...(prev[pallet.id]||{}), [k]: { ...s, qty: Math.min(Number(e.target.value), pr.available) } } }))}
+                                      className="border rounded p-1 w-16 text-xs text-center focus:border-purple-400 outline-none bg-white disabled:bg-gray-100" />
+                                    <span className="text-xs text-gray-400">קרטונים</span>
+                                  </div>
+                                );
+                              })}
+                              <button onClick={() => applyWdSelection(pallet.id)} className="mt-3 bg-purple-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700">אשר בחירה</button>
+                            </React.Fragment>
+                          )}
+                        </div>
+                      )}
+                      {pallet.products.length > 0 && (
+                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                          <thead><tr className="text-xs text-gray-500">
+                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
+                          </tr></thead>
+                          <tbody>{pallet.products.map(pr => (
+                            <tr key={pr.id} className="border-t">
+                              <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
+                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                              <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
+                              <td className="py-1 px-1 font-bold text-purple-700">{pr.cartons}</td>
+                              <td className="py-1 px-1"><button onClick={() => removeWdProduct(pallet.id, pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
+                            </tr>
+                          ))}</tbody>
+                          <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
+                            <td colSpan="3" className="py-1 px-1">סה"כ</td>
+                            <td className="py-1 px-1 text-purple-700">{pallet.products.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td><td></td>
+                          </tr></tfoot>
+                        </table></div>
+                      )}
                     </div>
+                    );
+                  })}
+                  <div className="flex gap-3 mt-2 mb-4">
+                    <button onClick={addWdPallet} className="bg-purple-100 text-purple-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-purple-200">+ משטח נוסף</button>
                   </div>
-                  {wdProducts.length > 0 && (
-                    <div className="overflow-x-auto mb-4"><table className="w-full text-sm min-w-max">
-                      <thead><tr className="text-xs text-gray-500">
-                        <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th><th></th>
-                      </tr></thead>
-                      <tbody>{wdProducts.map(pr => (
-                        <tr key={pr.id} className="border-t">
-                          <td className="py-1 px-1 text-gray-400 text-xs">{pr.sku}</td>
-                          <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
-                          <td className="py-1 px-1 text-xs text-gray-500">{pr.kashrut||'-'}</td>
-                          <td className="py-1 px-1 font-bold text-purple-700">{pr.cartons}</td>
-                          <td className="py-1 px-1"><button onClick={() => removeWdProduct(pr.id)} className="text-red-400 text-xs hover:text-red-600">הסר</button></td>
-                        </tr>
-                      ))}</tbody>
-                      <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
-                        <td colSpan="3" className="py-1 px-1">סה"כ</td>
-                        <td className="py-1 px-1 text-purple-700">{wdProducts.reduce((s,p)=>s+Number(p.cartons||0),0)} קרטונים</td><td></td>
-                      </tr></tfoot>
-                    </table></div>
-                  )}
                   <div className="flex gap-3">
                     <button onClick={saveWithdrawal} disabled={saving} className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-purple-700 disabled:opacity-60">{saving ? 'שומר...' : 'שמור משיכה'}</button>
-                    <button onClick={() => { setShowWdForm(false); setWdProducts([]); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
+                    <button onClick={() => { setShowWdForm(false); setWdPallets([{ id: Date.now(), palletRef: '', products: [] }]); setWdSelections({}); }} className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-bold">ביטול</button>
                   </div>
                 </div>
               )}
@@ -6044,23 +6135,46 @@ setTimeout(function(){
                     </div>
                     <div className="space-y-3">{wdReportItems.map(w => (
                       <div key={w.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                        <div className="flex justify-between items-center mb-2">
+                        <div className="flex justify-between items-center mb-3">
                           <span className="text-sm font-semibold text-gray-600">{w.date}</span>
                           <button onClick={() => deleteWithdrawal(w.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>
                         </div>
-                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
-                          <thead><tr className="text-xs text-gray-500">
-                            <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
-                          </tr></thead>
-                          <tbody>{w.products.map(p => (
-                            <tr key={p.id} className="border-t">
-                              <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
-                              <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
-                              <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
-                              <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
-                            </tr>
-                          ))}</tbody>
-                        </table></div>
+                        {w.pallets ? w.pallets.map(wp => (
+                          <div key={wp.id} className="mb-3">
+                            {wp.palletRef && <div className="text-xs font-bold text-purple-700 mb-1 bg-purple-50 px-2 py-1 rounded inline-block">משטח מספר {wp.palletRef}</div>}
+                            <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                              <thead><tr className="text-xs text-gray-500">
+                                <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
+                              </tr></thead>
+                              <tbody>{wp.products.map(p => (
+                                <tr key={p.id} className="border-t">
+                                  <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
+                                  <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
+                                  <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
+                                  <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
+                                </tr>
+                              ))}</tbody>
+                              <tfoot><tr className="border-t font-bold text-xs bg-purple-50">
+                                <td colSpan="3" className="py-1 px-1">סה"כ משטח</td>
+                                <td className="py-1 px-1 text-purple-700">{wp.products.reduce((s,p)=>s+Number(p.cartons||0),0)}</td>
+                              </tr></tfoot>
+                            </table></div>
+                          </div>
+                        )) : (
+                          <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                            <thead><tr className="text-xs text-gray-500">
+                              <th className="text-right pb-1 px-1">מקט</th><th className="text-right pb-1 px-1">מוצר</th><th className="text-right pb-1 px-1">כשרות</th><th className="text-right pb-1 px-1">קרטונים</th>
+                            </tr></thead>
+                            <tbody>{(w.products||[]).map(p => (
+                              <tr key={p.id} className="border-t">
+                                <td className="py-1 px-1 text-gray-400 text-xs">{p.sku}</td>
+                                <td className="py-1 px-1 font-semibold whitespace-nowrap">{p.name}</td>
+                                <td className="py-1 px-1 text-xs text-gray-500">{p.kashrut||'-'}</td>
+                                <td className="py-1 px-1 font-bold text-purple-700">{p.cartons}</td>
+                              </tr>
+                            ))}</tbody>
+                          </table></div>
+                        )}
                       </div>
                     ))}</div>
                   </div>
@@ -6072,69 +6186,136 @@ setTimeout(function(){
           {/* ══ TAB: מצב מלאי ══ */}
           {bsTab === 'inventory' && (
             <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
-              <h2 className="font-bold text-xl mb-2 text-gray-800">מצב מלאי נוכחי</h2>
-              <p className="text-sm text-gray-400 mb-5">מחושב אוטומטית: יציאות פחות משיכות</p>
-              {inventoryMap.length === 0 ? (
-                <div className="text-center text-gray-400 py-10">אין נתוני מלאי עדיין</div>
-              ) : (
-                <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
-                  <thead><tr className="bg-gray-50 text-xs text-gray-500">
-                    <th className="text-right p-2 rounded-r-lg">מוצר</th>
-                    <th className="text-right p-2">כשרות</th>
-                    <th className="text-right p-2">מקט</th>
-                    <th className="text-right p-2">סימון</th>
-                    <th className="text-right p-2">נכנס</th>
-                    <th className="text-right p-2">נמשך</th>
-                    <th className="text-right p-2 rounded-l-lg">יתרה</th>
-                  </tr></thead>
-                  <tbody>{(() => {
-                    const groups = {};
-                    inventoryMap.forEach(item => {
-                      const k = item.kashrut || '-';
-                      if (!groups[k]) groups[k] = [];
-                      groups[k].push(item);
-                    });
-                    return Object.entries(groups).map(([kashrutName, items]) => {
-                      const kObj = kashrutList.find(k => k.name === kashrutName);
-                      const kColor = kObj?.color || '#888';
-                      return (
-                        <React.Fragment key={kashrutName}>
-                          <tr style={{ backgroundColor: kColor + '22' }}>
-                            <td colSpan="7" className="p-2 font-extrabold text-sm" style={{ color: kColor }}>
-                              {kashrutName === '-' ? 'ללא כשרות' : kashrutName} — {items.length} פריטים
-                            </td>
-                          </tr>
-                          {items.map((item, i) => {
-                            const balance = item.totalIn - item.totalOut;
-                            return (
-                              <tr key={i} className={`border-t ${balance === 0 ? 'opacity-40' : ''}`} style={{ backgroundColor: kColor + '0A' }}>
-                                <td className="p-2 font-semibold whitespace-nowrap">{item.name}</td>
-                                <td className="p-2">
-                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{item.kashrut||'-'}</span>
-                                </td>
-                                <td className="p-2 text-xs text-gray-700 font-medium">{item.sku||'-'}</td>
-                                <td className="p-2">
-                                  {item.dateType ? <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300">{item.dateType}</span> : <span className="text-xs text-gray-300">—</span>}
-                                </td>
-                                <td className="p-2 text-blue-600 font-bold">{item.totalIn}</td>
-                                <td className="p-2 text-purple-600 font-bold">{item.totalOut}</td>
-                                <td className="p-2">
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{balance}</span>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-xl text-gray-800">מצב מלאי נוכחי</h2>
+                <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-bold">
+                  <button onClick={() => setInvTab('products')} className={`px-3 py-1.5 transition-colors ${invTab === 'products' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי מוצר</button>
+                  <button onClick={() => setInvTab('pallets')} className={`px-3 py-1.5 transition-colors ${invTab === 'pallets' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי משטח</button>
+                </div>
+              </div>
+              {invTab === 'products' && (
+                <>
+                  <p className="text-sm text-gray-400 mb-4">מחושב אוטומטית: יציאות פחות משיכות</p>
+                  {inventoryMap.length === 0 ? (
+                    <div className="text-center text-gray-400 py-10">אין נתוני מלאי עדיין</div>
+                  ) : (
+                    <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
+                      <thead><tr className="bg-gray-50 text-xs text-gray-500">
+                        <th className="text-right p-2 rounded-r-lg">מוצר</th>
+                        <th className="text-right p-2">כשרות</th>
+                        <th className="text-right p-2">מקט</th>
+                        <th className="text-right p-2">סימון</th>
+                        <th className="text-right p-2">נכנס</th>
+                        <th className="text-right p-2">נמשך</th>
+                        <th className="text-right p-2 rounded-l-lg">יתרה</th>
+                      </tr></thead>
+                      <tbody>{(() => {
+                        const groups = {};
+                        inventoryMap.forEach(item => {
+                          const k = item.kashrut || '-';
+                          if (!groups[k]) groups[k] = [];
+                          groups[k].push(item);
+                        });
+                        return Object.entries(groups).map(([kashrutName, items]) => {
+                          const kObj = kashrutList.find(k => k.name === kashrutName);
+                          const kColor = kObj?.color || '#888';
+                          return (
+                            <React.Fragment key={kashrutName}>
+                              <tr style={{ backgroundColor: kColor + '22' }}>
+                                <td colSpan="7" className="p-2 font-extrabold text-sm" style={{ color: kColor }}>
+                                  {kashrutName === '-' ? 'ללא כשרות' : kashrutName} — {items.length} פריטים
                                 </td>
                               </tr>
-                            );
-                          })}
-                        </React.Fragment>
-                      );
-                    });
-                  })()}</tbody>
-                  <tfoot><tr className="border-t font-bold text-sm bg-gray-50">
-                    <td colSpan="4" className="p-2">סה"כ</td>
-                    <td className="p-2 text-blue-600">{inventoryMap.reduce((s,p)=>s+p.totalIn,0)}</td>
-                    <td className="p-2 text-purple-600">{inventoryMap.reduce((s,p)=>s+p.totalOut,0)}</td>
-                    <td className="p-2 text-green-700">{inventoryMap.reduce((s,p)=>s+(p.totalIn-p.totalOut),0)}</td>
-                  </tr></tfoot>
-                </table></div>
+                              {items.map((item, i) => {
+                                const balance = item.totalIn - item.totalOut;
+                                return (
+                                  <tr key={i} className={`border-t ${balance === 0 ? 'opacity-40' : ''}`} style={{ backgroundColor: kColor + '0A' }}>
+                                    <td className="p-2 font-semibold whitespace-nowrap">{item.name}</td>
+                                    <td className="p-2">
+                                      <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{item.kashrut||'-'}</span>
+                                    </td>
+                                    <td className="p-2 text-xs text-gray-700 font-medium">{item.sku||'-'}</td>
+                                    <td className="p-2">
+                                      {item.dateType ? <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300">{item.dateType}</span> : <span className="text-xs text-gray-300">—</span>}
+                                    </td>
+                                    <td className="p-2 text-blue-600 font-bold">{item.totalIn}</td>
+                                    <td className="p-2 text-purple-600 font-bold">{item.totalOut}</td>
+                                    <td className="p-2">
+                                      <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{balance}</span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </React.Fragment>
+                          );
+                        });
+                      })()}</tbody>
+                      <tfoot><tr className="border-t font-bold text-sm bg-gray-50">
+                        <td colSpan="4" className="p-2">סה"כ</td>
+                        <td className="p-2 text-blue-600">{inventoryMap.reduce((s,p)=>s+p.totalIn,0)}</td>
+                        <td className="p-2 text-purple-600">{inventoryMap.reduce((s,p)=>s+p.totalOut,0)}</td>
+                        <td className="p-2 text-green-700">{inventoryMap.reduce((s,p)=>s+(p.totalIn-p.totalOut),0)}</td>
+                      </tr></tfoot>
+                    </table></div>
+                  )}
+                </>
+              )}
+              {invTab === 'pallets' && (
+                <>
+                  <p className="text-sm text-gray-400 mb-4">מצב כל משטח שנכנס — נכנס / נמשך / יתרה</p>
+                  {palletInventoryMap.length === 0 ? (
+                    <div className="text-center text-gray-400 py-10">אין נתוני משטחים עדיין</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {palletInventoryMap.map((pallet, i) => {
+                        const balance = pallet.totalIn - pallet.totalOut;
+                        return (
+                          <div key={i} className={`rounded-xl border p-4 ${balance === 0 ? 'opacity-50 bg-gray-50 border-gray-100' : 'bg-white border-indigo-100'}`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-base font-extrabold text-indigo-800">משטח {pallet.palletRef}</span>
+                                {pallet.date && <span className="text-xs text-gray-400">{pallet.date}</span>}
+                              </div>
+                              <div className="flex gap-3 text-xs font-bold">
+                                <span className="text-blue-600">נכנס: {pallet.totalIn}</span>
+                                <span className="text-purple-600">נמשך: {pallet.totalOut}</span>
+                                <span className={`px-2 py-0.5 rounded-full ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>יתרה: {balance}</span>
+                              </div>
+                            </div>
+                            {pallet.productsIn.length > 0 && (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs min-w-max">
+                                  <thead><tr className="text-gray-400 border-b">
+                                    <th className="text-right pb-1 px-1">מוצר</th>
+                                    <th className="text-right pb-1 px-1">מקט</th>
+                                    <th className="text-right pb-1 px-1 text-blue-500">נכנס</th>
+                                    <th className="text-right pb-1 px-1 text-purple-500">נמשך</th>
+                                    <th className="text-right pb-1 px-1 text-green-600">יתרה</th>
+                                  </tr></thead>
+                                  <tbody>{pallet.productsIn.map((pr, j) => {
+                                    const wdOut = pallet.withdrawnProducts.filter(w => (w.sku && w.sku === pr.sku) || (!w.sku && w.name === pr.name)).reduce((s,w) => s+Number(w.cartons||0), 0);
+                                    const prBal = Number(pr.cartons||0) - wdOut;
+                                    return (
+                                      <tr key={j} className="border-t">
+                                        <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
+                                        <td className="py-1 px-1 text-gray-400">{pr.sku||'-'}</td>
+                                        <td className="py-1 px-1 text-blue-600 font-bold">{pr.cartons}</td>
+                                        <td className="py-1 px-1 text-purple-600 font-bold">{wdOut || '-'}</td>
+                                        <td className="py-1 px-1">
+                                          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${prBal > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>{prBal}</span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}</tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -8049,4 +8230,3 @@ setTimeout(function(){
   </script>
 </body>
 </html>
-
