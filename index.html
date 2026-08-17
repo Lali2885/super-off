@@ -5972,6 +5972,79 @@ setTimeout(function(){
         });
       };
 
+      const exportInventoryStatePdf = async () => {
+        const { jsPDF } = window.jspdf;
+        const date = new Date().toLocaleDateString('he-IL');
+        const groups = {};
+        inventoryMap.forEach(item => {
+          const k = item.kashrut || '-';
+          if (!groups[k]) groups[k] = [];
+          groups[k].push(item);
+        });
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        let first = true;
+        for (const [kashrutName, items] of Object.entries(groups)) {
+          const kObj = kashrutList.find(k => k.name === kashrutName);
+          const kColor = kObj?.color || '#1e293b';
+          const totalIn = items.reduce((s, p) => s + p.totalIn, 0);
+          const totalOut = items.reduce((s, p) => s + p.totalOut, 0);
+          const totalBalance = items.reduce((s, p) => s + (p.totalIn - p.totalOut), 0);
+          const rows = items.map((item, i) => {
+            const balance = item.totalIn - item.totalOut;
+            return `<tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8fafc'};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:6px 10px;font-weight:bold;">${item.name}</td>
+              <td style="padding:6px 10px;text-align:center;color:#64748b;font-size:11px;">${item.sku || ''}</td>
+              <td style="padding:6px 10px;text-align:center;">${item.dateType || '-'}</td>
+              <td style="padding:6px 10px;text-align:center;color:#2563eb;font-weight:bold;">${item.totalIn}</td>
+              <td style="padding:6px 10px;text-align:center;color:#9333ea;font-weight:bold;">${item.totalOut}</td>
+              <td style="padding:6px 10px;text-align:center;color:#15803d;font-weight:bold;">${balance}</td>
+            </tr>`;
+          }).join('');
+          const html = `
+            <div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:620px;">
+              <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid ${kColor};">
+                <div style="font-size:13px;color:#64748b;font-weight:normal;margin-bottom:4px;">מצב מלאי — קירור לירוי — נכון לתאריך ${date}</div>
+                <div style="font-size:22px;font-weight:bold;color:${kColor};">${kashrutName === '-' ? 'ללא כשרות' : kashrutName}</div>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:#1e293b;color:#ffffff;">
+                    <th style="padding:7px 10px;text-align:right;">מוצר</th>
+                    <th style="padding:7px 10px;text-align:center;">מקט</th>
+                    <th style="padding:7px 10px;text-align:center;">סימון</th>
+                    <th style="padding:7px 10px;text-align:center;">נכנס</th>
+                    <th style="padding:7px 10px;text-align:center;">נמשך</th>
+                    <th style="padding:7px 10px;text-align:center;">יתרה</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                  <tr style="background:#f1f5f9;font-weight:bold;border-top:2px solid #cbd5e1;">
+                    <td style="padding:6px 10px;" colspan="3">סה"כ</td>
+                    <td style="padding:6px 10px;text-align:center;">${totalIn}</td>
+                    <td style="padding:6px 10px;text-align:center;">${totalOut}</td>
+                    <td style="padding:6px 10px;text-align:center;">${totalBalance}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>`;
+          const container = document.createElement('div');
+          container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+          container.innerHTML = html;
+          document.body.appendChild(container);
+          const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
+          document.body.removeChild(container);
+          if (!first) doc.addPage();
+          first = false;
+          const imgData = canvas.toDataURL('image/png');
+          const pageW = doc.internal.pageSize.getWidth();
+          const imgH = (canvas.height * pageW) / canvas.width;
+          doc.addImage(imgData, 'PNG', 0, 0, pageW, imgH);
+        }
+        if (first) doc.text('אין נתוני מלאי', 105, 40, { align: 'center' });
+        doc.save(`מצב-מלאי-קירור-לירוי-${date.replace(/\//g, '-')}.pdf`);
+      };
+
       if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
 
       const tabBtn = (id, label, color) => (
@@ -6365,11 +6438,16 @@ setTimeout(function(){
           {/* ══ TAB: מצב מלאי ══ */}
           {bsTab === 'inventory' && (
             <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <h2 className="font-bold text-xl text-gray-800">מצב מלאי נוכחי</h2>
-                <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-bold">
-                  <button onClick={() => setInvTab('products')} className={`px-3 py-1.5 transition-colors ${invTab === 'products' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי מוצר</button>
-                  <button onClick={() => setInvTab('pallets')} className={`px-3 py-1.5 transition-colors ${invTab === 'pallets' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי משטח</button>
+                <div className="flex items-center gap-2">
+                  <button onClick={exportInventoryStatePdf} className="flex items-center gap-1.5 text-xs font-bold bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <span>📄</span> הורד PDF
+                  </button>
+                  <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-bold">
+                    <button onClick={() => setInvTab('products')} className={`px-3 py-1.5 transition-colors ${invTab === 'products' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי מוצר</button>
+                    <button onClick={() => setInvTab('pallets')} className={`px-3 py-1.5 transition-colors ${invTab === 'pallets' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>לפי משטח</button>
+                  </div>
                 </div>
               </div>
               {invTab === 'products' && (
@@ -6813,6 +6891,79 @@ setTimeout(function(){
         XLSX.writeFile(wb, `תעודת-יציאה-${shipment.date}${pallet.number ? '-יציאה'+pallet.number : ''}.xlsx`);
       };
 
+      const exportInventoryStatePdf = async () => {
+        const { jsPDF } = window.jspdf;
+        const date = new Date().toLocaleDateString('he-IL');
+        const groups = {};
+        inventoryMap.forEach(item => {
+          const k = item.kashrut || '-';
+          if (!groups[k]) groups[k] = [];
+          groups[k].push(item);
+        });
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        let first = true;
+        for (const [kashrutName, items] of Object.entries(groups)) {
+          const kObj = kashrutList.find(k => k.name === kashrutName);
+          const kColor = kObj?.color || '#0f766e';
+          const totalIn = items.reduce((s, p) => s + p.totalIn, 0);
+          const totalOut = items.reduce((s, p) => s + p.totalOut, 0);
+          const totalBalance = items.reduce((s, p) => s + (p.totalIn - p.totalOut), 0);
+          const rows = items.map((item, i) => {
+            const balance = item.totalIn - item.totalOut;
+            return `<tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8fafc'};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:6px 10px;font-weight:bold;">${item.name}</td>
+              <td style="padding:6px 10px;text-align:center;color:#64748b;font-size:11px;">${item.sku || ''}</td>
+              <td style="padding:6px 10px;text-align:center;">${item.dateType || '-'}</td>
+              <td style="padding:6px 10px;text-align:center;color:#2563eb;font-weight:bold;">${item.totalIn}</td>
+              <td style="padding:6px 10px;text-align:center;color:#9333ea;font-weight:bold;">${item.totalOut}</td>
+              <td style="padding:6px 10px;text-align:center;color:#15803d;font-weight:bold;">${balance}</td>
+            </tr>`;
+          }).join('');
+          const html = `
+            <div style="font-family:Arial,sans-serif;direction:rtl;padding:28px;width:620px;">
+              <div style="margin-bottom:16px;padding-bottom:10px;border-bottom:3px solid ${kColor};">
+                <div style="font-size:13px;color:#64748b;font-weight:normal;margin-bottom:4px;">מצב מלאי — קירור גב"ש — נכון לתאריך ${date}</div>
+                <div style="font-size:22px;font-weight:bold;color:${kColor};">${kashrutName === '-' ? 'ללא כשרות' : kashrutName}</div>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:#1e293b;color:#ffffff;">
+                    <th style="padding:7px 10px;text-align:right;">מוצר</th>
+                    <th style="padding:7px 10px;text-align:center;">מקט</th>
+                    <th style="padding:7px 10px;text-align:center;">סימון</th>
+                    <th style="padding:7px 10px;text-align:center;">נכנס</th>
+                    <th style="padding:7px 10px;text-align:center;">נמשך</th>
+                    <th style="padding:7px 10px;text-align:center;">יתרה</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                  <tr style="background:#f1f5f9;font-weight:bold;border-top:2px solid #cbd5e1;">
+                    <td style="padding:6px 10px;" colspan="3">סה"כ</td>
+                    <td style="padding:6px 10px;text-align:center;">${totalIn}</td>
+                    <td style="padding:6px 10px;text-align:center;">${totalOut}</td>
+                    <td style="padding:6px 10px;text-align:center;">${totalBalance}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>`;
+          const container = document.createElement('div');
+          container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
+          container.innerHTML = html;
+          document.body.appendChild(container);
+          const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
+          document.body.removeChild(container);
+          if (!first) doc.addPage();
+          first = false;
+          const imgData = canvas.toDataURL('image/png');
+          const pageW = doc.internal.pageSize.getWidth();
+          const imgH = (canvas.height * pageW) / canvas.width;
+          doc.addImage(imgData, 'PNG', 0, 0, pageW, imgH);
+        }
+        if (first) doc.text('אין נתוני מלאי', 105, 40, { align: 'center' });
+        doc.save(`מצב-מלאי-קירור-גבש-${date.replace(/\//g, '-')}.pdf`);
+      };
+
       if (loading) return <div className="flex items-center justify-center py-20 text-gray-400 text-lg">טוען נתונים...</div>;
 
       const tabBtn = (id, label, color) => (
@@ -7122,7 +7273,12 @@ setTimeout(function(){
           {/* ══ TAB: מצב מלאי ══ */}
           {bsTab === 'inventory' && (
             <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
-              <h2 className="font-bold text-xl mb-2 text-gray-800">מצב מלאי נוכחי</h2>
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <h2 className="font-bold text-xl text-gray-800">מצב מלאי נוכחי</h2>
+                <button onClick={exportInventoryStatePdf} className="flex items-center gap-1.5 text-xs font-bold bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors">
+                  <span>📄</span> הורד PDF
+                </button>
+              </div>
               <p className="text-sm text-gray-400 mb-5">מחושב אוטומטית: יציאות פחות משיכות</p>
               {inventoryMap.length === 0 ? (
                 <div className="text-center text-gray-400 py-10">אין נתוני מלאי עדיין</div>
