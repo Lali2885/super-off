@@ -5451,8 +5451,8 @@ setTimeout(function(){
     const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
       const today = new Date().toISOString().split('T')[0];
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
-      const [bsTab, setBsTab] = useState('exits');
-      const [invTab, setInvTab] = useState('products');
+      const [bsTab, setBsTab] = useState('inventory');
+      const [invTab, setInvTab] = useState('pallets');
       const [shipments, setShipments] = useState([]);
       const [withdrawals, setWithdrawals] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -6583,7 +6583,7 @@ setTimeout(function(){
     const GavashView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
       const today = new Date().toISOString().split('T')[0];
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
-      const [bsTab, setBsTab] = useState('exits');
+      const [bsTab, setBsTab] = useState('inventory');
       const [shipments, setShipments] = useState([]);
       const [withdrawals, setWithdrawals] = useState([]);
       const [loading, setLoading] = useState(true);
