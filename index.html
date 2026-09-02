@@ -5987,8 +5987,8 @@ setTimeout(function(){
           const balance = item.totalIn - item.totalOut;
           const k = item.kashrut || '-';
           let sep = '';
-          if (lastKashrut !== null && k !== lastKashrut) {
-            sep = `<tr><td colspan="7" style="padding:0;border:none;background:#888;height:2px;"></td></tr>`;
+          if (k !== lastKashrut) {
+            sep = `<tr><td colspan="7" style="padding:4px 6px;border:none;background:#555;color:#fff;font-weight:bold;font-size:11px;">${k}</td></tr>`;
             rowIdx = 0;
           }
           lastKashrut = k;
@@ -6949,8 +6949,8 @@ setTimeout(function(){
           const balance = item.totalIn - item.totalOut;
           const k = item.kashrut || '-';
           let sep = '';
-          if (lastKashrut2 !== null && k !== lastKashrut2) {
-            sep = `<tr><td colspan="7" style="padding:0;border:none;background:#888;height:2px;"></td></tr>`;
+          if (k !== lastKashrut2) {
+            sep = `<tr><td colspan="7" style="padding:4px 6px;border:none;background:#555;color:#fff;font-weight:bold;font-size:11px;">${k}</td></tr>`;
             rowIdx2 = 0;
           }
           lastKashrut2 = k;
