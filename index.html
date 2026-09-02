@@ -5976,7 +5976,8 @@ setTimeout(function(){
       const exportInventoryStatePdf = async () => {
         const { jsPDF } = window.jspdf;
         const date = new Date().toLocaleDateString('he-IL');
-        const rows = inventoryMap.map((item, i) => {
+        const sorted = [...inventoryMap].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
+        const rows = sorted.map((item, i) => {
           const balance = item.totalIn - item.totalOut;
           const bg = i % 2 === 0 ? '#ffffff' : '#f5f5f5';
           return `<tr style="background:${bg};">
@@ -6924,7 +6925,8 @@ setTimeout(function(){
       const exportInventoryStatePdf = async () => {
         const { jsPDF } = window.jspdf;
         const date = new Date().toLocaleDateString('he-IL');
-        const rows = inventoryMap.map((item, i) => {
+        const sorted = [...inventoryMap].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
+        const rows = sorted.map((item, i) => {
           const balance = item.totalIn - item.totalOut;
           const bg = i % 2 === 0 ? '#ffffff' : '#f5f5f5';
           return `<tr style="background:${bg};">
