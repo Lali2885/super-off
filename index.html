@@ -5977,13 +5977,22 @@ setTimeout(function(){
         const { jsPDF } = window.jspdf;
         const date = new Date().toLocaleDateString('he-IL');
         const sorted = [...inventoryMap].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
-        const rows = sorted.map((item, i) => {
+        let lastKashrut = null;
+        let rowIdx = 0;
+        const rows = sorted.map((item) => {
           const balance = item.totalIn - item.totalOut;
-          const bg = i % 2 === 0 ? '#ffffff' : '#f5f5f5';
-          return `<tr style="background:${bg};">
+          const k = item.kashrut || '-';
+          let sep = '';
+          if (lastKashrut !== null && k !== lastKashrut) {
+            sep = `<tr><td colspan="7" style="padding:0;border:none;background:#888;height:2px;"></td></tr>`;
+            rowIdx = 0;
+          }
+          lastKashrut = k;
+          const bg = rowIdx++ % 2 === 0 ? '#ffffff' : '#f5f5f5';
+          return sep + `<tr style="background:${bg};">
             <td style="padding:3px 5px;border:1px solid #bbb;">${item.name}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.sku || ''}</td>
-            <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.kashrut || '-'}</td>
+            <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${k}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.dateType || '-'}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.totalIn}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.totalOut}</td>
@@ -6926,13 +6935,22 @@ setTimeout(function(){
         const { jsPDF } = window.jspdf;
         const date = new Date().toLocaleDateString('he-IL');
         const sorted = [...inventoryMap].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
-        const rows = sorted.map((item, i) => {
+        let lastKashrut2 = null;
+        let rowIdx2 = 0;
+        const rows = sorted.map((item) => {
           const balance = item.totalIn - item.totalOut;
-          const bg = i % 2 === 0 ? '#ffffff' : '#f5f5f5';
-          return `<tr style="background:${bg};">
+          const k = item.kashrut || '-';
+          let sep = '';
+          if (lastKashrut2 !== null && k !== lastKashrut2) {
+            sep = `<tr><td colspan="7" style="padding:0;border:none;background:#888;height:2px;"></td></tr>`;
+            rowIdx2 = 0;
+          }
+          lastKashrut2 = k;
+          const bg = rowIdx2++ % 2 === 0 ? '#ffffff' : '#f5f5f5';
+          return sep + `<tr style="background:${bg};">
             <td style="padding:3px 5px;border:1px solid #bbb;">${item.name}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.sku || ''}</td>
-            <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.kashrut || '-'}</td>
+            <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${k}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.dateType || '-'}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.totalIn}</td>
             <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;">${item.totalOut}</td>
