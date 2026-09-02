@@ -6648,17 +6648,17 @@ setTimeout(function(){
           if (newVal === undefined) return;
           const delta = (item.totalIn - item.totalOut) - Number(newVal);
           if (delta === 0) return;
-          const prod = { name: item.name, kashrut: item.kashrut, cartons: Math.abs(delta), is_adjustment: true };
+          const prod = { name: item.name, kashrut: item.kashrut, cartons: Math.abs(delta) };
           if (item.sku) prod.sku = item.sku;
           if (item.dateType) prod.dateType = item.dateType;
           if (delta > 0) wdProds.push(prod); else shProds.push(prod);
         });
         if (wdProds.length) {
-          const { error } = await db.from('gavash_withdrawals').insert([{ id: Date.now(), date: today, products: wdProds, is_adjustment: true }]);
+          const { error } = await db.from('gavash_withdrawals').insert([{ id: Date.now(), date: today, products: wdProds }]);
           if (error) { alert('שגיאה: ' + error.message); setGvEditSaving(false); return; }
         }
         if (shProds.length) {
-          const { error } = await db.from('gavash_shipments').insert([{ id: Date.now(), date: today, pallets: [{ id: Date.now()+1, number: 'תיקון ידני', products: shProds }], is_adjustment: true }]);
+          const { error } = await db.from('gavash_shipments').insert([{ id: Date.now(), date: today, pallets: [{ id: Date.now()+1, number: 'תיקון ידני', products: shProds }] }]);
           if (error) { alert('שגיאה: ' + error.message); setGvEditSaving(false); return; }
         }
         await loadData(true);
