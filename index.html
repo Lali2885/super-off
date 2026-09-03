@@ -898,7 +898,7 @@
               </td>
             )}
             <td className="p-2.5 text-center bg-blue-50/40 border-r-2 border-blue-400">
-              <span className="font-black text-blue-700 text-2xl">{cartons}</span>
+              <span className="font-black text-blue-700 text-lg">{cartons}</span>
             </td>
             {!simple && (
               <td className="p-2.5 text-center bg-indigo-50/40 border-r-2 border-indigo-400">
@@ -911,7 +911,7 @@
               </td>
             )}
             <td className="p-2.5 text-center bg-orange-50/60">
-              <span className="font-black text-orange-700 text-lg">{cartons + (bsBalance[`${p.name}|${kashrut}`] || 0) + (gvBalance[`${p.name}|${kashrut}`] || 0)}</span>
+              <span className="font-black text-orange-700 text-2xl">{cartons + (bsBalance[`${p.name}|${kashrut}`] || 0) + (gvBalance[`${p.name}|${kashrut}`] || 0)}</span>
             </td>
           </tr>
         );
