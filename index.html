@@ -7812,7 +7812,8 @@ setTimeout(function(){
 
                 {storageReportTab==='top' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {[{label:'❄️ קירור לירוי',data:bsTop,max:maxBsTop},{label:'❄️ קירור גב"ש',data:gvTop,max:maxGvTop}].map(({label,data,max})=>(
+                    <p className="text-xs text-gray-400 mb-4 md:col-span-2">10 המוצרים שנמשכו הכי הרבה — סך קרטונים מצטבר מכל תעודות המשיכה</p>
+                {[{label:'❄️ קירור לירוי',data:bsTop,max:maxBsTop},{label:'❄️ קירור גב"ש',data:gvTop,max:maxGvTop}].map(({label,data,max})=>(
                       <div key={label}>
                         <h3 className="font-bold text-gray-700 mb-3 text-sm border-b border-gray-100 pb-2">{label}</h3>
                         {data.length===0
@@ -7828,9 +7829,9 @@ setTimeout(function(){
                                       <div className="text-[10px] text-gray-400">{kashrut||''}{sku?` · ${sku}`:''}</div>
                                     </div>
                                     <div className="flex-1 bg-gray-100 rounded-full h-5">
-                                      <div className="bg-blue-500 h-5 rounded-full flex items-center justify-end px-2 min-w-[2rem]"
+                                      <div className="bg-blue-500 h-5 rounded-full flex items-center justify-end px-2 min-w-[2.5rem]"
                                         style={{width:`${(total/max)*100}%`}}>
-                                        <span className="text-[10px] text-white font-bold">{total}</span>
+                                        <span className="text-[10px] text-white font-bold">{total} קרט׳</span>
                                       </div>
                                     </div>
                                   </div>
