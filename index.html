@@ -7752,63 +7752,50 @@ setTimeout(function(){
             )}
           </div>
 
-          {/* מצב נתון — סיכום מלאי */}
+          {/* מצב נתון — מלאי קפוא לפי מוצר */}
           {(() => {
-            const allK = [...kashrutList, { name: 'כללי', color: '#3b82f6' }];
-            const rows = allK.map(k => {
-              const trays = (frozenProductsList || []).filter(p => (p.kashrut||'') === k.name && p.storageTypes?.includes('frozen')).reduce((s,p) => s + (frozenStock[`${p.name}|${k.name}`]||0), 0);
-              const store = Math.floor(trays / TRAYS_PER_CARTON);
-              const bs = Object.entries(bsBalance).filter(([key]) => key.endsWith('|'+k.name)).reduce((s,[,v])=>s+v,0);
-              const gv = Object.entries(gvBalance).filter(([key]) => key.endsWith('|'+k.name)).reduce((s,[,v])=>s+v,0);
-              return { name: k.name, color: k.color, store, bs, gv, total: store+bs+gv };
-            }).filter(r => r.total > 0);
-            const totals = rows.reduce((acc,r) => ({ store: acc.store+r.store, bs: acc.bs+r.bs, gv: acc.gv+r.gv, total: acc.total+r.total }), { store:0, bs:0, gv:0, total:0 });
+            const rows = (frozenProductsList || [])
+              .filter(p => p.storageTypes?.includes('frozen'))
+              .map(p => ({ ...p, trays: frozenStock[`${p.name}|${p.kashrut}`] || 0 }))
+              .filter(p => p.trays > 0)
+              .sort((a,b) => (b.trays - a.trays));
             if (!rows.length) return null;
+            const totalTrays = rows.reduce((s,p)=>s+p.trays,0);
             return (
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-                  <span className="text-xl">📦</span>
-                  <div>
-                    <h2 className="font-extrabold text-gray-800">מצב נתון — סיכום מלאי קרטונים</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">חנות + קירור לירוי + קירור גב"ש לפי כשרות</p>
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📦</span>
+                    <div>
+                      <h2 className="font-extrabold text-gray-800">מצב נתון — מלאי קפוא בחנות</h2>
+                      <p className="text-xs text-gray-400 mt-0.5">{rows.length} מוצרים עם מלאי</p>
+                    </div>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs text-gray-400">סה"כ מגשים</div>
+                    <div className="font-extrabold text-gray-900 text-lg">{totalTrays} <span className="text-xs font-normal text-gray-400">({Math.floor(totalTrays/TRAYS_PER_CARTON)} קרט׳)</span></div>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-96 custom-scrollbar">
                   <table className="w-full text-sm text-right">
-                    <thead className="bg-gray-50 text-xs text-gray-500 border-b border-gray-200">
+                    <thead className="bg-gray-50 text-xs text-gray-500 border-b border-gray-200 sticky top-0">
                       <tr>
+                        <th className="p-3 font-bold">מוצר</th>
                         <th className="p-3 font-bold">כשרות</th>
-                        <th className="p-3 font-bold text-center">🏪 בחנות</th>
-                        <th className="p-3 font-bold text-center">❄️ לירוי</th>
-                        <th className="p-3 font-bold text-center">❄️ גב"ש</th>
-                        <th className="p-3 font-bold text-center bg-gray-100">סך הכל</th>
+                        <th className="p-3 font-bold text-center">מגשים</th>
+                        <th className="p-3 font-bold text-center">קרטונים</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {rows.map(r => (
-                        <tr key={r.name} className="hover:bg-gray-50/80">
-                          <td className="p-3">
-                            <span className="flex items-center gap-2">
-                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{backgroundColor: r.color||'#888'}}/>
-                              <span className="font-medium text-gray-800">{r.name}</span>
-                            </span>
-                          </td>
-                          <td className="p-3 text-center font-bold text-gray-700">{r.store || '—'}</td>
-                          <td className="p-3 text-center font-bold text-blue-600">{r.bs || '—'}</td>
-                          <td className="p-3 text-center font-bold text-blue-600">{r.gv || '—'}</td>
-                          <td className="p-3 text-center font-extrabold text-gray-900 bg-gray-50">{r.total}</td>
+                      {rows.map(p => (
+                        <tr key={p.id} className="hover:bg-gray-50/80">
+                          <td className="p-3 font-medium text-gray-800">{p.name}</td>
+                          <td className="p-3 text-gray-500">{p.kashrut}</td>
+                          <td className="p-3 text-center font-bold text-gray-700">{p.trays}</td>
+                          <td className="p-3 text-center text-gray-500">{Math.floor(p.trays/TRAYS_PER_CARTON) || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-t-2 border-gray-300 bg-gray-50">
-                      <tr>
-                        <td className="p-3 font-extrabold text-gray-700">סך הכל</td>
-                        <td className="p-3 text-center font-extrabold text-gray-900">{totals.store}</td>
-                        <td className="p-3 text-center font-extrabold text-blue-700">{totals.bs}</td>
-                        <td className="p-3 text-center font-extrabold text-blue-700">{totals.gv}</td>
-                        <td className="p-3 text-center font-extrabold text-lg text-gray-900 bg-gray-100">{totals.total}</td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
               </div>
