@@ -7765,7 +7765,7 @@ setTimeout(function(){
               </div>
 
               <div className="flex border-b border-gray-100">
-                {[{id:'monthly',label:'📅 נפח חודשי'},{id:'top',label:'🏆 טופ מוצרים'},{id:'stock',label:'📦 מלאי נוכחי'}].map(t=>(
+                {[{id:'monthly',label:'📅 נפח חודשי'},{id:'top',label:'🏆 טופ מוצרים'}].map(t=>(
                   <button key={t.id} onClick={()=>setStorageReportTab(t.id)}
                     className={`px-5 py-3 text-sm font-bold transition-colors border-b-2 ${storageReportTab===t.id?'border-blue-500 text-blue-700 bg-blue-50/50':'border-transparent text-gray-500 hover:text-gray-700'}`}>
                     {t.label}
@@ -7811,86 +7811,41 @@ setTimeout(function(){
                   </div>
                 )}
 
-                {storageReportTab==='top' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <p className="text-xs text-gray-400 mb-4 md:col-span-2">10 המוצרים שנמשכו הכי הרבה — סך קרטונים מצטבר מכל תעודות המשיכה</p>
-                {[{label:'❄️ קירור לירוי',data:bsTop,max:maxBsTop},{label:'❄️ קירור גב"ש',data:gvTop,max:maxGvTop}].map(({label,data,max})=>(
-                      <div key={label}>
-                        <h3 className="font-bold text-gray-700 mb-3 text-sm border-b border-gray-100 pb-2">{label}</h3>
-                        {data.length===0
-                          ? <div className="text-gray-400 text-sm text-center py-4">אין נתוני משיכות</div>
-                          : <div className="space-y-2.5">
-                              {data.map(([key,total],i)=>{
-                                const [name,kashrut,sku]=key.split('|');
-                                return (
-                                  <div key={key} className="flex items-center gap-2">
-                                    <span className="text-xs font-extrabold text-gray-300 w-4 shrink-0 text-center">{i+1}</span>
-                                    <div className="w-32 shrink-0">
-                                      <div className="text-xs font-medium text-gray-800 truncate" title={name}>{name}</div>
-                                      <div className="text-[10px] text-gray-400">{kashrut||''}{sku?` · ${sku}`:''}</div>
-                                    </div>
-                                    <div className="flex-1 bg-gray-100 rounded-full h-5">
-                                      <div className="bg-blue-500 h-5 rounded-full flex items-center justify-end px-2 min-w-[2.5rem]"
-                                        style={{width:`${(total/max)*100}%`}}>
-                                        <span className="text-[10px] text-white font-bold">{total} קרט׳</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                        }
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {storageReportTab==='stock' && (() => {
-                  const rows = (frozenProductsList||[])
-                    .filter(p => p.storageTypes?.includes('frozen'))
-                    .map(p => ({
-                      name: p.name, kashrut: p.kashrut, sku: p.sku,
-                      store: frozenStock[`${p.name}|${p.kashrut}`] || 0,
-                      bs: bsBalance[`${p.name}|${p.kashrut}`] || 0,
-                      gv: gvBalance[`${p.name}|${p.kashrut}`] || 0,
-                    }))
-                    .filter(r => r.store > 0 || r.bs > 0 || r.gv > 0)
-                    .sort((a,b) => (b.store+b.bs+b.gv) - (a.store+a.bs+a.gv));
-                  const tot = rows.reduce((acc,r)=>({ store:acc.store+r.store, bs:acc.bs+r.bs, gv:acc.gv+r.gv }), {store:0,bs:0,gv:0});
-                  if (!rows.length) return <div className="text-center text-gray-400 py-8">אין מלאי</div>;
+                {storageReportTab==='top' && (() => {
+                  const storeTop = (frozenProductsList||[]).filter(p=>p.storageTypes?.includes('frozen')).map(p=>({ key:`${p.name}|${p.kashrut}|${p.sku||''}`, name:p.name, kashrut:p.kashrut, sku:p.sku||'', total:frozenStock[`${p.name}|${p.kashrut}`]||0 })).filter(p=>p.total>0).sort((a,b)=>b.total-a.total).slice(0,10);
+                  const maxStore = Math.max(1, storeTop[0]?.total||1);
+                  const cols = [
+                    {label:'🏪 מלאי חנות', data:storeTop, max:maxStore, color:'bg-green-500', unit:'מגשים'},
+                    {label:'❄️ קירור לירוי', data:bsTop.map(([k,t])=>{ const [n,ks,sk]=k.split('|'); return {key:k,name:n,kashrut:ks,sku:sk||'',total:t}; }), max:maxBsTop, color:'bg-blue-500', unit:'קרט׳'},
+                    {label:'❄️ קירור גב"ש',  data:gvTop.map(([k,t])=>{ const [n,ks,sk]=k.split('|'); return {key:k,name:n,kashrut:ks,sku:sk||'',total:t}; }), max:maxGvTop, color:'bg-blue-500', unit:'קרט׳'},
+                  ];
                   return (
                     <div>
-                      <p className="text-xs text-gray-400 mb-3">מלאי נוכחי לפי מוצר — חנות במגשים, קירורים בקרטונים</p>
-                      <div className="overflow-x-auto max-h-96 custom-scrollbar">
-                        <table className="w-full text-sm text-right">
-                          <thead className="bg-gray-50 text-xs text-gray-500 border-b border-gray-200 sticky top-0">
-                            <tr>
-                              <th className="p-2.5 font-bold">מוצר</th>
-                              <th className="p-2.5 font-bold">כשרות</th>
-                              <th className="p-2.5 font-bold text-center">🏪 חנות (מגשים)</th>
-                              <th className="p-2.5 font-bold text-center">❄️ לירוי (קרט׳)</th>
-                              <th className="p-2.5 font-bold text-center">❄️ גב"ש (קרט׳)</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            {rows.map((r,i) => (
-                              <tr key={i} className="hover:bg-gray-50/80">
-                                <td className="p-2.5 font-medium text-gray-800">{r.name}</td>
-                                <td className="p-2.5 text-gray-500 text-xs">{r.kashrut}</td>
-                                <td className="p-2.5 text-center font-bold text-gray-700">{r.store || '—'}</td>
-                                <td className="p-2.5 text-center font-bold text-blue-600">{r.bs || '—'}</td>
-                                <td className="p-2.5 text-center font-bold text-blue-600">{r.gv || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot className="border-t-2 border-gray-200 bg-gray-50 sticky bottom-0">
-                            <tr>
-                              <td colSpan={2} className="p-2.5 font-extrabold text-gray-700">סך הכל</td>
-                              <td className="p-2.5 text-center font-extrabold text-gray-900">{tot.store}</td>
-                              <td className="p-2.5 text-center font-extrabold text-blue-700">{tot.bs}</td>
-                              <td className="p-2.5 text-center font-extrabold text-blue-700">{tot.gv}</td>
-                            </tr>
-                          </tfoot>
-                        </table>
+                      <p className="text-xs text-gray-400 mb-4">10 המוצרים המובילים — חנות לפי מגשים, קירורים לפי קרטונים מצטברים</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {cols.map(({label,data,max,color,unit})=>(
+                          <div key={label}>
+                            <h3 className="font-bold text-gray-700 mb-3 text-sm border-b border-gray-100 pb-2">{label}</h3>
+                            {!data.length ? <div className="text-gray-400 text-sm text-center py-4">אין נתונים</div>
+                              : <div className="space-y-2">
+                                  {data.map((p,i)=>(
+                                    <div key={p.key} className="flex items-center gap-1.5">
+                                      <span className="text-xs font-extrabold text-gray-300 w-4 shrink-0 text-center">{i+1}</span>
+                                      <div className="w-20 shrink-0">
+                                        <div className="text-xs font-medium text-gray-800 truncate" title={p.name}>{p.name}</div>
+                                        <div className="text-[10px] text-gray-400 truncate">{p.kashrut}{p.sku?` · ${p.sku}`:''}</div>
+                                      </div>
+                                      <div className="flex-1 bg-gray-100 rounded-full h-5">
+                                        <div className={`${color} h-5 rounded-full flex items-center justify-end px-1.5 min-w-[2rem]`} style={{width:`${(p.total/max)*100}%`}}>
+                                          <span className="text-[9px] text-white font-bold whitespace-nowrap">{p.total} {unit}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                            }
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
