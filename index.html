@@ -5016,6 +5016,7 @@ setTimeout(function(){
       const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
       const [newCatName, setNewCatName] = useState('');
       const [showNewCatInput, setShowNewCatInput] = useState(false);
+      const [pendingCats, setPendingCats] = useState([]);
       const tableRef = useRef(null);
 
       useEffect(() => {
@@ -5079,7 +5080,7 @@ setTimeout(function(){
 
       const enriched = items.map(p => ({ ...p, _cat: p.category || getProductCategory(p.name) }));
       const customCats = [...new Set(enriched.map(p => p._cat).filter(c => c && !PRODUCT_CATEGORIES.includes(c)))];
-      const allCategories = [...PRODUCT_CATEGORIES, ...customCats];
+      const allCategories = [...PRODUCT_CATEGORIES, ...customCats, ...pendingCats.filter(c => !PRODUCT_CATEGORIES.includes(c) && !customCats.includes(c))];
       let filtered = enriched;
       if (searchName)         filtered = filtered.filter(p => p.name.includes(searchName));
       if (activeCats.size)    filtered = filtered.filter(p => activeCats.has(p._cat));
@@ -5332,12 +5333,12 @@ setTimeout(function(){
                           <input autoFocus type="text" value={newCatName}
                             onChange={e => setNewCatName(e.target.value)}
                             onKeyDown={e => {
-                              if (e.key === 'Enter' && newCatName.trim()) { setNewProduct(p => ({ ...p, category: newCatName.trim() })); setShowNewCatInput(false); setNewCatName(''); }
+                              if (e.key === 'Enter' && newCatName.trim()) { const t = newCatName.trim(); setPendingCats(p => p.includes(t) ? p : [...p, t]); setNewProduct(p => ({ ...p, category: t })); setShowNewCatInput(false); setNewCatName(''); }
                               if (e.key === 'Escape') { setShowNewCatInput(false); setNewCatName(''); }
                             }}
                             placeholder="שם קטגוריה..."
                             className="w-28 p-1.5 border border-blue-400 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-300" />
-                          <button type="button" onClick={() => { if (newCatName.trim()) { setNewProduct(p => ({ ...p, category: newCatName.trim() })); setShowNewCatInput(false); setNewCatName(''); } }}
+                          <button type="button" onClick={() => { if (newCatName.trim()) { const t = newCatName.trim(); setPendingCats(p => p.includes(t) ? p : [...p, t]); setNewProduct(p => ({ ...p, category: t })); setShowNewCatInput(false); setNewCatName(''); } }}
                             className="text-xs px-2 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">✓</button>
                           <button type="button" onClick={() => { setShowNewCatInput(false); setNewCatName(''); }}
                             className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">✕</button>
