@@ -830,7 +830,7 @@
         if (!delta) return;
         const current = frozenStock[key] || 0;
         if (delta > current) {
-          alert(`אי אפשר למשוך ${delta} מגשים — במלאי יש רק ${current} מגשים`);
+          alert(`אי אפשר למשוך ${Math.floor(delta/TRAYS_PER_CARTON)} קרטונים — במלאי יש רק ${Math.floor(current/TRAYS_PER_CARTON)} קרטונים`);
           return;
         }
         setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
@@ -850,19 +850,16 @@
         <thead className="text-sm">
           <tr>
             <th className="p-2.5 font-bold text-right bg-gray-50" rowSpan={2} style={{ borderBottom: '2px solid #6b7280' }}>מוצר</th>
-            {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }} colSpan={simple ? 1 : 2}>כניסה למלאי</th>}
-            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }} colSpan={simple ? 1 : 2}>משיכה ממלאי</th>}
-            <th className="p-2.5 font-black text-base text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }} colSpan={simple ? 1 : 2}>מצב נתון</th>
+            {showEntry && <th className="p-2.5 font-bold text-center bg-green-100 text-green-800" style={{ borderRight: '2px solid #22c55e', borderBottom: '1px solid #bbf7d0' }}>כניסה למלאי</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }}>משיכה ממלאי</th>}
+            <th className="p-2.5 font-black text-base text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }}>מצב נתון</th>
             {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderRight: '1px solid #c7d2fe', borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
             {!simple && <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800" style={{ borderBottom: '1px solid #99f6e4' }} colSpan={1}>קירור גב"ש</th>}
           </tr>
           <tr>
-            {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
-            {showEntry && !simple && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>מגשים</th>}
-            {showWithdrawal && !simple && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            <th className="p-2.5 font-black text-base text-center bg-gray-100 text-gray-400" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>מגשים</th>
-            {!simple && <th className="p-2.5 font-black text-base text-center bg-blue-50 text-blue-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            <th className="p-2.5 font-black text-base text-center bg-blue-50 text-blue-700" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>קרטונים</th>
             {!simple && <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             {!simple && <th className="p-2.5 font-bold text-center bg-teal-50 text-teal-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
           </tr>
@@ -884,51 +881,24 @@
             </td>
             {showEntry && (
               <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
-                <input type="number" min="0" step="1" value={eT||''} placeholder="0"
-                  onChange={e => setEFromTrays(key, e.target.value)}
+                <input type="number" min="0" step="1" value={eC||''} placeholder="0"
+                  onChange={e => setEFromCartons(key, e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
-                  className="w-16 p-1.5 text-center text-base font-bold border border-green-200 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
-              </td>
-            )}
-            {showEntry && !simple && (
-              <td className="p-1 text-center bg-green-50/30 border-r border-gray-300">
-                <div className="flex flex-col items-center">
-                  <input type="number" min="0" step="1" value={eC||''} placeholder="0"
-                    onChange={e => setEFromCartons(key, e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
-                    className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
-                  {eR > 0 && <div className="text-xs text-gray-900 font-bold">+{eR}</div>}
-                </div>
+                  className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
               </td>
             )}
             {showWithdrawal && (
               <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
-                <input type="number" min="0" step="1" value={wT||''} placeholder="0"
-                  onChange={e => setWFromTrays(key, e.target.value)}
+                <input type="number" min="0" step="1" value={wC||''} placeholder="0"
+                  onChange={e => setWFromCartons(key, e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
-                  className="w-16 p-1.5 text-center text-base font-bold border border-red-200 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
+                  className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
               </td>
             )}
-            {showWithdrawal && !simple && (
-              <td className="p-1 text-center bg-red-50/30 border-r border-gray-300">
-                <div className="flex flex-col items-center">
-                  <input type="number" min="0" step="1" value={wC||''} placeholder="0"
-                    onChange={e => setWFromCartons(key, e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
-                    className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
-                  {wR > 0 && <div className="text-xs text-gray-900 font-bold">+{wR}</div>}
-                </div>
-              </td>
-            )}
-            <td className="p-2.5 text-center bg-gray-50/60 border-r-2 border-blue-400">
-              <span className="font-black text-gray-500 text-2xl">{trays}</span>
+            <td className="p-2.5 text-center bg-blue-50/40 border-r-2 border-blue-400">
+              <span className="font-black text-blue-700 text-2xl">{cartons}</span>
+              {remainder > 0 && <div className="text-xs text-gray-400 font-bold">+{remainder} מגשים</div>}
             </td>
-            {!simple && (
-              <td className="p-2.5 text-center bg-blue-50/40 border-r border-gray-300">
-                <span className="font-black text-blue-700 text-2xl">{cartons}</span>
-                {remainder > 0 && <div className="text-xs text-gray-900 font-bold">+{remainder}</div>}
-              </td>
-            )}
             {!simple && (
               <td className="p-2.5 text-center bg-indigo-50/40">
                 <span className="font-black text-indigo-700 text-lg">{bsBalance[`${p.name}|${kashrut}`] || 0}</span>
@@ -996,7 +966,7 @@
               );
             });
           })()}
-          <p className="text-xs text-gray-400 text-center">* קרטון = {TRAYS_PER_CARTON} מגשים | הקלד וּלחץ Enter לביצוע</p>
+          <p className="text-xs text-gray-400 text-center">הקלד וּלחץ Enter לביצוע</p>
 
           {/* סקשן דגים */}
           {/* סקשן מ.ל / מ.ל.ה — עבור הכשרות הפעילה */}
@@ -1620,12 +1590,12 @@
         const withGavash = exportMode === 'withGavash';
         const withStorage = withLeroy || withGavash;
         const selectedNames = new Set(selectedKashrut.map(k => k.name));
-        const numCols = withStorage ? 5 : 4;
+        const numCols = withStorage ? 4 : 3;
         const colHeaders = withLeroy
-          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור לירוי']
+          ? ['מוצר', 'מקט', 'קרטונים', 'קירור לירוי']
           : withGavash
-          ? ['מוצר', 'מקט', 'מגשים', 'קרטונים', 'קירור גב"ש']
-          : ['מוצר', 'מקט', 'מגשים', 'קרטונים'];
+          ? ['מוצר', 'מקט', 'קרטונים', 'קירור גב"ש']
+          : ['מוצר', 'מקט', 'קרטונים'];
 
         const grouped = {};
         frozenProductsList.filter(p => p.storageTypes?.includes('frozen') && selectedNames.has(p.kashrut) && ((frozenStock[`${p.name}|${p.kashrut}`] || 0) > 0 || (bsBalance[`${p.name}|${p.kashrut}`] || 0) > 0 || (gvBalance[`${p.name}|${p.kashrut}`] || 0) > 0)).forEach(p => {
@@ -1667,7 +1637,7 @@
             const key = `${p.name}|${p.kashrut}`;
             const t = frozenStock[key] || 0;
             const c = Math.floor(t / TRAYS_PER_CARTON);
-            const cells = [p.name, p.sku || '', t, c];
+            const cells = [p.name, p.sku || '', c];
             if (withLeroy) cells.push(bsBalance[key] || 0);
             else if (withGavash) cells.push(gvBalance[key] || 0);
             const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
@@ -1678,7 +1648,7 @@
 
           const totalT = products.reduce((s, p) => s + (frozenStock[`${p.name}|${p.kashrut}`] || 0), 0);
           const totalC = products.reduce((s, p) => s + Math.floor((frozenStock[`${p.name}|${p.kashrut}`] || 0) / TRAYS_PER_CARTON), 0);
-          const totCells = ['סה"כ', '', totalT, totalC];
+          const totCells = ['סה"כ', '', totalC];
           if (withLeroy) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (bsBalance[key]||0); }, 0));
           else if (withGavash) totCells.push(products.reduce((s, p) => { const key = `${p.name}|${p.kashrut}`; return s + (gvBalance[key]||0); }, 0));
           htmlRows += `<tr style="background:#f1f5f9;font-weight:bold;">${totCells.map((v, ci) =>
