@@ -1467,7 +1467,7 @@
       const showReset      = !hiddenFeatures.includes('inventory.reset');
 
       useEffect(() => {
-        Promise.all([
+        const loadBsBalance = () => Promise.all([
           db.from('beit_shemesh_shipments').select('*'),
           db.from('beit_shemesh_withdrawals').select('*')
         ]).then(([shRes, wdRes]) => {
@@ -1477,18 +1477,24 @@
             const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
           })));
-          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
-            const dt = pr.dateType || '';
-            const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
-            map[key] = (map[key] || 0) - Number(pr.cartons || 0);
-          }));
+          (wdRes.data || []).forEach(w => {
+            const prods = (w.pallets?.length) ? w.pallets.flatMap(p => p.products || []) : (w.products || []);
+            prods.forEach(pr => {
+              const dt = pr.dateType || '';
+              const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
+              map[key] = (map[key] || 0) - Number(pr.cartons || 0);
+            });
+          });
           Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
           setBsBalance(map);
         });
+        loadBsBalance();
+        window.addEventListener('focus', loadBsBalance);
+        return () => window.removeEventListener('focus', loadBsBalance);
       }, []);
 
       useEffect(() => {
-        Promise.all([
+        const loadGvBalance = () => Promise.all([
           db.from('gavash_shipments').select('*'),
           db.from('gavash_withdrawals').select('*')
         ]).then(([shRes, wdRes]) => {
@@ -1498,14 +1504,20 @@
             const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
           })));
-          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
-            const dt = pr.dateType || '';
-            const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
-            map[key] = (map[key] || 0) - Number(pr.cartons || 0);
-          }));
+          (wdRes.data || []).forEach(w => {
+            const prods = (w.pallets?.length) ? w.pallets.flatMap(p => p.products || []) : (w.products || []);
+            prods.forEach(pr => {
+              const dt = pr.dateType || '';
+              const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
+              map[key] = (map[key] || 0) - Number(pr.cartons || 0);
+            });
+          });
           Object.keys(map).forEach(k => { if (map[k] < 0) map[k] = 0; });
           setGvBalance(map);
         });
+        loadGvBalance();
+        window.addEventListener('focus', loadGvBalance);
+        return () => window.removeEventListener('focus', loadGvBalance);
       }, []);
 
 
@@ -5526,7 +5538,8 @@ setTimeout(function(){
 
       useEffect(() => {
         loadData();
-        const onFocus = () => loadData(true);
+        let lastFocus = 0;
+        const onFocus = () => { if (Date.now() - lastFocus > 30000) { lastFocus = Date.now(); loadData(true); } };
         window.addEventListener('focus', onFocus);
         return () => window.removeEventListener('focus', onFocus);
       }, []);
@@ -6699,7 +6712,8 @@ setTimeout(function(){
 
       useEffect(() => {
         loadData();
-        const onFocus = () => loadData(true);
+        let lastFocus = 0;
+        const onFocus = () => { if (Date.now() - lastFocus > 30000) { lastFocus = Date.now(); loadData(true); } };
         window.addEventListener('focus', onFocus);
         return () => window.removeEventListener('focus', onFocus);
       }, []);
@@ -7691,7 +7705,7 @@ setTimeout(function(){
       // === סוף חישובי ניתוח קירורים ===
 
       useEffect(() => {
-        db.from('frozen_stock_log').select('*').then(({ data }) => setStoreLog(data || []));
+        db.from('frozen_stock_log').select('*').order('created_at', { ascending: false }).limit(1000).then(({ data }) => setStoreLog(data || []));
       }, []);
 
       const exportStorageReport = () => {
