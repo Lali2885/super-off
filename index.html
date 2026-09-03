@@ -5014,6 +5014,8 @@ setTimeout(function(){
       const [showAddModal, setShowAddModal] = useState(false);
       const [newProduct, setNewProduct] = useState({ name: '', category: 'עוף', sku: '', storageTypes: ['frozen'], kashrut: '' });
       const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
+      const [newCatName, setNewCatName] = useState('');
+      const [showNewCatInput, setShowNewCatInput] = useState(false);
       const tableRef = useRef(null);
 
       useEffect(() => {
@@ -5076,6 +5078,8 @@ setTimeout(function(){
       const duplicateSkus = new Set(Object.keys(skuCounts).filter(sku => skuCounts[sku] > 1));
 
       const enriched = items.map(p => ({ ...p, _cat: p.category || getProductCategory(p.name) }));
+      const customCats = [...new Set(enriched.map(p => p._cat).filter(c => c && !PRODUCT_CATEGORIES.includes(c)))];
+      const allCategories = [...PRODUCT_CATEGORIES, ...customCats];
       let filtered = enriched;
       if (searchName)         filtered = filtered.filter(p => p.name.includes(searchName));
       if (activeCats.size)    filtered = filtered.filter(p => activeCats.has(p._cat));
@@ -5087,7 +5091,7 @@ setTimeout(function(){
         return sortDir === 'asc' ? va.localeCompare(vb, 'he') : vb.localeCompare(va, 'he');
       });
 
-      const visibleCats = PRODUCT_CATEGORIES.filter(c => filtered.some(p => p._cat === c));
+      const visibleCats = allCategories.filter(c => filtered.some(p => p._cat === c));
       const isActive = {
         name:     !!searchName || sortBy === 'name',
         category: activeCats.size > 0,
@@ -5140,7 +5144,7 @@ setTimeout(function(){
                   </div>
                 </>}
                 {field === 'category' && <>
-                  {PRODUCT_CATEGORIES.map(cat => checkRow(`${CAT_EMOJI[cat]} ${cat}`, activeCats.has(cat), () => { toggleSet(setActiveCats, cat); setOpenFilter(null); }))}
+                  {allCategories.map(cat => checkRow(`${CAT_EMOJI[cat] || '⭐'} ${cat}`, activeCats.has(cat), () => { toggleSet(setActiveCats, cat); setOpenFilter(null); }))}
                   {activeCats.size > 0 && clearBtn(() => { setActiveCats(new Set()); setOpenFilter(null); })}
                 </>}
                 {field === 'sku' && <>
@@ -5244,7 +5248,7 @@ setTimeout(function(){
                           <td className="px-4 py-2">
                             <select value={p._cat} onChange={e => updateByName(p.name, 'category', e.target.value)}
                               className="p-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
-                              {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{CAT_EMOJI[c]} {c}</option>)}
+                              {allCategories.map(c => <option key={c} value={c}>{CAT_EMOJI[c] || '📦'} {c}</option>)}
                             </select>
                           </td>
                           <td className="px-4 py-2">
@@ -5317,12 +5321,33 @@ setTimeout(function(){
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">קטגוריה</label>
                     <div className="flex gap-2 flex-wrap">
-                      {PRODUCT_CATEGORIES.map(cat => (
+                      {allCategories.map(cat => (
                         <button key={cat} type="button" onClick={() => setNewProduct(p => ({ ...p, category: cat, kashrut: cat === 'דגים' ? 'כללי' : (p.kashrut === 'כללי' ? '' : p.kashrut) }))}
                           className={`text-sm px-3 py-2 rounded-xl border font-bold transition-all ${newProduct.category === cat ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
-                          {CAT_EMOJI[cat]} {cat}
+                          {CAT_EMOJI[cat] || '⭐'} {cat}
                         </button>
                       ))}
+                      {showNewCatInput ? (
+                        <div className="flex gap-1 items-center">
+                          <input autoFocus type="text" value={newCatName}
+                            onChange={e => setNewCatName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && newCatName.trim()) { setNewProduct(p => ({ ...p, category: newCatName.trim() })); setShowNewCatInput(false); setNewCatName(''); }
+                              if (e.key === 'Escape') { setShowNewCatInput(false); setNewCatName(''); }
+                            }}
+                            placeholder="שם קטגוריה..."
+                            className="w-28 p-1.5 border border-blue-400 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-300" />
+                          <button type="button" onClick={() => { if (newCatName.trim()) { setNewProduct(p => ({ ...p, category: newCatName.trim() })); setShowNewCatInput(false); setNewCatName(''); } }}
+                            className="text-xs px-2 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">✓</button>
+                          <button type="button" onClick={() => { setShowNewCatInput(false); setNewCatName(''); }}
+                            className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">✕</button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setShowNewCatInput(true)}
+                          className="text-sm px-3 py-2 rounded-xl border border-dashed border-gray-400 text-gray-500 font-bold hover:border-gray-600 hover:text-gray-700 transition-all">
+                          + קטגוריה חדשה
+                        </button>
+                      )}
                     </div>
                   </div>
 
