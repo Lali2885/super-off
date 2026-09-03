@@ -7619,6 +7619,7 @@ setTimeout(function(){
       const [gvWithdrawals, setGvWithdrawals] = useState([]);
       const [storageReportTab, setStorageReportTab] = useState('monthly');
       const [storeLog, setStoreLog] = useState([]);
+      const [showAllMonths, setShowAllMonths] = useState(false);
 
       useEffect(() => {
         Promise.all([
@@ -7671,17 +7672,14 @@ setTimeout(function(){
       const _wdProds = (w) => (w.pallets && w.pallets.length) ? w.pallets.flatMap(p=>p.products||[]) : (w.products||[]);
       const _storeM={};
       storeLog.forEach(r=>{ const d=r.data||{}; const m=(d.date||'').slice(0,7); if(!m) return; if(!_storeM[m]) _storeM[m]={In:0,Out:0}; if((d.action||'').includes('כניסה')) _storeM[m].In+=Number(d.cartons||0); else if((d.action||'').includes('משיכה')) _storeM[m].Out+=Number(d.cartons||0); });
-      const storeMonthly = Object.entries(_storeM).sort(([a],[b])=>a.localeCompare(b)).slice(-9);
-      const maxStoreM = Math.max(1,...storeMonthly.flatMap(([,v])=>[v.In,v.Out]));
+      const storeMonthlyAll = Object.entries(_storeM).sort(([a],[b])=>a.localeCompare(b));
       const _bsM={}, _gvM={};
       bsShipments.forEach(s=>(s.pallets||[]).forEach(p=>(p.products||[]).forEach(pr=>_addM(_bsM,s.date,'In',pr.cartons))));
       bsWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>_addM(_bsM,w.date,'Out',pr.cartons)));
       gvShipments.forEach(s=>(s.pallets||[]).forEach(p=>(p.products||[]).forEach(pr=>_addM(_gvM,s.date,'In',pr.cartons))));
       gvWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>_addM(_gvM,w.date,'Out',pr.cartons)));
-      const bsMonthly = Object.entries(_bsM).sort(([a],[b])=>a.localeCompare(b)).slice(-9);
-      const gvMonthly = Object.entries(_gvM).sort(([a],[b])=>a.localeCompare(b)).slice(-9);
-      const maxBsM = Math.max(1,...bsMonthly.flatMap(([,v])=>[v.In,v.Out]));
-      const maxGvM = Math.max(1,...gvMonthly.flatMap(([,v])=>[v.In,v.Out]));
+      const bsMonthlyAll = Object.entries(_bsM).sort(([a],[b])=>a.localeCompare(b));
+      const gvMonthlyAll = Object.entries(_gvM).sort(([a],[b])=>a.localeCompare(b));
       const _bsTopMap={}, _gvTopMap={};
       bsWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>{ const k=(pr.name||'')+'|'+(pr.kashrut||'')+'|'+(pr.sku||''); _bsTopMap[k]=(_bsTopMap[k]||0)+Number(pr.cartons||0); }));
       gvWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>{ const k=(pr.name||'')+'|'+(pr.kashrut||'')+'|'+(pr.sku||''); _gvTopMap[k]=(_gvTopMap[k]||0)+Number(pr.cartons||0); }));
@@ -7689,11 +7687,30 @@ setTimeout(function(){
       const gvTop = Object.entries(_gvTopMap).sort(([,a],[,b])=>b-a).slice(0,10);
       const maxBsTop = Math.max(1, bsTop[0]?.[1]||1);
       const maxGvTop = Math.max(1, gvTop[0]?.[1]||1);
+      const storeTopAll = (frozenProductsList||[]).filter(p=>p.storageTypes?.includes('frozen')).map(p=>({ key:`${p.name}|${p.kashrut}|${p.sku||''}`, name:p.name, kashrut:p.kashrut, sku:p.sku||'', total:frozenStock[`${p.name}|${p.kashrut}`]||0 })).filter(p=>p.total>0).sort((a,b)=>b.total-a.total);
       // === סוף חישובי ניתוח קירורים ===
 
       useEffect(() => {
         db.from('frozen_stock_log').select('*').then(({ data }) => setStoreLog(data || []));
       }, []);
+
+      const exportStorageReport = () => {
+        const wb = window.XLSX.utils.book_new();
+        if (storageReportTab === 'monthly') {
+          const allMonths = [...new Set([...storeMonthlyAll.map(([m])=>m),...bsMonthlyAll.map(([m])=>m),...gvMonthlyAll.map(([m])=>m)])].sort();
+          const sMap=Object.fromEntries(storeMonthlyAll), bMap=Object.fromEntries(bsMonthlyAll), gMap=Object.fromEntries(gvMonthlyAll);
+          const rows = [['חודש','חנות כניסה (קרט׳)','חנות יציאה (קרט׳)','לירוי כניסה (קרט׳)','לירוי יציאה (קרט׳)','גב"ש כניסה (קרט׳)','גב"ש יציאה (קרט׳)']];
+          allMonths.forEach(m=>{ const [y,mo]=m.split('-'); const s=sMap[m]||{In:0,Out:0}, bs=bMap[m]||{In:0,Out:0}, gv=gMap[m]||{In:0,Out:0}; rows.push([`${_HEB_M[Number(mo)]} ${y}`,s.In,s.Out,bs.In,bs.Out,gv.In,gv.Out]); });
+          window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet(rows), 'נפח חודשי');
+          window.XLSX.writeFile(wb, 'נפח_חודשי.xlsx');
+        } else if (storageReportTab === 'top') {
+          const bsMap=Object.fromEntries(bsTop), gvMap=Object.fromEntries(gvTop);
+          const rows = [['מוצר','כשרות','מק"ט','חנות (מגשים)','לירוי (קרט׳)','גב"ש (קרט׳)']];
+          storeTopAll.forEach(p=>{ const k=`${p.name}|${p.kashrut}|${p.sku}`; rows.push([p.name,p.kashrut,p.sku,p.total,bsMap[k]||0,gvMap[k]||0]); });
+          window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.aoa_to_sheet(rows), 'טופ מוצרים');
+          window.XLSX.writeFile(wb, 'טופ_מוצרים.xlsx');
+        }
+      };
 
       const allKashrutForSnap = [
         ...kashrutList,
@@ -7765,12 +7782,18 @@ setTimeout(function(){
           {/* ניתוח קירורים */}
           {(bsShipments.length > 0 || gvShipments.length > 0) && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-                <span className="text-xl">🏭</span>
-                <div>
-                  <h2 className="font-extrabold text-gray-800">ניתוח קירורים — לירוי וגב"ש</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">נתונים מתוך תעודות הכניסה והמשיכה</p>
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🏭</span>
+                  <div>
+                    <h2 className="font-extrabold text-gray-800">ניתוח קירורים — לירוי וגב"ש</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">נתונים מתוך תעודות הכניסה והמשיכה</p>
+                  </div>
                 </div>
+                <button onClick={exportStorageReport}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                  📥 ייצוא לאקסל
+                </button>
               </div>
 
               <div className="flex border-b border-gray-100">
@@ -7784,8 +7807,20 @@ setTimeout(function(){
 
               <div className="p-5">
                 {storageReportTab==='monthly' && (
+                  {(() => {
+                    const slice = (arr) => showAllMonths ? arr : arr.slice(-3);
+                    const storeM=slice(storeMonthlyAll), bsM=slice(bsMonthlyAll), gvM=slice(gvMonthlyAll);
+                    const maxSt=Math.max(1,...storeMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
+                    const maxBs=Math.max(1,...bsMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
+                    const maxGv=Math.max(1,...gvMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
+                    const totalMonths = Math.max(storeMonthlyAll.length, bsMonthlyAll.length, gvMonthlyAll.length);
+                    return (<>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-gray-400">{showAllMonths ? `כל ההיסטוריה (${totalMonths} חודשים)` : '3 חודשים אחרונים'}</p>
+                    {totalMonths > 3 && <button onClick={()=>setShowAllMonths(p=>!p)} className="text-xs text-blue-600 hover:underline font-bold">{showAllMonths ? '← חזור ל-3 חודשים' : 'הצג כל ההיסטוריה →'}</button>}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[{label:'🏪 מלאי חנות',data:storeMonthly,max:maxStoreM},{label:'❄️ קירור לירוי',data:bsMonthly,max:maxBsM},{label:'❄️ קירור גב"ש',data:gvMonthly,max:maxGvM}].map(({label,data,max})=>(
+                    {[{label:'🏪 מלאי חנות',data:storeM,max:maxSt},{label:'❄️ קירור לירוי',data:bsM,max:maxBs},{label:'❄️ קירור גב"ש',data:gvM,max:maxGv}].map(({label,data,max})=>(
                       <div key={label}>
                         <h3 className="font-bold text-gray-700 mb-3 text-sm border-b border-gray-100 pb-2">{label}</h3>
                         {data.length===0
@@ -7818,10 +7853,11 @@ setTimeout(function(){
                       <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-400 inline-block"/>יציאה מקירור</span>
                     </div>
                   </div>
+                  </>); })()}
                 )}
 
                 {storageReportTab==='top' && (() => {
-                  const storeTop = (frozenProductsList||[]).filter(p=>p.storageTypes?.includes('frozen')).map(p=>({ key:`${p.name}|${p.kashrut}|${p.sku||''}`, name:p.name, kashrut:p.kashrut, sku:p.sku||'', total:frozenStock[`${p.name}|${p.kashrut}`]||0 })).filter(p=>p.total>0).sort((a,b)=>b.total-a.total).slice(0,10);
+                  const storeTop = storeTopAll.slice(0,10);
                   const maxStore = Math.max(1, storeTop[0]?.total||1);
                   const cols = [
                     {label:'🏪 מלאי חנות', data:storeTop.map(p=>({...p, label:`${p.total} מגשים (${Math.floor(p.total/TRAYS_PER_CARTON)} קרט׳)`})), max:maxStore, color:'bg-green-500', unit:''},
