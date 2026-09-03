@@ -6530,7 +6530,7 @@ setTimeout(function(){
                               {items.map((item, i) => {
                                 const balance = item.totalIn - item.totalOut;
                                 return (
-                                  <tr key={i} className={`border-t ${balance === 0 ? 'opacity-40' : ''}`} style={{ backgroundColor: kColor + '0A' }}>
+                                  <tr key={i} className={`border-t ${balance === 0 ? 'opacity-40' : ''}`} style={{ backgroundColor: balance < 0 ? '#fef2f2' : kColor + '0A' }}>
                                     <td className="p-2 font-semibold whitespace-nowrap">{item.name}</td>
                                     <td className="p-2">
                                       <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{ color: kColor, borderColor: kColor+'60', backgroundColor: kColor+'20' }}>{item.kashrut||'-'}</span>
@@ -6542,7 +6542,7 @@ setTimeout(function(){
                                     <td className="p-2 text-blue-600 font-bold">{item.totalIn}</td>
                                     <td className="p-2 text-purple-600 font-bold">{item.totalOut}</td>
                                     <td className="p-2">
-                                      <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{balance}</span>
+                                      <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${balance > 0 ? 'bg-green-100 text-green-700' : balance < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>{balance}</span>
                                     </td>
                                   </tr>
                                 );
@@ -6571,16 +6571,17 @@ setTimeout(function(){
                       {palletInventoryMap.map((pallet, i) => {
                         const balance = pallet.totalIn - pallet.totalOut;
                         return (
-                          <div key={i} className={`rounded-xl border p-4 ${balance === 0 ? 'opacity-50 bg-gray-50 border-gray-100' : 'bg-white border-indigo-100'}`}>
+                          <div key={i} className={`rounded-xl border p-4 ${balance < 0 ? 'bg-red-50 border-red-200' : balance === 0 ? 'opacity-50 bg-gray-50 border-gray-100' : 'bg-white border-indigo-100'}`}>
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <span className="text-base font-extrabold text-indigo-800">משטח {pallet.palletRef}</span>
                                 {pallet.date && <span className="text-xs text-gray-400">{pallet.date}</span>}
+                                {balance < 0 && <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">⚠ חריגה בנתונים</span>}
                               </div>
                               <div className="flex gap-3 text-xs font-bold">
                                 <span className="text-blue-600">נכנס: {pallet.totalIn}</span>
                                 <span className="text-purple-600">נמשך: {pallet.totalOut}</span>
-                                <span className={`px-2 py-0.5 rounded-full ${balance > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>יתרה: {balance}</span>
+                                <span className={`px-2 py-0.5 rounded-full ${balance > 0 ? 'bg-green-100 text-green-700' : balance < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>יתרה: {balance}</span>
                               </div>
                             </div>
                             {pallet.productsIn.length > 0 && (
@@ -6594,7 +6595,10 @@ setTimeout(function(){
                                     <th className="text-right pb-1 px-1 text-green-600">יתרה</th>
                                   </tr></thead>
                                   <tbody>{pallet.productsIn.map((pr, j) => {
-                                    const wdOut = pallet.withdrawnProducts.filter(w => (w.sku && w.sku === pr.sku) || (!w.sku && w.name === pr.name)).reduce((s,w) => s+Number(w.cartons||0), 0);
+                                    const wdOut = pallet.withdrawnProducts.filter(w =>
+                                      ((w.sku && w.sku === pr.sku) || (!w.sku && w.name === pr.name)) &&
+                                      (w.dateType||'') === (pr.dateType||'')
+                                    ).reduce((s,w) => s+Number(w.cartons||0), 0);
                                     const prBal = Number(pr.cartons||0) - wdOut;
                                     return (
                                       <tr key={j} className="border-t">
@@ -6603,7 +6607,7 @@ setTimeout(function(){
                                         <td className="py-1 px-1 text-blue-600 font-bold">{pr.cartons}</td>
                                         <td className="py-1 px-1 text-purple-600 font-bold">{wdOut || '-'}</td>
                                         <td className="py-1 px-1">
-                                          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${prBal > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>{prBal}</span>
+                                          <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${prBal > 0 ? 'bg-green-100 text-green-700' : prBal < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400'}`}>{prBal}</span>
                                         </td>
                                       </tr>
                                     );
