@@ -854,14 +854,16 @@
             {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-100 text-red-800" style={{ borderRight: '2px solid #ef4444', borderBottom: '1px solid #fecaca' }}>משיכה ממלאי</th>}
             <th className="p-2.5 font-black text-base text-center bg-blue-100 text-blue-800" style={{ borderRight: '2px solid #3b82f6', borderBottom: '1px solid #bfdbfe' }}>מצב נתון</th>
             {!simple && <th className="p-2.5 font-bold text-center bg-indigo-100 text-indigo-800" style={{ borderRight: '1px solid #c7d2fe', borderBottom: '1px solid #c7d2fe' }} colSpan={1}>קירור לירוי</th>}
-            {!simple && <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800" style={{ borderBottom: '1px solid #99f6e4' }} colSpan={1}>קירור גב"ש</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-teal-100 text-teal-800" style={{ borderRight: '1px solid #99f6e4', borderBottom: '1px solid #99f6e4' }} colSpan={1}>קירור גב"ש</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-orange-100 text-orange-800" style={{ borderBottom: '1px solid #fed7aa' }} colSpan={1}>סה"כ כולל</th>}
           </tr>
           <tr>
             {showEntry && <th className="p-2.5 font-bold text-center bg-green-50 text-green-700" style={{ borderRight: '2px solid #22c55e', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             {showWithdrawal && <th className="p-2.5 font-bold text-center bg-red-50 text-red-700" style={{ borderRight: '2px solid #ef4444', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
             <th className="p-2.5 font-black text-base text-center bg-blue-50 text-blue-700" style={{ borderRight: '2px solid #3b82f6', borderBottom: '2px solid #6b7280' }}>קרטונים</th>
             {!simple && <th className="p-2.5 font-bold text-center bg-indigo-50 text-indigo-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
-            {!simple && <th className="p-2.5 font-bold text-center bg-teal-50 text-teal-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {!simple && <th className="p-2.5 font-bold text-center bg-teal-50 text-teal-700" style={{ borderRight: '1px solid #d1d5db', borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
+            {!simple && <th className="p-2.5 font-extrabold text-center bg-orange-50 text-orange-700" style={{ borderBottom: '2px solid #6b7280' }}>קרטונים</th>}
           </tr>
         </thead>
       );
@@ -906,6 +908,11 @@
             {!simple && (
               <td className="p-2.5 text-center bg-teal-50/40">
                 <span className="font-black text-teal-700 text-lg">{gvBalance[`${p.name}|${kashrut}`] || 0}</span>
+              </td>
+            )}
+            {!simple && (
+              <td className="p-2.5 text-center bg-orange-50/60">
+                <span className="font-black text-orange-700 text-lg">{cartons + (bsBalance[`${p.name}|${kashrut}`] || 0) + (gvBalance[`${p.name}|${kashrut}`] || 0)}</span>
               </td>
             )}
           </tr>
