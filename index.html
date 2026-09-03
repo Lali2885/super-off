@@ -7806,8 +7806,7 @@ setTimeout(function(){
               </div>
 
               <div className="p-5">
-                {storageReportTab==='monthly' && (
-                  {(() => {
+                {storageReportTab==='monthly' && (() => {
                     const slice = (arr) => showAllMonths ? arr : arr.slice(-3);
                     const storeM=slice(storeMonthlyAll), bsM=slice(bsMonthlyAll), gvM=slice(gvMonthlyAll);
                     const maxSt=Math.max(1,...storeMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
@@ -7854,7 +7853,6 @@ setTimeout(function(){
                     </div>
                   </div>
                   </>); })()}
-                )}
 
                 {storageReportTab==='top' && (() => {
                   const storeTop = storeTopAll.slice(0,10);
