@@ -7798,11 +7798,11 @@ setTimeout(function(){
                                     <div className="text-xs font-bold text-gray-500 mb-1">{_HEB_M[Number(m)]} {y}</div>
                                     <div className="space-y-1">
                                       <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-green-600 w-16 shrink-0">↓ כניסה {v.In}</span>
+                                        <span className="text-[10px] text-green-600 w-20 shrink-0">↓ כניסה {v.In} קרט׳</span>
                                         <div className="flex-1 bg-gray-100 rounded-full h-3"><div className="bg-green-400 h-3 rounded-full" style={{width:`${(v.In/max)*100}%`}}/></div>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-orange-500 w-16 shrink-0">↑ יציאה {v.Out}</span>
+                                        <span className="text-[10px] text-orange-500 w-20 shrink-0">↑ יציאה {v.Out} קרט׳</span>
                                         <div className="flex-1 bg-gray-100 rounded-full h-3"><div className="bg-orange-400 h-3 rounded-full" style={{width:`${(v.Out/max)*100}%`}}/></div>
                                       </div>
                                     </div>
@@ -7824,7 +7824,7 @@ setTimeout(function(){
                   const storeTop = (frozenProductsList||[]).filter(p=>p.storageTypes?.includes('frozen')).map(p=>({ key:`${p.name}|${p.kashrut}|${p.sku||''}`, name:p.name, kashrut:p.kashrut, sku:p.sku||'', total:frozenStock[`${p.name}|${p.kashrut}`]||0 })).filter(p=>p.total>0).sort((a,b)=>b.total-a.total).slice(0,10);
                   const maxStore = Math.max(1, storeTop[0]?.total||1);
                   const cols = [
-                    {label:'🏪 מלאי חנות', data:storeTop, max:maxStore, color:'bg-green-500', unit:'מגשים'},
+                    {label:'🏪 מלאי חנות', data:storeTop.map(p=>({...p, label:`${p.total} מגשים (${Math.floor(p.total/TRAYS_PER_CARTON)} קרט׳)`})), max:maxStore, color:'bg-green-500', unit:''},
                     {label:'❄️ קירור לירוי', data:bsTop.map(([k,t])=>{ const [n,ks,sk]=k.split('|'); return {key:k,name:n,kashrut:ks,sku:sk||'',total:t}; }), max:maxBsTop, color:'bg-blue-500', unit:'קרט׳'},
                     {label:'❄️ קירור גב"ש',  data:gvTop.map(([k,t])=>{ const [n,ks,sk]=k.split('|'); return {key:k,name:n,kashrut:ks,sku:sk||'',total:t}; }), max:maxGvTop, color:'bg-blue-500', unit:'קרט׳'},
                   ];
@@ -7846,7 +7846,7 @@ setTimeout(function(){
                                       </div>
                                       <div className="flex-1 bg-gray-100 rounded-full h-5">
                                         <div className={`${color} h-5 rounded-full flex items-center justify-end px-1.5 min-w-[2rem]`} style={{width:`${(p.total/max)*100}%`}}>
-                                          <span className="text-[9px] text-white font-bold whitespace-nowrap">{p.total} {unit}</span>
+                                          <span className="text-[9px] text-white font-bold whitespace-nowrap">{p.label||`${p.total} ${unit}`}</span>
                                         </div>
                                       </div>
                                     </div>
