@@ -6590,6 +6590,7 @@ setTimeout(function(){
                                   <thead><tr className="text-gray-400 border-b">
                                     <th className="text-right pb-1 px-1">מוצר</th>
                                     <th className="text-right pb-1 px-1">מקט</th>
+                                    <th className="text-right pb-1 px-1">סימון</th>
                                     <th className="text-right pb-1 px-1 text-blue-500">נכנס</th>
                                     <th className="text-right pb-1 px-1 text-purple-500">נמשך</th>
                                     <th className="text-right pb-1 px-1 text-green-600">יתרה</th>
@@ -6604,6 +6605,7 @@ setTimeout(function(){
                                       <tr key={j} className="border-t">
                                         <td className="py-1 px-1 font-semibold whitespace-nowrap">{pr.name}</td>
                                         <td className="py-1 px-1 text-gray-400">{pr.sku||'-'}</td>
+                                        <td className="py-1 px-1">{pr.dateType ? <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">{pr.dateType}</span> : <span className="text-gray-300">—</span>}</td>
                                         <td className="py-1 px-1 text-blue-600 font-bold">{pr.cartons}</td>
                                         <td className="py-1 px-1 text-purple-600 font-bold">{wdOut || '-'}</td>
                                         <td className="py-1 px-1">
