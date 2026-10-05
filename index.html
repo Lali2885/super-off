@@ -6799,23 +6799,45 @@ setTimeout(function(){
       const totalWeight = allProducts.reduce((sum, p) => sum + Number(p.weight || 0), 0);
 
       const wdReportItems = showAllWithdrawals ? withdrawals : withdrawals.filter(w => w.date === wdReportDate);
-      const wdTotalCartons = wdReportItems.flatMap(w => w.products).reduce((sum,p) => sum + Number(p.cartons||0), 0);
+      const wdTotalCartons = wdReportItems.flatMap(w => w.products).filter(p => !p.reset).reduce((sum,p) => sum + Number(p.cartons||0), 0);
 
       // ── Inventory calc ──
+      // איפוס מלאי = משיכה שמוצריה מסומנים reset. המלאי מחושב רק מתנועות שאחרי האיפוס האחרון.
+      const isResetWd = (w) => (w.products || []).some(p => p.reset);
+      const lastReset = useMemo(() => withdrawals.filter(isResetWd).sort((a,b) => b.id - a.id)[0] || null, [withdrawals]);
       const inventoryMap = useMemo(() => {
         const map = {};
-        shipments.forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+        const afterReset = r => !lastReset || r.id > lastReset.id;
+        shipments.filter(afterReset).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
           const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '') + '|' + (pr.dateType || '');
           if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', dateType: pr.dateType||'', totalIn: 0, totalOut: 0 };
           map[key].totalIn += Number(pr.cartons||0);
         })));
-        withdrawals.forEach(w => w.products.forEach(pr => {
+        withdrawals.filter(afterReset).forEach(w => w.products.forEach(pr => {
           const key = (pr.sku || pr.name) + '|' + (pr.kashrut || '') + '|' + (pr.dateType || '');
           if (!map[key]) map[key] = { sku: pr.sku||'', name: pr.name||'', kashrut: pr.kashrut||'', dateType: pr.dateType||'', totalIn: 0, totalOut: 0 };
           map[key].totalOut += Number(pr.cartons||0);
         }));
         return Object.values(map).sort((a,b) => (b.totalIn-b.totalOut) - (a.totalIn-a.totalOut));
-      }, [shipments, withdrawals]);
+      }, [shipments, withdrawals, lastReset]);
+
+      const [gvResetting, setGvResetting] = useState(false);
+      const resetGvInventory = async () => {
+        const prods = inventoryMap.filter(item => item.totalIn - item.totalOut > 0).map(item => {
+          const prod = { id: Date.now() + Math.random(), name: item.name, kashrut: item.kashrut, cartons: item.totalIn - item.totalOut, reset: true };
+          if (item.sku) prod.sku = item.sku;
+          if (item.dateType) prod.dateType = item.dateType;
+          return prod;
+        });
+        if (!prods.length) { alert('אין מלאי לאיפוס'); return; }
+        const total = prods.reduce((s,p) => s + p.cartons, 0);
+        if (!window.confirm(`לאפס את מלאי קירור גב"ש?\n${prods.length} מוצרים, ${total} קרטונים יאופסו ל-0.\n\nמומלץ להוריד PDF של המצב הנוכחי לפני האיפוס.`)) return;
+        setGvResetting(true);
+        const { error } = await db.from('gavash_withdrawals').insert([{ id: Date.now(), date: today, products: prods }]);
+        if (error) alert('שגיאה באיפוס: ' + error.message);
+        await loadData(true);
+        setGvResetting(false);
+      };
 
       const nextDocNumber = useMemo(() => {
         const nums = shipments.map(s => Number((s.pallets && s.pallets[0] && s.pallets[0].number) || 0)).filter(n => !isNaN(n) && n > 0);
@@ -7314,7 +7336,7 @@ setTimeout(function(){
                     <div className="space-y-3">{wdReportItems.map(w => (
                       <div key={w.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-semibold text-gray-600">{w.date}</span>
+                          <span className="text-sm font-semibold text-gray-600">{w.date}{isResetWd(w) && <span className="mr-2 text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">🔄 איפוס מלאי</span>}</span>
                           <button onClick={() => deleteWithdrawal(w.id)} className="text-red-400 text-xs hover:text-red-600">מחק</button>
                         </div>
                         <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
@@ -7343,11 +7365,19 @@ setTimeout(function(){
             <div className="bg-white rounded-2xl shadow p-5 border border-gray-100">
               <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                 <h2 className="font-bold text-xl text-gray-800">מצב מלאי נוכחי</h2>
-                <button onClick={exportInventoryStatePdf} className="flex items-center gap-1.5 text-xs font-bold bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors">
-                  <span>📄</span> הורד PDF
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={exportInventoryStatePdf} className="flex items-center gap-1.5 text-xs font-bold bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors">
+                    <span>📄</span> הורד PDF
+                  </button>
+                  <button onClick={resetGvInventory} disabled={gvResetting || gvEditMode} className="flex items-center gap-1.5 text-xs font-bold bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50">
+                    <span>🔄</span> {gvResetting ? 'מאפס...' : 'איפוס מלאי'}
+                  </button>
+                </div>
               </div>
-              <p className="text-sm text-gray-400 mb-5">מחושב אוטומטית: יציאות פחות משיכות</p>
+              <p className="text-sm text-gray-400 mb-5">
+                מחושב אוטומטית: יציאות פחות משיכות
+                {lastReset && <span className="mr-2 text-red-500 font-semibold">· מאז איפוס אחרון ({fmtDate(lastReset.date)})</span>}
+              </p>
               {inventoryMap.length === 0 ? (
                 <div className="text-center text-gray-400 py-10">אין נתוני מלאי עדיין</div>
               ) : (
@@ -7671,12 +7701,12 @@ setTimeout(function(){
       bsShipments.forEach(s=>(s.pallets||[]).forEach(p=>(p.products||[]).forEach(pr=>_addM(_bsM,s.date,'In',pr.cartons))));
       bsWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>_addM(_bsM,w.date,'Out',pr.cartons)));
       gvShipments.forEach(s=>(s.pallets||[]).forEach(p=>(p.products||[]).forEach(pr=>_addM(_gvM,s.date,'In',pr.cartons))));
-      gvWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>_addM(_gvM,w.date,'Out',pr.cartons)));
+      gvWithdrawals.forEach(w=>_wdProds(w).filter(pr=>!pr.reset).forEach(pr=>_addM(_gvM,w.date,'Out',pr.cartons)));
       const bsMonthlyAll = Object.entries(_bsM).sort(([a],[b])=>a.localeCompare(b));
       const gvMonthlyAll = Object.entries(_gvM).sort(([a],[b])=>a.localeCompare(b));
       const _bsTopMap={}, _gvTopMap={};
       bsWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>{ const k=(pr.name||'')+'|'+(pr.kashrut||'')+'|'+(pr.sku||''); _bsTopMap[k]=(_bsTopMap[k]||0)+Number(pr.cartons||0); }));
-      gvWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>{ const k=(pr.name||'')+'|'+(pr.kashrut||'')+'|'+(pr.sku||''); _gvTopMap[k]=(_gvTopMap[k]||0)+Number(pr.cartons||0); }));
+      gvWithdrawals.forEach(w=>_wdProds(w).filter(pr=>!pr.reset).forEach(pr=>{ const k=(pr.name||'')+'|'+(pr.kashrut||'')+'|'+(pr.sku||''); _gvTopMap[k]=(_gvTopMap[k]||0)+Number(pr.cartons||0); }));
       const bsTop = Object.entries(_bsTopMap).sort(([,a],[,b])=>b-a).slice(0,10);
       const gvTop = Object.entries(_gvTopMap).sort(([,a],[,b])=>b-a).slice(0,10);
       const maxBsTop = Math.max(1, bsTop[0]?.[1]||1);
