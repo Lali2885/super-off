@@ -407,16 +407,6 @@
     };
     const CAT_EMOJI = { 'עוף': '🐔', 'הודו': '🦃', 'בשר': '🥩', 'דגים': '🐟', 'מתובלים': '🧂', 'קפואים': '❄️', 'טחונים': '⚙️' };
 
-    const getDynProductPriority = (name, category) => {
-      if (category === 'עוף') {
-        if (name === 'עוף שלם') return 0;
-        if (name.includes('כרעיים')) return 1;
-        if (name.includes('שניצל') || name.includes('חזה')) return 2;
-        return 3;
-      }
-      return 99;
-    };
-
     const getProductCategory = (name) => {
       const t = NEW_PRODUCTS_TEMPLATE.find(p => p.name === name);
       if (t?.category) return t.category;
@@ -2306,7 +2296,8 @@ ${htmlRows}
           </div>
           <div style="border-bottom:2px solid black;padding-bottom:6px;margin-bottom:8px;">
             <div style="font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${customerLine}</div>
-          </div>`;
+          </div>
+          ${order.orderNotes ? `<div style="border:2px solid #dc2626;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:20px;font-weight:bold;color:#dc2626;white-space:pre-wrap;">📝 ${order.orderNotes}</div>` : ''}`;
 
         const tableHtml = (groups, isFresh, showKashrut = true) => {
           const rows = groups.map((group, gIdx) => {
@@ -2390,9 +2381,6 @@ setTimeout(function(){
         printWindow.document.close();
       };
       const [orderType, setOrderType] = useState('delivery');
-      const [formItemsState, setFormItemsState] = useState({});
-      const [packingOption, setPackingOption] = useState('');
-      const [categorySearch, setCategorySearch] = useState({});
       const [formErrorMessage, setFormErrorMessage] = useState('');
       const [complexAddError, setComplexAddError] = useState('');
 
@@ -2402,7 +2390,6 @@ setTimeout(function(){
       const [customerPhone, setCustomerPhone] = useState('');
       const [customerMobile, setCustomerMobile] = useState('');
       const [neighborhood, setNeighborhood] = useState('');
-      const [subNeighborhood, setSubNeighborhood] = useState('');
       const [street, setStreet] = useState('');
       const [entrance, setEntrance] = useState('');
       const [floor, setFloor] = useState('');
@@ -2414,15 +2401,6 @@ setTimeout(function(){
       const [chargeStatus, setChargeStatus] = useState('');
       const [assignedButcher, setAssignedButcher] = useState('');
 
-      const [expandedCategories, setExpandedCategories] = useState({
-        'מפורק': false,
-        'עוף': false,
-        'הודו': false,
-        'בשר': false,
-        'דגים': false
-      });
-
-      const [openDropdown, setOpenDropdown] = useState(null);
       const [orderSkuRow, setOrderSkuRow] = useState({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '', storageType: '', needsStorageToggle: false });
       const [orderAddedItems, setOrderAddedItems] = useState([]);
       const [orderNotes, setOrderNotes] = useState('');
@@ -2484,10 +2462,6 @@ setTimeout(function(){
       const [expandedOrders, setExpandedOrders] = useState(new Set());
       const toggleOrderExpand = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
       const collapseOrder = (id) => setExpandedOrders(prev => { const n = new Set(prev); n.delete(id); return n; });
-
-      const toggleCategory = (category) => {
-        setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
-      };
 
       const orderSkuLookup = (sku) => {
         setOrderSkuRow(prev => ({ ...prev, sku, name: '', category: '', kashrut: '', storageType: '', needsStorageToggle: false }));
@@ -2576,27 +2550,6 @@ setTimeout(function(){
         }, 80);
       };
 
-      // פריטים ללא אופציות — עדכון שורה רגילה
-      const updateItemState = (id, field, value, rowIndex = 0) => {
-        setFormItemsState(prev => {
-          const rows = Array.isArray(prev[id]) ? prev[id] : [{ qty: '', notes: '', kashrut: '' }];
-          return { ...prev, [id]: rows.map((row, i) => i === rowIndex ? { ...row, [field]: value } : row) };
-        });
-      };
-
-      // פריטים עם אופציות — קריאה ועדכון state
-      const getOptState = (id) => {
-        const s = formItemsState[id];
-        return (s && !Array.isArray(s)) ? s : { totalQty: '', rows: [], checks: [], kashrut: '', notes: '' };
-      };
-
-      const updateOptState = (id, update) => {
-        setFormItemsState(prev => {
-          const s = (prev[id] && !Array.isArray(prev[id])) ? prev[id] : { totalQty: '', rows: [], checks: [], kashrut: '', notes: '' };
-          return { ...prev, [id]: { ...s, ...update } };
-        });
-      };
-
       const deleteOrder = (order) => setDeleteConfirmOrder(order);
       const confirmDelete = () => {
         setOrders(prev => prev.filter(o => o.id !== deleteConfirmOrder.id));
@@ -2625,43 +2578,8 @@ setTimeout(function(){
         setFlags({ mustCoordinate: order.flags?.mustCoordinate || false, notifyReady: order.flags?.notifyReady || false });
         setChargeStatus(order.flags?.chargeStatus || '');
         setAssignedButcher(order.assignedButcher || '');
+        setOrderNotes(order.orderNotes || '');
 
-        const rebuilt = {};
-        let rebuildPacking = '';
-        order.items.forEach(item => {
-          if (item.qty === '-' && item.name === 'אריזת עופות') {
-            rebuildPacking = item.notes || '';
-            return;
-          }
-          const template = ORDER_FORM_TEMPLATE.find(t => t.name === (item.cleanName || item.name));
-          if (template) {
-            let option = '';
-            if (item.name !== template.name) {
-              const match = item.name.match(/\((.+)\)$/);
-              if (match) option = match[1];
-            }
-            const newRow = { qty: item.qty.toString(), option, notes: item.notes || '', kashrut: item.kashrut || '' };
-            if (!rebuilt[template.id]) {
-              rebuilt[template.id] = [newRow];
-            } else {
-              rebuilt[template.id].push(newRow);
-            }
-          } else {
-            // פריט דינמי — לא בטמפלייט, נגזר מ-frozenProductsList
-            const name = item.cleanName || item.name;
-            rebuilt[`dyn_${name}`] = [{ qty: item.qty.toString(), notes: item.notes || '' }];
-          }
-        });
-        // המרת פריטים עם אופציות לפורמט החדש
-        ORDER_FORM_TEMPLATE.filter(t => t.options.length > 0).forEach(template => {
-          const arr = rebuilt[template.id];
-          if (!arr) return;
-          const rows = arr.map(r => ({ option: r.option, qty: r.qty })).filter(r => r.option);
-          const totalQty = arr.reduce((sum, r) => sum + (parseFloat(r.qty) || 0), 0).toString();
-          rebuilt[template.id] = { totalQty, rows, checks: arr[0]?.checks || [], kashrut: arr[0]?.kashrut || '', notes: arr[0]?.notes || '' };
-        });
-        setFormItemsState(rebuilt);
-        setPackingOption(rebuildPacking);
         // בניית רשימת פריטים לממשק החדש
         const rebuiltItems = [];
         const processedTemplates = {};
@@ -2688,18 +2606,18 @@ setTimeout(function(){
         setIsModalOpen(false);
         setEditingOrder(null);
         setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]);
-        setNeighborhood(''); setSubNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
+        setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
         setDeliveryDate(new Date().toISOString().split('T')[0]); setPickupTime(new Date().toISOString().split('T')[0]); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
         setAssignedButcher('');
-        setFormItemsState({});
-        setPackingOption('');
         setOrderAddedItems([]); setOrderNotes(''); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false); setNameSearch(''); setShowNameDropdown(false);
       };
 
-      const handleAddOrder = (e) => {
+      const submittingRef = React.useRef(false);
+      const handleAddOrder = async (e) => {
         e.preventDefault();
+        if (submittingRef.current) return;
         setFormErrorMessage('');
 
         const allItems = orderAddedItems.flatMap(item => {
@@ -2721,15 +2639,24 @@ setTimeout(function(){
           return;
         }
 
+        submittingRef.current = true;
+        // מספר עוקב — לפי המקסימום המקומי וגם בשרת, כדי ששני מכשירים לא יקבלו אותו מספר
+        let maxId = Math.max(1000, ...orders.map(o => Number(o.id) || 0));
+        if (!editingOrder) {
+          try {
+            const { data } = await db.from('orders').select('id').order('id', { ascending: false }).limit(1);
+            if (data?.[0]) maxId = Math.max(maxId, Number(data[0].id) || 0);
+          } catch (err) {}
+        }
+
         const newOrder = {
-          id: Math.floor(1000 + Math.random() * 9000),
+          id: maxId + 1,
           createdAt: new Date().toLocaleDateString('he-IL'),
           customer: customerName, phone: customerPhone, mobile: customerMobile,
           type: orderType,
           fullAddress: orderType === 'delivery' ? `${street} ${entrance ? 'כניסה '+entrance : ''} ${floor ? 'קומה '+floor : ''} ${apt ? 'דירה '+apt : ''}`.trim() : '',
           street, entrance, floor, apt,
           neighborhood: orderType === 'delivery' ? neighborhood : '',
-          subNeighborhood: orderType === 'delivery' ? subNeighborhood : '',
           timeString: orderType === 'delivery' ? deliveryDate : pickupTime,
           kashrut: allItems.find(i => i.kashrut)?.kashrut || '',
           assignedButcher,
@@ -2740,448 +2667,13 @@ setTimeout(function(){
         };
 
         if (editingOrder) {
-          setOrders(orders.map(o => o.id === editingOrder.id ? { ...newOrder, id: editingOrder.id, status: editingOrder.status } : o));
+          // שומרים שדות שהטופס לא מנהל (createdAt, packaging וכו')
+          setOrders(prev => prev.map(o => o.id === editingOrder.id ? { ...editingOrder, ...newOrder, items: [...allItems, ...(editingOrder.items || []).filter(i => i.qty === '-')], id: editingOrder.id, status: editingOrder.status, createdAt: editingOrder.createdAt || newOrder.createdAt } : o));
         } else {
-          setOrders([newOrder, ...orders]);
+          setOrders(prev => [newOrder, ...prev]);
         }
+        submittingRef.current = false;
         closeModal();
-      };
-
-      const triggerPhysicalPrint = (areaId = 'physical-print-slip-area-general') => {
-        const printContent = document.getElementById(areaId).innerHTML;
-        const printWindow = window.open('', '_blank', 'width=800,height=900');
-        printWindow.document.write(`
-          <html dir="rtl">
-            <head>
-              <title>בון הזמנה - סופר עוף</title>
-              <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-              <style>
-                @import url('https://fonts.googleapis.com/css2?family=David+Libre:wght@400;700&display=swap');
-                body {
-                  font-family: 'David Libre', 'David', serif;
-                  padding: 0; margin: 0; background: white; color: black;
-                  -webkit-print-color-adjust: exact; print-color-adjust: exact;
-                }
-                @page { size: A5 portrait; margin: 5mm; }
-                @media print {
-                  html, body { width: 138mm; height: 200mm; overflow: hidden; }
-                  header, footer { display: none !important; }
-                }
-              </style>
-            </head>
-            <body onload="window.print(); setTimeout(function() { window.close(); }, 500);">
-              <div style="width: 138mm; margin: 0 auto; padding: 2px;">
-                ${printContent}
-              </div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-      };
-
-      const renderItemCategory = (categoryName, overrideTitle, overrideToggleKey) => {
-        const toggleKey = overrideToggleKey || categoryName;
-        const itemsInCategory = ORDER_FORM_TEMPLATE.filter(i => i.category === categoryName);
-        if (itemsInCategory.length === 0) return null;
-        const isExpanded = expandedCategories[toggleKey];
-
-        const cc = getCatColors(categoryName);
-        const simpleItems = itemsInCategory.filter(i => i.options.length === 0);
-        const isSearchable = simpleItems.length > 8;
-        const query = (categorySearch[categoryName] || '').trim();
-        return (
-          <div className={`mb-4 bg-white rounded-lg border overflow-hidden shadow-sm transition-all duration-200 ${cc.outer}`}>
-            <button
-              type="button"
-              onClick={() => toggleCategory(toggleKey)}
-              className={`w-full font-bold px-4 py-3 border-b flex justify-between items-center transition-colors ${cc.headerBg} ${cc.headerHover} ${cc.headerText} ${cc.headerBorder}`}
-            >
-              <span>{overrideTitle || categoryName}</span>
-              <Icons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isExpanded && (
-              <div className={`divide-y animate-in slide-in-from-top-2 duration-200 ${cc.divider}`}>
-                {itemsInCategory.filter(i => !isSearchable || i.options.length > 0).map(item => {
-                  if (item.inline && (item.options.length > 0 || item.checkboxOptions?.length > 0)) {
-                    // אופציות inline — כמות כללית + רשת קוביות, 2 בשורה
-                    const s = getOptState(item.id);
-                    return (
-                      <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-1 text-sm">
-                          {item.name}
-                          {(() => {
-                            const _fl = frozenProductsList || [];
-                            const sk = getSku(item.id, kashrut)
-                              || _fl.find(fp => fp.name === item.name && fp.kashrut === kashrut)?.sku
-                              || _fl.find(fp => fp.name === item.name && fp.sku)?.sku || '';
-                            return sk ? <span className="block text-[10px] text-gray-400 font-normal">{sk}</span> : null;
-                          })()}
-                        </div>
-                        <div className="flex-1 flex flex-col gap-2">
-                          {/* כמות — כשאין אופציות, או כשיש showTotalQty */}
-                          {(item.options.length === 0 || item.showTotalQty) && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-gray-500 shrink-0">כמות:</span>
-                              <input type="number" min="0" step="0.5" placeholder="0"
-                                value={s.totalQty}
-                                onChange={e => updateOptState(item.id, { totalQty: e.target.value })}
-                                className={`w-20 p-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none text-center font-bold`}
-                              />
-                            </div>
-                          )}
-                          {/* רשת קוביות אופציות */}
-                          {item.options.length > 0 && (
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {item.options.map(opt => {
-                              const row = s.rows.find(r => r.option === opt);
-                              const qty = row?.qty || '';
-                              const isActive = parseFloat(qty) > 0;
-                              return (
-                                <div key={opt}
-                                  onClick={e => { if (e.target.tagName !== 'INPUT') e.currentTarget.querySelector('input').focus(); }}
-                                  className={`flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl border-2 cursor-pointer transition-all
-                                    ${isActive ? cc.cardActive : `bg-white border-gray-200 ${cc.cardHover}`}`}>
-                                  <span className={`text-xs font-bold leading-tight flex-1 ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>
-                                    {opt}
-                                    {getSku(`${item.id}|${opt}`, kashrut) && <span className="block text-[10px] font-normal opacity-70">{getSku(`${item.id}|${opt}`, kashrut)}</span>}
-                                  </span>
-                                  <input type="number" min="0" step="0.5" placeholder="כמות"
-                                    value={qty}
-                                    onChange={e => {
-                                      const newVal = e.target.value;
-                                      const cur = getOptState(item.id);
-                                      const exists = cur.rows.some(r => r.option === opt);
-                                      if (exists) {
-                                        updateOptState(item.id, { rows: cur.rows.map(r => r.option === opt ? { ...r, qty: newVal } : r) });
-                                      } else if (newVal !== '') {
-                                        updateOptState(item.id, { rows: [...cur.rows, { option: opt, qty: newVal }] });
-                                      }
-                                    }}
-                                    className={`w-16 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} transition-colors
-                                      ${isActive ? `${cc.inputActive} bg-white` : 'border-gray-200 bg-gray-50 text-gray-700'}`}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                          )}
-                          {/* checkbox options — ללא כמות, שורה אחת */}
-                          {item.checkboxOptions && item.checkboxOptions.length > 0 && (
-                            <div className="flex flex-wrap gap-1 border-t border-dashed border-gray-200 pt-1.5">
-                              {item.checkboxOptions.map(opt => {
-                                const isChecked = (s.checks || []).includes(opt);
-                                return (
-                                  <div key={opt}
-                                    onClick={() => {
-                                      const cur = getOptState(item.id);
-                                      const checks = cur.checks || [];
-                                      updateOptState(item.id, { checks: isChecked ? checks.filter(c => c !== opt) : [...checks, opt] });
-                                    }}
-                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer transition-all select-none
-                                      ${isChecked ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
-                                    <span className={`text-[11px] font-black shrink-0 ${isChecked ? cc.cardActiveText : 'text-gray-300'}`}>{isChecked ? '✓' : '○'}</span>
-                                    <span className={`text-[11px] font-bold ${isChecked ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <input type="text" placeholder="הערה"
-                            value={s.notes}
-                            onChange={e => updateOptState(item.id, { notes: e.target.value })}
-                            className={`p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 ${cc.ring} outline-none w-full`}
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  if (item.options.length > 0) {
-                    // פריטים עם אופציות — multi-select dropdown + כמות לכל אופציה
-                    const s = getOptState(item.id);
-                    const selectedOptions = s.rows.map(r => r.option);
-                    const isDropOpen = openDropdown === item.id;
-                    return (
-                      <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                        <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
-                          {item.name}
-                          {getSku(item.id, kashrut) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id, kashrut)}</span>}
-                        </div>
-                        <div className="flex-1 flex flex-col gap-2">
-                          {/* שורה 1: כמות כוללת + dropdown אופציות */}
-                          <div className="flex gap-2 items-center flex-wrap">
-                            <input
-                              type="number" min="0" step="0.5" placeholder="כמות..."
-                              value={s.totalQty}
-                              onChange={e => updateOptState(item.id, { totalQty: e.target.value })}
-                              className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
-                            />
-                            <div className="relative flex-1 min-w-[160px]">
-                              <button type="button"
-                                onClick={() => setOpenDropdown(isDropOpen ? null : item.id)}
-                                className="w-full flex items-center justify-between p-2 text-sm border border-gray-300 rounded bg-white hover:border-purple-300 transition-colors focus:ring-2 focus:ring-purple-400 outline-none">
-                                <span className={selectedOptions.length === 0 ? 'text-gray-400' : 'text-purple-800 font-bold'}>
-                                  {selectedOptions.length === 0 ? 'בחר הוראות...' : selectedOptions.length === 1 ? selectedOptions[0] : `✓ ${selectedOptions.length} הוראות נבחרו`}
-                                </span>
-                                <Icons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 mr-1 ${isDropOpen ? 'rotate-180' : ''}`} />
-                              </button>
-                              {isDropOpen && (
-                                <div className="absolute z-30 w-full mt-1 bg-white border border-purple-200 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
-                                  {item.options.map(opt => {
-                                    const isChecked = selectedOptions.includes(opt);
-                                    return (
-                                      <label key={opt} className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-gray-50 last:border-0 transition-colors ${isChecked ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-gray-50'}`}>
-                                        <input type="checkbox" checked={isChecked}
-                                          onChange={() => {
-                                            const cur = getOptState(item.id);
-                                            const exists = cur.rows.some(r => r.option === opt);
-                                            updateOptState(item.id, {
-                                              rows: exists
-                                                ? cur.rows.filter(r => r.option !== opt)
-                                                : [...cur.rows, { option: opt, qty: '' }]
-                                            });
-                                          }}
-                                          className="accent-purple-600 w-4 h-4 shrink-0" />
-                                        <span className={`text-sm ${isChecked ? 'font-bold text-purple-800' : 'text-gray-700'}`}>{opt}</span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* שורה 2: כמות פר-אופציה (רק כשנבחרו 2 אופציות ומעלה) */}
-                          {s.rows.length > 1 && (
-                            <div className="flex flex-wrap gap-2 pr-1">
-                              {s.rows.map((row, idx) => (
-                                <div key={row.option} className="flex items-center gap-1.5 bg-purple-50/70 rounded-lg px-2.5 py-1.5 border border-purple-200">
-                                  <input
-                                    type="number" min="0" step="0.5" placeholder="כמות"
-                                    value={row.qty}
-                                    onChange={e => {
-                                      const cur = getOptState(item.id);
-                                      updateOptState(item.id, { rows: cur.rows.map((r, i) => i === idx ? { ...r, qty: e.target.value } : r) });
-                                    }}
-                                    className="w-14 p-1 text-sm border border-purple-200 rounded text-center bg-white font-bold focus:ring-2 focus:ring-purple-400 outline-none"
-                                  />
-                                  <span className="text-xs font-bold text-purple-700 whitespace-nowrap">{row.option}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* שורה 3: הערה בלבד */}
-                          <input
-                            type="text" placeholder="הערה"
-                            value={s.notes}
-                            onChange={e => updateOptState(item.id, { notes: e.target.value })}
-                            className="p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none w-full"
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // פריטים ללא אופציות — שורה פשוטה
-                  const rows = Array.isArray(formItemsState[item.id])
-                    ? formItemsState[item.id]
-                    : [{ qty: '', notes: '', kashrut: '' }];
-                  return (
-                    <div key={item.id} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                      <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
-                        {item.name}
-                        {getSku(item.id, kashrut) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id, kashrut)}</span>}
-                      </div>
-                      <div className="flex-1 flex gap-2 flex-wrap sm:flex-nowrap">
-                        <input
-                          type="number" min="0" step="0.5" placeholder="כמות..."
-                          value={rows[0]?.qty ?? ''}
-                          onChange={e => updateItemState(item.id, 'qty', e.target.value, 0)}
-                          className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
-                        />
-                        <input
-                          type="text" placeholder="הערה"
-                          value={rows[0]?.notes ?? ''}
-                          onChange={e => updateItemState(item.id, 'notes', e.target.value, 0)}
-                          className="flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {isSearchable && (() => {
-                  const selectedSimple = simpleItems.filter(item => {
-                    const rows = formItemsState[item.id];
-                    return Array.isArray(rows) && parseFloat(rows[0]?.qty) > 0;
-                  });
-                  const unselected = simpleItems.filter(item => {
-                    const rows = formItemsState[item.id];
-                    return !(Array.isArray(rows) && parseFloat(rows[0]?.qty) > 0);
-                  });
-                  const dropKey = `list_${categoryName}`;
-                  const isListOpen = openDropdown === dropKey;
-                  const filteredUnselected = query ? unselected.filter(i => i.name.includes(query)) : unselected;
-                  return (
-                    <div className="p-3 space-y-2">
-                      {/* פריטים שנבחרו — עם שדה כמות */}
-                      {selectedSimple.map(item => {
-                        const rows = Array.isArray(formItemsState[item.id]) ? formItemsState[item.id] : [{ qty: '' }];
-                        return (
-                          <div key={item.id} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border ${cc.qtyBg} ${cc.qtyBorder}`}>
-                            <span className={`flex-1 text-sm font-bold ${cc.qtyText}`}>
-                              {item.name}
-                              {getSku(item.id, kashrut) && <span className="block text-[10px] text-gray-400 font-normal">{getSku(item.id, kashrut)}</span>}
-                            </span>
-                            {['קהילות', 'לנדא'].map(k => {
-                              const isActive = rows[0]?.kashrut === k;
-                              return (
-                                <div key={k}
-                                  onClick={() => updateItemState(item.id, 'kashrut', isActive ? '' : k, 0)}
-                                  className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer transition-all select-none shrink-0
-                                    ${isActive ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
-                                  <span className={`text-[11px] font-black shrink-0 ${isActive ? cc.cardActiveText : 'text-gray-300'}`}>{isActive ? '✓' : '○'}</span>
-                                  <span className={`text-[11px] font-bold ${isActive ? cc.cardActiveText : 'text-gray-600'}`}>{k}</span>
-                                </div>
-                              );
-                            })}
-                            <input type="number" min="0" step="0.5"
-                              value={rows[0]?.qty || ''}
-                              onChange={e => updateItemState(item.id, 'qty', e.target.value, 0)}
-                              className={`w-14 p-1 text-xs border rounded-lg text-center font-bold outline-none focus:ring-2 ${cc.ring} border-transparent bg-white shrink-0`}
-                            />
-                            <button type="button" onClick={() => updateItemState(item.id, 'qty', '', 0)}
-                              className="w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold text-gray-500 hover:bg-gray-200 transition-all shrink-0">×</button>
-                          </div>
-                        );
-                      })}
-
-                      {/* כפתור פתיחת רשימה */}
-                      <div className="relative">
-                        <button type="button"
-                          onClick={() => { setOpenDropdown(isListOpen ? null : dropKey); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }}
-                          className={`w-full flex items-center justify-center gap-2 p-2.5 text-sm border-2 border-dashed rounded-xl font-bold transition-all
-                            ${isListOpen ? `${cc.qtyBg} ${cc.qtyBorder} ${cc.qtyText}` : 'border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600'}`}>
-                          <span className="text-lg leading-none">+</span>
-                          <span>הוסף מוצר</span>
-                        </button>
-
-                        {isListOpen && (
-                          <>
-                            <div className="fixed inset-0 z-40 bg-black/30" onClick={() => { setOpenDropdown(null); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }} />
-                            <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-2xl overflow-hidden flex w-auto max-w-xs" style={{maxHeight:'55vh'}}>
-                              {/* חיפוש + כותרת — משמאל */}
-                              <div className="w-28 shrink-0 border-l border-gray-100 bg-gray-50 flex flex-col">
-                                <div className="flex items-center justify-between p-2 border-b border-gray-100">
-                                  <span className={`text-xs font-bold ${cc.qtyText}`}>{categoryName}</span>
-                                  <button type="button" onClick={() => { setOpenDropdown(null); setCategorySearch(prev => ({...prev, [categoryName]: ''})); }}
-                                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 font-bold text-xs">×</button>
-                                </div>
-                                <div className="p-2">
-                                  <input type="text" placeholder="חיפוש..."
-                                    autoFocus
-                                    value={categorySearch[categoryName] || ''}
-                                    onChange={e => setCategorySearch(prev => ({...prev, [categoryName]: e.target.value}))}
-                                    className={`w-full p-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 ${cc.ring} outline-none bg-white`}
-                                  />
-                                </div>
-                              </div>
-                              {/* רשימת תוצאות — מימין */}
-                              <div className="flex-1 overflow-y-auto">
-                                {filteredUnselected.length === 0
-                                  ? <div className="text-center text-xs text-gray-400 py-6">לא נמצאו תוצאות</div>
-                                  : filteredUnselected.map(item => (
-                                      <button key={item.id} type="button"
-                                        onClick={() => {
-                                          updateItemState(item.id, 'qty', '1', 0);
-                                          setOpenDropdown(null);
-                                          setCategorySearch(prev => ({...prev, [categoryName]: ''}));
-                                        }}
-                                        className="w-full text-right px-3 py-2.5 text-sm text-gray-900 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 last:border-0 font-bold transition-colors whitespace-nowrap">
-                                        {item.name}
-                                      </button>
-                                    ))
-                                }
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-              </div>
-            )}
-          </div>
-        );
-      };
-
-      // רינדור קטגוריה דינמי — נגזר ישירות מ-frozenProductsList
-      const renderCategoryDynamic = (categoryName) => {
-        const templateNames = new Set(ORDER_FORM_TEMPLATE.map(t => t.name));
-        const seen = new Set();
-        const products = (frozenProductsList || [])
-          .filter(p => (p.category || getProductCategory(p.name)) === categoryName)
-          .filter(p => !templateNames.has(p.name))
-          .filter(p => { if (seen.has(p.name)) return false; seen.add(p.name); return true; })
-          .sort((a, b) => getDynProductPriority(a.name, categoryName) - getDynProductPriority(b.name, categoryName));
-        if (!products.length) return null;
-        const cc = getCatColors(categoryName);
-        const isExpanded = expandedCategories[categoryName];
-        return (
-          <div className={`mb-4 bg-white rounded-lg border overflow-hidden shadow-sm transition-all duration-200 ${cc.outer}`}>
-            <button type="button"
-              onClick={() => toggleCategory(categoryName)}
-              className={`w-full font-bold px-4 py-3 border-b flex justify-between items-center transition-colors ${cc.headerBg} ${cc.headerHover} ${cc.headerText} ${cc.headerBorder}`}>
-              <span>{CAT_EMOJI[categoryName]} {categoryName}</span>
-              <Icons.ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-            </button>
-            {isExpanded && (
-              <div className={`divide-y animate-in slide-in-from-top-2 duration-200 ${cc.divider}`}>
-                {products.map(p => {
-                  const key = `dyn_${p.name}`;
-                  const rows = Array.isArray(formItemsState[key]) ? formItemsState[key] : [{ qty: '', notes: '' }];
-                  const val = rows[0];
-                  const _fpList = frozenProductsList || [];
-                  const sku = _fpList.find(fp => fp.name === p.name && fp.kashrut === kashrut)?.sku
-                           || _fpList.find(fp => fp.name === p.name && fp.kashrut === 'כללי')?.sku
-                           || _fpList.find(fp => fp.name === p.name && fp.sku)?.sku
-                           || getSku(p.name, kashrut)
-                           || '';
-                  return (
-                    <div key={p.name} className="p-3 flex items-start gap-3 hover:bg-gray-50">
-                      <div className="w-28 md:w-36 font-bold text-gray-800 shrink-0 pt-2 text-sm">
-                        {p.name}
-                        {sku && <span className="block text-[10px] text-gray-400 font-normal">{sku}</span>}
-                      </div>
-                      <div className="flex-1 flex gap-2 flex-wrap sm:flex-nowrap">
-                        <input type="number" min="0" step="0.5" placeholder="כמות..."
-                          value={val.qty}
-                          onChange={e => setFormItemsState(prev => {
-                            const cur = (Array.isArray(prev[key]) ? prev[key] : [{ qty: '', notes: '' }])[0];
-                            return { ...prev, [key]: [{ ...cur, qty: e.target.value }] };
-                          })}
-                          className="w-16 sm:w-20 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none text-center"
-                        />
-                        <input type="text" placeholder="הערה"
-                          value={val.notes}
-                          onChange={e => setFormItemsState(prev => {
-                            const cur = (Array.isArray(prev[key]) ? prev[key] : [{ qty: '', notes: '' }])[0];
-                            return { ...prev, [key]: [{ ...cur, notes: e.target.value }] };
-                          })}
-                          className="flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 outline-none"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
       };
 
       const [draggingId, setDraggingId] = useState(null);
@@ -3325,6 +2817,10 @@ setTimeout(function(){
                     {order.flags?.chargeStatus === 'charge' && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">💳 לחייב</span>}
                     {order.flags?.chargeStatus === 'noCharge' && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">🆓 לא לחייב</span>}
                   </div>
+
+                  {order.orderNotes && (
+                    <div className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-2 py-1.5 mb-2 font-medium whitespace-pre-wrap">📝 {order.orderNotes}</div>
+                  )}
 
                   {/* תגיות קטגוריה + חץ */}
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -3532,11 +3028,6 @@ setTimeout(function(){
               </div>
             );
           })()}
-
-          {/* overlay לסגירת dropdown בקליק מחוץ */}
-          {openDropdown !== null && (
-            <div className="fixed inset-0 z-20" onClick={() => setOpenDropdown(null)} />
-          )}
 
           {/* מודאל הזמנה חדשה */}
           {isModalOpen && (
@@ -8477,6 +7968,8 @@ setTimeout(function(){
       const [appLoading, setAppLoading] = useState(false);
       const dataLoadedRef = useRef(false);
       const skipSaveRef = useRef(false);
+      const remoteOrdersRef = useRef(null);  // המערך האחרון שהגיע מהשרת — לא שומרים אותו חזרה
+      const syncedOrdersRef = useRef([]);    // מצב ההזמנות בשמירה הקודמת — להשוואה
       const initialLoadDoneRef = useRef(false);
       const mainScrollRef = useRef(null);
       const scrollToTop = useCallback(() => { if (mainScrollRef.current) mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
@@ -8588,7 +8081,7 @@ setTimeout(function(){
               db.from('inventory_log').select('data').order('created_at', { ascending: false })
             ]);
 
-            if (ordersRes.data?.length) setOrders(ordersRes.data.map(r => r.data));
+            if (ordersRes.data?.length) { const o = ordersRes.data.map(r => r.data); remoteOrdersRef.current = o; setOrders(o); }
             if (freshRes.data) setStock(freshRes.data.data);
             if (frozenRes.data) setFrozenStock(frozenRes.data.data);
             if (settingsRes.data) {
@@ -8639,15 +8132,15 @@ setTimeout(function(){
       }, [appUser]);
 
       // --- Supabase: שמירה ---
+      // שומרים רק את מה שהמכשיר הזה שינה — כדי לא לדרוס/למחוק הזמנות שמכשיר אחר יצר או עדכן
       useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        orders.forEach(o => db.from('orders').upsert({ id: o.id, data: o }).then());
-        // מחיקת הזמנות שנמחקו
-        db.from('orders').select('id').then(({ data }) => {
-          if (!data) return;
-          const ids = orders.map(o => o.id);
-          data.forEach(row => { if (!ids.includes(row.id)) db.from('orders').delete().eq('id', row.id).then(); });
-        });
+        const prev = syncedOrdersRef.current;
+        syncedOrdersRef.current = orders;
+        if (!dataLoadedRef.current || orders === remoteOrdersRef.current) return;
+        const prevById = new Map(prev.map(o => [o.id, o]));
+        orders.forEach(o => { if (prevById.get(o.id) !== o) db.from('orders').upsert({ id: o.id, data: o }).then(); });
+        const ids = new Set(orders.map(o => o.id));
+        prev.forEach(o => { if (!ids.has(o.id)) db.from('orders').delete().eq('id', o.id).then(); });
       }, [orders]);
 
       useEffect(() => {
@@ -8711,7 +8204,10 @@ setTimeout(function(){
           })
           .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
             const res = await db.from('orders').select('data').order('created_at', { ascending: false });
-            if (res.data?.length) { pause(); setOrders(res.data.map(r => r.data)); }
+            if (res.error || !res.data) return;
+            const o = res.data.map(r => r.data);
+            remoteOrdersRef.current = o;
+            setOrders(o);
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'settings' }, async (payload) => {
             if (!payload.new?.id || !payload.new?.data) return;
