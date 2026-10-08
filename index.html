@@ -437,7 +437,7 @@
     // --- Constants ---
     // עוף מפורק בלבד — שאר המוצרים נגזרים ישירות מ-frozenProductsList
     const ORDER_FORM_TEMPLATE = [
-      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'], quickMark: { label: '8 שניצל', option: 'שניצל', check: 'לחלק כרעיים' } },
+      { id: 'c2', category: 'עוף', name: 'עוף מפורק', storageType: 'fresh', inline: true, showTotalQty: true, options: ['שניצל', 'חזה שלם עם עצם', 'חזה שלם בלי עצם', 'חזה קוביות', 'חזה לרצועות'], checkboxOptions: ['לחלק כרעיים', 'כרעיים שלם', 'להוריד עור', 'כל עוף במגש', 'לא כל עוף במגש', 'חלקים נפרדים', 'סט למרק'], quickMark: { label: '8 שניצל', check: '8 שניצל' } },
       { id: 'c3', category: 'עוף', name: 'כרעיים', storageType: 'fresh', inline: true, showTotalQty: true, options: [], checkboxOptions: ['לחלק כרעיים', 'להוריד עור'] },
       { id: 'f1', category: 'דגים', name: 'בייבי סלמון', storageType: 'frozen', inline: true, showTotalQty: true, options: [], checkboxOptions: ['5 במגש', '6 במגש', '8 במגש', '32/8'] },
     ];
@@ -2432,27 +2432,18 @@ setTimeout(function(){
       const complexOptionsRef = React.useRef(null);
       const activeComplexTemplate = showComplex ? ORDER_FORM_TEMPLATE.find(t => t.name === orderSkuRow.name) : null;
 
-      useEffect(() => {
-        if (!quickMarkOn || !activeComplexTemplate?.quickMark) return;
-        const { option, check } = activeComplexTemplate.quickMark;
-        setComplexState(prev => ({
-          ...prev,
-          rows: [{ option, qty: orderSkuRow.qty }],
-          checks: prev.checks.includes(check) ? prev.checks : [...prev.checks, check],
-        }));
-      }, [quickMarkOn, orderSkuRow.qty, activeComplexTemplate]);
-
+      // סימון מהיר (8 שניצל) — נשמר כסימון על הפריט, בלי חלוקת כמות לאופציות
       const toggleQuickMark = () => {
+        if (!activeComplexTemplate?.quickMark) return;
+        const { check } = activeComplexTemplate.quickMark;
         const next = !quickMarkOn;
         setQuickMarkOn(next);
-        if (!next && activeComplexTemplate?.quickMark) {
-          const { option, check } = activeComplexTemplate.quickMark;
-          setComplexState(prev => ({
-            ...prev,
-            rows: prev.rows.filter(r => r.option !== option),
-            checks: prev.checks.filter(c => c !== check),
-          }));
-        }
+        setComplexAddError('');
+        setComplexState(prev => ({
+          ...prev,
+          rows: next ? [] : prev.rows,
+          checks: next ? (prev.checks.includes(check) ? prev.checks : [...prev.checks, check]) : prev.checks.filter(c => c !== check),
+        }));
       };
 
       useEffect(() => {
@@ -2544,7 +2535,7 @@ setTimeout(function(){
             totalQty: savedTotal,
             rows: complexState.rows.filter(r => parseFloat(r.qty) > 0),
             checks: complexState.checks,
-            notes: [orderSkuRow.notes, complexState.notes].map(n => (n || '').trim()).filter(Boolean).join(' | ')
+            notes: (orderSkuRow.notes || '').trim()
           }]);
           setShowComplex(false);
           setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false);
@@ -3314,7 +3305,7 @@ setTimeout(function(){
                         const cc = getCatColors(template.category);
                         return (
                           <div ref={complexOptionsRef} className={`border-t-2 border-dashed pt-3 space-y-3 ${cc.headerBorder}`}>
-                            {template.options.length > 0 && (() => {
+                            {template.options.length > 0 && !quickMarkOn && (() => {
                               const rowsSum = complexState.rows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
                               const skuQtyVal = parseFloat(orderSkuRow.qty) || 0;
                               const hasMismatch = skuQtyVal > 0 && rowsSum > 0 && Math.abs(rowsSum - skuQtyVal) > 0.001;
@@ -3379,11 +3370,6 @@ setTimeout(function(){
                                 })}
                               </div>
                             )}
-                            <input type="text" placeholder="הערה"
-                              value={complexState.notes}
-                              onChange={e => setComplexState(prev => ({ ...prev, notes: e.target.value }))}
-                              className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-                            />
                             {complexAddError && (
                               <div className="flex items-start gap-2 bg-red-50 border border-red-300 rounded-xl p-3">
                                 <span className="text-red-500 text-base shrink-0">⚠️</span>
@@ -3467,9 +3453,8 @@ setTimeout(function(){
                                         const eChecks = editItemState.checks || [];
                                         return (
                                           <div className={`border-t-2 border-dashed pt-2 mt-2 space-y-2 ${cc.headerBorder}`}>
-                                            {tmpl.options.length > 0 && <div className="grid grid-cols-2 gap-1.5">{tmpl.options.map(opt => { const qty = (eRows.find(r=>r.option===opt)||{}).qty||''; const isActive=parseFloat(qty)>0; return (<div key={opt} onClick={e=>{if(e.target.tagName!=='INPUT')e.currentTarget.querySelector('input').focus();}} className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border cursor-pointer ${isActive?cc.cardActive:'bg-white border-gray-200'}`}><span className={`text-xs font-bold flex-1 ${isActive?cc.cardActiveText:'text-gray-600'}`}>{opt}</span><input type="number" min="0" step="0.5" placeholder="כמות" value={qty} onChange={e=>{const v=e.target.value;setEditItemState(prev=>{const rows=prev.rows||[];const exists=rows.some(r=>r.option===opt);return{...prev,rows:exists?rows.map(r=>r.option===opt?{...r,qty:v}:r):[...rows,{option:opt,qty:v}]};});}} className={`w-14 p-1 text-xs border rounded text-center font-bold outline-none ${isActive?'border-current bg-white':'border-gray-200 bg-gray-50'}`}/></div>);})}</div>}
+                                            {tmpl.options.length > 0 && !(tmpl.quickMark && eChecks.includes(tmpl.quickMark.check)) && <div className="grid grid-cols-2 gap-1.5">{tmpl.options.map(opt => { const qty = (eRows.find(r=>r.option===opt)||{}).qty||''; const isActive=parseFloat(qty)>0; return (<div key={opt} onClick={e=>{if(e.target.tagName!=='INPUT')e.currentTarget.querySelector('input').focus();}} className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border cursor-pointer ${isActive?cc.cardActive:'bg-white border-gray-200'}`}><span className={`text-xs font-bold flex-1 ${isActive?cc.cardActiveText:'text-gray-600'}`}>{opt}</span><input type="number" min="0" step="0.5" placeholder="כמות" value={qty} onChange={e=>{const v=e.target.value;setEditItemState(prev=>{const rows=prev.rows||[];const exists=rows.some(r=>r.option===opt);return{...prev,rows:exists?rows.map(r=>r.option===opt?{...r,qty:v}:r):[...rows,{option:opt,qty:v}]};});}} className={`w-14 p-1 text-xs border rounded text-center font-bold outline-none ${isActive?'border-current bg-white':'border-gray-200 bg-gray-50'}`}/></div>);})}</div>}
                                             {tmpl.checkboxOptions&&tmpl.checkboxOptions.length>0&&<div className="flex flex-wrap gap-1">{tmpl.checkboxOptions.map(opt=>{const isChecked=eChecks.includes(opt);return(<div key={opt} onClick={()=>setEditItemState(prev=>{const checks=prev.checks||[];return{...prev,checks:isChecked?checks.filter(c=>c!==opt):[...checks,opt]};})} className={`flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer select-none text-[11px] font-bold ${isChecked?cc.cardActive+' '+cc.cardActiveText:'bg-white border-gray-200 text-gray-600'}`}>{isChecked?'✓':'○'} {opt}</div>);})}</div>}
-                                            <input type="text" value={editItemState.notes??''} onChange={e=>setEditItemState(prev=>({...prev,notes:e.target.value}))} placeholder="הערה..." className="w-full p-1.5 border border-gray-200 rounded text-xs outline-none"/>
                                           </div>
                                         );
                                       })()}
