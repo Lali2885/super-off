@@ -3065,12 +3065,23 @@ setTimeout(function(){
                 
                 <form onSubmit={handleAddOrder}
                   onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
-                      e.preventDefault();
-                      const focusable = Array.from(e.currentTarget.querySelectorAll('input:not([type=hidden]), select, textarea')).filter(el => !el.disabled);
-                      const idx = focusable.indexOf(e.target);
-                      if (idx !== -1 && idx < focusable.length - 1) focusable[idx + 1].focus();
+                    // מעבר בין שדות: אנטר / חץ שמאלה = קדימה, חץ ימינה = אחורה
+                    if (e.defaultPrevented) return; // שדה שטיפל במקש בעצמו
+                    const t = e.target;
+                    if (t.tagName !== 'INPUT' && t.tagName !== 'SELECT') return;
+                    const dir = (e.key === 'Enter' || e.key === 'ArrowLeft') ? 1 : e.key === 'ArrowRight' ? -1 : 0;
+                    if (!dir) return;
+                    // בשדה טקסט החץ מזיז קודם את הסמן — עוברים שדה רק כשהסמן כבר בקצה
+                    if (e.key !== 'Enter' && t.tagName === 'INPUT' && ['text', 'tel', 'search'].includes(t.type)) {
+                      const len = t.value.length;
+                      if (dir === 1 && !(t.selectionStart === len && t.selectionEnd === len)) return;
+                      if (dir === -1 && !(t.selectionStart === 0 && t.selectionEnd === 0)) return;
                     }
+                    e.preventDefault();
+                    const focusable = Array.from(e.currentTarget.querySelectorAll('input:not([type=hidden]), select, textarea')).filter(el => !el.disabled && el.offsetParent !== null);
+                    const idx = focusable.indexOf(t);
+                    const next = idx === -1 ? null : focusable[idx + dir];
+                    if (next) next.focus();
                   }}
                   ref={modalFormRef}
                   className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
@@ -3208,7 +3219,7 @@ setTimeout(function(){
                             type="text" autoComplete="off"
                             value={orderSkuRow.sku}
                             onChange={e => orderSkuLookup(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (!showComplex && orderSkuRow.name) document.getElementById('orderQtyInput')?.focus(); } }}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (orderSkuRow.name) document.getElementById('orderQtyInput')?.focus(); } }}
                             placeholder="סרוק..."
                             className="w-full p-2.5 border-2 border-purple-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-purple-400 bg-purple-50"
                           />
