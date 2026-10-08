@@ -2287,15 +2287,27 @@ ${htmlRows}
           order.neighborhood
         ].filter(Boolean).join('  |  ');
 
+        const [tDate, tTime] = (order.timeString || '').split('T');
+        const whenText = tDate ? [tDate.split('-').reverse().join('/'), tTime && tTime !== '00:00' ? tTime : ''].filter(Boolean).join(' ') : '';
+        const addressText = order.type === 'delivery' ? [order.fullAddress, order.neighborhood].filter(Boolean).join(', ') : '';
+        const flagsText = [
+          order.flags?.mustCoordinate && '🚨 לתאם',
+          order.flags?.notifyReady && '📞 להודיע שמוכן',
+          order.flags?.chargeStatus === 'charge' && '💳 לחייב',
+          order.flags?.chargeStatus === 'noCharge' && '🆓 לא לחייב',
+        ].filter(Boolean);
+
         const headerHtml = `
           <div style="border:1px solid black;border-radius:4px;padding:6px 8px;margin-bottom:8px;background:#f9f9f9;font-size:14px;">
             <div style="display:flex;justify-content:space-between;font-weight:800;">
-              <span>${order.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}</span>
+              <span>${order.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}${whenText ? ` — ${whenText}` : ''}</span>
               <span>הזמנה #${order.id}</span>
             </div>
           </div>
           <div style="border-bottom:2px solid black;padding-bottom:6px;margin-bottom:8px;">
             <div style="font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${customerLine}</div>
+            ${addressText ? `<div style="font-size:16px;font-weight:bold;margin-top:2px;">📍 ${addressText}</div>` : ''}
+            ${flagsText.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">${flagsText.map(f => `<span style="font-size:15px;font-weight:800;padding:1px 8px;border:2px solid black;border-radius:4px;">${f}</span>`).join('')}</div>` : ''}
           </div>
           ${order.orderNotes ? `<div style="border:2px solid #dc2626;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:20px;font-weight:bold;color:#dc2626;white-space:pre-wrap;">📝 ${order.orderNotes}</div>` : ''}`;
 
@@ -2305,7 +2317,8 @@ ${htmlRows}
             const qtyDisplay = group.items.length > 1 ? group.total : group.items[0].qty;
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
               ? `<div style="margin-top:4px;margin-right:4px;padding-right:8px;border-right:2px solid #aaa;">${group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="display:flex;gap:8px;font-size:22px;color:#555;font-weight:bold;"><span style="min-width:44px;text-align:center;font-weight:800;">${item.qty}</span><span>${opt}</span></div>`; }).join('')}</div>` : '';
-            const notes = group.items.length === 1 && group.items[0].notes ? `<span style="display:block;font-size:22px;color:#dc2626;font-weight:bold;margin-top:4px;">✂️ ${group.items[0].notes}</span>` : '';
+            const groupNotes = [...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ');
+            const notes = groupNotes ? `<span style="display:block;font-size:22px;color:#dc2626;font-weight:bold;margin-top:4px;">✂️ ${groupNotes}</span>` : '';
             const checks = group.items[0]?.checks?.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${group.items[0].checks.map(c => `<span style="font-size:22px;padding:2px 8px;border:1px solid #ccc;border-radius:4px;font-weight:bold;">✓ ${c}</span>`).join('')}</div>` : '';
             const skuKash = showKashrut && (group.items[0]?.sku || group.items[0]?.kashrut) ? `<div style="display:flex;align-items:center;gap:8px;margin-top:2px;">${group.items[0].sku ? `<span style="font-size:18px;color:#666;font-weight:bold;">מק"ט: ${group.items[0].sku}</span>` : ''}${group.items[0].kashrut ? `<span style="font-size:18px;font-weight:800;padding:2px 12px;border-radius:999px;border:2px solid black;">${group.items[0].kashrut}</span>` : ''}</div>` : '';
             return `<tr style="background:${bg};"><td style="padding:12px;border:1px solid black;text-align:center;font-size:36px;font-weight:800;background:#f0f0f0;">${qtyDisplay}</td><td style="padding:12px;border:1px solid black;"><span style="display:block;font-weight:800;font-size:22px;">${group.key}</span>${skuKash}${subItems}${notes}${checks}</td></tr>`;
@@ -2320,7 +2333,8 @@ ${htmlRows}
             const qtyDisplay = group.items.length > 1 ? group.total : group.items[0].qty;
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
               ? group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="font-size:0.8em;color:#555;padding-right:10px;">└ ${item.qty}×${opt}</div>`; }).join('') : '';
-            const notes = group.items.length === 1 && group.items[0].notes ? `<div style="font-size:0.8em;color:#dc2626;font-weight:bold;">✂️ ${group.items[0].notes}</div>` : '';
+            const groupNotes = [...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ');
+            const notes = groupNotes ? `<div style="font-size:0.8em;color:#dc2626;font-weight:bold;">✂️ ${groupNotes}</div>` : '';
             const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:0.55em;font-weight:800;padding:1px 6px;border-radius:999px;border:1.5px solid black;white-space:nowrap;">${group.items[0].kashrut}</span>` : '';
             return `<div class="frozen-row" style="display:flex;align-items:flex-start;gap:4px;padding:5px 4px;border-bottom:1px solid #93c5fd;background:${bg};break-inside:avoid;">
               <span style="font-size:1.2em;color:#1e40af;flex-shrink:0;">☐</span>
@@ -2529,7 +2543,8 @@ setTimeout(function(){
             storageType: orderSkuRow.storageType || 'fresh',
             totalQty: savedTotal,
             rows: complexState.rows.filter(r => parseFloat(r.qty) > 0),
-            checks: complexState.checks, notes: complexState.notes
+            checks: complexState.checks,
+            notes: [orderSkuRow.notes, complexState.notes].map(n => (n || '').trim()).filter(Boolean).join(' | ')
           }]);
           setShowComplex(false);
           setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false);
@@ -2670,7 +2685,16 @@ setTimeout(function(){
           // שומרים שדות שהטופס לא מנהל (createdAt, packaging וכו')
           setOrders(prev => prev.map(o => o.id === editingOrder.id ? { ...editingOrder, ...newOrder, items: [...allItems, ...(editingOrder.items || []).filter(i => i.qty === '-')], id: editingOrder.id, status: editingOrder.status, createdAt: editingOrder.createdAt || newOrder.createdAt } : o));
         } else {
-          setOrders(prev => [newOrder, ...prev]);
+          // insert ולא upsert: אם מכשיר אחר תפס את המספר באותו רגע — מקבלים שגיאת כפילות ועוברים למספר הבא
+          try {
+            for (let attempt = 0; attempt < 10; attempt++) {
+              const { error } = await db.from('orders').insert({ id: newOrder.id, data: newOrder });
+              if (!error || error.code !== '23505') break;
+              newOrder.id++;
+            }
+          } catch (err) {}
+          // ייתכן שעדכון חי מהשרת כבר הביא את ההזמנה
+          setOrders(prev => prev.some(o => o.id === newOrder.id) ? prev : [newOrder, ...prev]);
         }
         submittingRef.current = false;
         closeModal();
@@ -2768,7 +2792,13 @@ setTimeout(function(){
             const assignedOrders = orders.filter(o => o.status === 'new' && o.assignedButcher);
             const packingOrders  = orders.filter(o => o.status === 'packing');
 
-            const sortByKashrut = (arr) => [...arr].sort((a, b) => (a.kashrut || '').localeCompare(b.kashrut || '', 'he'));
+            // הזמנה עם כמה כשרויות מקובצת תחת "מעורב" ולא לפי הפריט הראשון
+            const kashrutGroupKey = (o) => {
+              const ks = [...new Set((o.items || []).map(i => i.kashrut).filter(Boolean))];
+              if (ks.length > 1) return `מעורב: ${ks.join(' + ')}`;
+              return ks[0] || o.kashrut || 'ללא כשרות';
+            };
+            const sortByKashrut = (arr) => [...arr].sort((a, b) => kashrutGroupKey(a).localeCompare(kashrutGroupKey(b), 'he'));
 
             const renderOrderCard = (order, dimmed = false, draggable = false) => {
               const isExpanded = dimmed || expandedOrders.has(order.id);
@@ -2921,8 +2951,8 @@ setTimeout(function(){
                                     })}
                                   </div>
                                 )}
-                                {group.items.length === 1 && group.items[0].notes && (
-                                  <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {group.items[0].notes}</div>
+                                {group.items.some(i => i.notes) && (
+                                  <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {[...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ')}</div>
                                 )}
                                 {group.items[0]?.checks?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mr-6 mt-1">
@@ -2964,7 +2994,7 @@ setTimeout(function(){
               );
               const groups = {};
               sortByKashrut(arr).forEach(o => {
-                const k = o.kashrut || 'ללא כשרות';
+                const k = kashrutGroupKey(o);
                 if (!groups[k]) groups[k] = [];
                 groups[k].push(o);
               });
