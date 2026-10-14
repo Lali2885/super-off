@@ -1495,13 +1495,13 @@
       const filteredLog = logEntries.filter(e => e.date === logDate);
 
       const downloadLogExcel = () => {
-        const rows = [['תאריך', 'שעה', 'פעולה', 'מוצר', 'כשרות', 'קרטונים', 'מגשים', 'משתמש']];
+        const rows = [['תאריך', 'שעה', 'פעולה', 'מוצר', 'כשרות', 'קרטונים', 'משתמש']];
         filteredLog.forEach(e => {
           const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
-          rows.push([e.date, time, e.action, e.product, e.kashrut || '', e.cartons || 0, e.trays || 0, e.user || '—']);
+          rows.push([e.date, time, e.action, e.product, e.kashrut || '', e.cartons || 0, e.user || '—']);
         });
         const ws = window.XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:22},{wch:10},{wch:10},{wch:10},{wch:14}];
+        ws['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:22},{wch:10},{wch:10},{wch:14}];
         const wb = window.XLSX.utils.book_new();
         window.XLSX.utils.book_append_sheet(wb, ws, 'יומן פעולות');
         wb.Sheets['יומן פעולות']['!sheetViews'] = [{ rightToLeft: true }];
@@ -2202,7 +2202,6 @@ ${htmlRows}
                                   <th className="p-3 font-bold">פעולה</th>
                                   <th className="p-3 font-bold">מוצר</th>
                                   <th className="p-3 font-bold text-center">קרטונים</th>
-                                  <th className="p-3 font-bold text-center">מגשים</th>
                                   <th className="p-3 font-bold text-center">משתמש</th>
                                 </tr>
                               </thead>
@@ -2220,7 +2219,6 @@ ${htmlRows}
                                       </td>
                                       <td className="p-3 font-bold text-gray-900">{e.product}</td>
                                       <td className="p-3 text-center font-bold">{e.cartons || 0}</td>
-                                      <td className="p-3 text-center text-gray-500">{e.trays || 0}</td>
                                       <td className="p-3 text-center text-xs text-indigo-600 font-semibold">{e.user || '—'}</td>
                                     </tr>
                                   );
