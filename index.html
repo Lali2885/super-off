@@ -681,7 +681,7 @@
       return (
         <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm">
             {kashrutList.map(k => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
@@ -910,7 +910,7 @@
       return (
         <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm">
             {kashrutList.map((k) => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
@@ -1316,7 +1316,7 @@
           </div>
 
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm">
             {kashrutList.map((k) => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
