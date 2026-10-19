@@ -560,6 +560,17 @@
     };
 
     // ===[INVENTORY]===
+    // צביעת רקע הדף בגוון בהיר של הכשרות הפעילה
+    const useKashrutPageTint = (kashrutList, activeKashrut) => {
+      const color = (kashrutList.find(k => k.name === activeKashrut) || {}).color || '#6366f1';
+      useEffect(() => {
+        const el = document.querySelector('main');
+        if (!el) return;
+        el.style.backgroundColor = `color-mix(in srgb, ${color} 12%, white)`;
+        return () => { el.style.backgroundColor = ''; };
+      }, [color]);
+    };
+
     // --- Inventory View ---
     const StockPanel = ({ title, color, accentClass, items, stockData, setStockData }) => {
       const [selectedProduct, setSelectedProduct] = useState('');
@@ -650,6 +661,7 @@
     // --- Fresh Stock Panel ---
     const FreshStockPanel = ({ stock, setStock, kashrutList, frozenProductsList }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
+      useKashrutPageTint(kashrutList, activeKashrut);
       const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries(PRODUCT_CATEGORIES.map(c => [c, true])));
       const seen = new Set();
       const freshItems = (frozenProductsList || [])
@@ -780,6 +792,7 @@
     // --- Frozen Stock Panel ---
     const FrozenStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, gvBalance = {}, showEntry = true, showWithdrawal = true, appUser }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
+      useKashrutPageTint(kashrutList, activeKashrut);
       const [collapsedCats, setCollapsedCats] = useState(() => Object.fromEntries([...PRODUCT_CATEGORIES.map(c => [c, true]), ['STICKER', true]]));
       const [entryTrays, setEntryTrays] = useState({});
       const [withdrawTrays, setWithdrawTrays] = useState({});
@@ -1205,6 +1218,7 @@
 
     const StickerStockPanel = ({ frozenStock, setFrozenStock, kashrutList, frozenProductsList, bsBalance = {}, gvBalance = {}, appUser }) => {
       const [activeKashrut, setActiveKashrut] = useState(kashrutList[0]?.name || '');
+      useKashrutPageTint(kashrutList, activeKashrut);
       const [addModal, setAddModal]           = useState(false);
       const [selProduct, setSelProduct]       = useState('');
       const [selMark, setSelMark]             = useState('');
