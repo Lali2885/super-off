@@ -680,20 +680,22 @@
 
       return (
         <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1650px]:fixed min-[1650px]:top-8 min-[1650px]:right-[272px] min-[1650px]:w-44 min-[1650px]:flex-col min-[1650px]:flex-nowrap min-[1650px]:gap-3 min-[1650px]:p-3 min-[1650px]:mx-0 min-[1650px]:rounded-2xl min-[1650px]:border min-[1650px]:border-gray-200 min-[1650px]:bg-white">
             {kashrutList.map(k => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
               return (
                 <button key={k.id} onClick={() => setActiveKashrut(k.name)}
                   style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1650px]:flex-none min-[1650px]:w-full min-[1650px]:py-4 min-[1650px]:text-lg min-[1650px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
                   {k.name}
                 </button>
               );
             })}
           </div>
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
 
           {/* סיכום */}
           <div className="rounded-xl overflow-hidden border" style={{ borderColor: activeColor + '40' }}>
@@ -768,6 +770,8 @@
               );
             });
           })()}
+          </div>
+          </div>
         </div>
       );
     };
@@ -909,20 +913,22 @@
 
       return (
         <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1650px]:fixed min-[1650px]:top-8 min-[1650px]:right-[272px] min-[1650px]:w-44 min-[1650px]:flex-col min-[1650px]:flex-nowrap min-[1650px]:gap-3 min-[1650px]:p-3 min-[1650px]:mx-0 min-[1650px]:rounded-2xl min-[1650px]:border min-[1650px]:border-gray-200 min-[1650px]:bg-white">
             {kashrutList.map((k) => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
               return (
                 <button key={k.id} onClick={() => setActiveKashrut(k.name)}
                   style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1650px]:flex-none min-[1650px]:w-full min-[1650px]:py-4 min-[1650px]:text-lg min-[1650px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
                   {k.name}
                 </button>
               );
             })}
           </div>
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
 
           {/* טבלת מוצרים לפי קטגוריות */}
           {(() => {
@@ -1191,6 +1197,8 @@
               </div>}
             </div>
           )}
+          </div>
+          </div>
         </div>
       );
     };
@@ -1315,20 +1323,22 @@
             </button>
           </div>
 
+          <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1650px]:fixed min-[1650px]:top-8 min-[1650px]:right-[272px] min-[1650px]:w-44 min-[1650px]:flex-col min-[1650px]:flex-nowrap min-[1650px]:gap-3 min-[1650px]:p-3 min-[1650px]:mx-0 min-[1650px]:rounded-2xl min-[1650px]:border min-[1650px]:border-gray-200 min-[1650px]:bg-white">
             {kashrutList.map((k) => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
               return (
                 <button key={k.id} onClick={() => setActiveKashrut(k.name)}
                   style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1650px]:flex-none min-[1650px]:w-full min-[1650px]:py-4 min-[1650px]:text-lg min-[1650px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
                   {k.name}
                 </button>
               );
             })}
           </div>
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
 
           {/* טבלה */}
           {activeProducts.length === 0 ? (
@@ -1392,6 +1402,8 @@
               </div>
             </div>
           )}
+          </div>
+          </div>
         </div>
       );
     };
