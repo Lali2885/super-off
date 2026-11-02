@@ -116,6 +116,10 @@
         display: none !important;
       }
     }
+    /* שדות כמות במלאי: הקלדה בלבד, בלי חיצי הגדלה/הקטנה */
+    input[data-stock-col]::-webkit-outer-spin-button,
+    input[data-stock-col]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[data-stock-col] { -moz-appearance: textfield; appearance: textfield; }
   </style>
 </head>
 <body class="bg-gray-50/50 text-gray-800 antialiased overflow-hidden">
