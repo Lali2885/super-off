@@ -694,20 +694,20 @@
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1650px]:fixed min-[1650px]:top-[220px] min-[1650px]:right-[272px] min-[1650px]:w-44 min-[1650px]:flex-col min-[1650px]:flex-nowrap min-[1650px]:gap-3 min-[1650px]:p-3 min-[1650px]:mx-0 min-[1650px]:rounded-2xl min-[1650px]:border min-[1650px]:border-gray-200 min-[1650px]:bg-white">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1280px]:fixed min-[1280px]:top-[220px] min-[1280px]:right-[272px] min-[1280px]:w-44 min-[1280px]:flex-col min-[1280px]:flex-nowrap min-[1280px]:gap-3 min-[1280px]:p-3 min-[1280px]:mx-0 min-[1280px]:rounded-2xl min-[1280px]:border min-[1280px]:border-gray-200 min-[1280px]:bg-white">
             {kashrutList.map(k => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
               return (
                 <button key={k.id} onClick={() => setActiveKashrut(k.name)}
                   style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1650px]:flex-none min-[1650px]:w-full min-[1650px]:py-4 min-[1650px]:text-lg min-[1650px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1280px]:flex-none min-[1280px]:w-full min-[1280px]:py-4 min-[1280px]:text-lg min-[1280px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
                   {k.name}
                 </button>
               );
             })}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
+          <div className="flex-1 min-w-0 flex flex-col gap-4 min-[1280px]:max-[1699px]:pr-44">
 
           {/* סיכום */}
           <div className="rounded-xl overflow-hidden border" style={{ borderColor: activeColor + '40' }}>
@@ -928,20 +928,20 @@
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1650px]:fixed min-[1650px]:top-[220px] min-[1650px]:right-[272px] min-[1650px]:w-44 min-[1650px]:flex-col min-[1650px]:flex-nowrap min-[1650px]:gap-3 min-[1650px]:p-3 min-[1650px]:mx-0 min-[1650px]:rounded-2xl min-[1650px]:border min-[1650px]:border-gray-200 min-[1650px]:bg-white">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1280px]:fixed min-[1280px]:top-[220px] min-[1280px]:right-[272px] min-[1280px]:w-44 min-[1280px]:flex-col min-[1280px]:flex-nowrap min-[1280px]:gap-3 min-[1280px]:p-3 min-[1280px]:mx-0 min-[1280px]:rounded-2xl min-[1280px]:border min-[1280px]:border-gray-200 min-[1280px]:bg-white">
             {kashrutList.map((k) => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
               return (
                 <button key={k.id} onClick={() => setActiveKashrut(k.name)}
                   style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1650px]:flex-none min-[1650px]:w-full min-[1650px]:py-4 min-[1650px]:text-lg min-[1650px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1280px]:flex-none min-[1280px]:w-full min-[1280px]:py-4 min-[1280px]:text-lg min-[1280px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
                   {k.name}
                 </button>
               );
             })}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
+          <div className="flex-1 min-w-0 flex flex-col gap-4 min-[1280px]:max-[1699px]:pr-44">
 
           {/* טבלת מוצרים לפי קטגוריות */}
           {(() => {
@@ -1339,20 +1339,20 @@
 
           <div className="flex flex-col gap-4">
           {/* טאבי כשרות */}
-          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1650px]:fixed min-[1650px]:top-[220px] min-[1650px]:right-[272px] min-[1650px]:w-44 min-[1650px]:flex-col min-[1650px]:flex-nowrap min-[1650px]:gap-3 min-[1650px]:p-3 min-[1650px]:mx-0 min-[1650px]:rounded-2xl min-[1650px]:border min-[1650px]:border-gray-200 min-[1650px]:bg-white">
+          <div className="flex gap-2 flex-wrap sticky top-0 z-30 bg-gray-50 py-3 -mx-2 px-2 rounded-b-xl shadow-sm min-[1280px]:fixed min-[1280px]:top-[220px] min-[1280px]:right-[272px] min-[1280px]:w-44 min-[1280px]:flex-col min-[1280px]:flex-nowrap min-[1280px]:gap-3 min-[1280px]:p-3 min-[1280px]:mx-0 min-[1280px]:rounded-2xl min-[1280px]:border min-[1280px]:border-gray-200 min-[1280px]:bg-white">
             {kashrutList.map((k) => {
               const isActive = k.name === activeKashrut;
               const color = k.color || '#6366f1';
               return (
                 <button key={k.id} onClick={() => setActiveKashrut(k.name)}
                   style={isActive ? { backgroundColor: color, borderColor: color, color: 'white' } : { borderColor: color, color }}
-                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1650px]:flex-none min-[1650px]:w-full min-[1650px]:py-4 min-[1650px]:text-lg min-[1650px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
+                  className={`flex-1 min-w-[80px] py-2.5 rounded-xl font-bold text-sm min-[1280px]:flex-none min-[1280px]:w-full min-[1280px]:py-4 min-[1280px]:text-lg min-[1280px]:leading-tight transition-all border-2 bg-white ${isActive ? 'shadow-md' : 'hover:opacity-80'}`}>
                   {k.name}
                 </button>
               );
             })}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
+          <div className="flex-1 min-w-0 flex flex-col gap-4 min-[1280px]:max-[1699px]:pr-44">
 
           {/* טבלה */}
           {activeProducts.length === 0 ? (
@@ -1912,22 +1912,43 @@ ${htmlRows}
         // Build column blocks for all kashrut given category filter
         const buildKashrutBlocks = (filterCats, includeStickers = false) => {
           const blocks = [];
-          for (const k of kashrutList) {
+          for (const k of (pickedKashrut.length ? pickedKashrut : kashrutList)) {
             chunk(buildList(k.name, filterCats, includeStickers))
               .forEach(items => blocks.push({ label: k.name, color: k.color || '#1e293b', items }));
           }
-          return blocks;
+          // כשיש סינון — לא מדפיסים עמודות ריקות
+          return isFiltered ? blocks.filter(b => b.items.length > 0) : blocks;
         };
 
+        // סינון לפי בחירה בחלון הייצוא; בלי בחירה — הכול
+        const STICKER_CAT = 'מ.ל./מ.ל.ה';
+        const pickedKashrut = selectedKashrut;
+        const pickedCats = Object.keys(countSheetCats).filter(c => countSheetCats[c]);
+        const isFiltered = pickedKashrut.length > 0 || pickedCats.length > 0;
+        const catOn = (c) => !pickedCats.length || pickedCats.includes(c);
+
         // Page definitions
-        const PAGE_CATS = [
+        const ALL_PAGE_CATS = [
           { cats: ['עוף', 'הודו', 'מתובלים', 'קפואים', 'טחונים'], title: 'עוף, הודו, מתובלים, טחונים', stickers: false },
           { cats: ['בשר'],                                           title: 'בשר',                        stickers: true  },
         ];
 
+        const PAGE_CATS = ALL_PAGE_CATS
+          .map(p => {
+            const cats = p.cats.filter(catOn);
+            const stickers = p.stickers && catOn(STICKER_CAT);
+            const title = pickedCats.length ? [...cats, ...(stickers ? [STICKER_CAT] : [])].join(', ') : p.title;
+            return { ...p, cats, stickers, title };
+          })
+          .filter(p => p.cats.length > 0 || p.stickers);
+
         const pageBlocks = PAGE_CATS.map(p => buildKashrutBlocks(p.cats, p.stickers));
 
-        const fishList = frozenProductsList
+        // דגים שייכים לכשרות "כללי": נכללים כשבחרו בקטגוריה דגים, או בלי בחירת קטגוריה אם הכשרות מתאימה
+        const fishOn = pickedCats.length
+          ? pickedCats.includes('דגים')
+          : (!pickedKashrut.length || pickedKashrut.some(k => k.name === 'כללי'));
+        const fishList = !fishOn ? [] : frozenProductsList
           .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי')
           .sort(sortBySku)
           .map(p => ({ name: p.name, sku: p.sku || '' }));
@@ -1996,11 +2017,17 @@ ${htmlRows}
             <div style="font-size:10px;">תאריך: <strong>${date}</strong> &nbsp;&nbsp; נספר ע"י: _________________</div>
           </div>`;
 
+        if (fishList.length === 0 && pageBlocks.every(b => b.length === 0)) {
+          alert('אין מוצרים לספירה לפי הבחירה הזו');
+          return;
+        }
+
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
         let docPageIdx = 0;
 
         for (const [i, pageDef] of PAGE_CATS.entries()) {
           const blocks = pageBlocks[i];
+          if (blocks.length === 0) continue;
           // Pad with empty blocks to match refN column width
           const padded = [...blocks, ...Array.from({ length: Math.max(0, refN - blocks.length) }, () => ({ label: '', color: '#e2e8f0', items: [] }))];
           await renderToDoc(wrapPage(makeHeader(pageDef.title), buildTable(padded, refN)), doc, docPageIdx++);
@@ -2026,7 +2053,7 @@ ${htmlRows}
             </div>
             <div className="flex gap-2">
               {showExport && (
-                <button onClick={() => { setExportKashrut(() => { const obj = {}; kashrutList.forEach(k => { obj[k.name] = false; }); return obj; }); setExportModal(true); }}
+                <button onClick={() => { setExportKashrut(() => { const obj = {}; kashrutList.forEach(k => { obj[k.name] = false; }); return obj; }); setCountSheetCats(p => Object.fromEntries(Object.keys(p).map(c => [c, false]))); setExportModal(true); }}
                   className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors">
                   <span>⬇️</span> ייצוא מלאי
                 </button>
@@ -2144,10 +2171,9 @@ ${htmlRows}
                   </div>
                   )}
 
-                  {/* כשרויות — רק בייצוא רגיל, לא בטופס ספירה */}
-                  {exportMode !== 'countSheet' && (
+                  {/* כשרויות */}
                   <div>
-                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">כשרויות לכלול</div>
+                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">{exportMode === 'countSheet' ? 'כשרויות (בלי בחירה — הכול)' : 'כשרויות לכלול'}</div>
                     <div className="flex flex-wrap gap-2">
                       {kashrutList.map(k => (
                         <label key={k.id} className="cursor-pointer">
@@ -2158,6 +2184,23 @@ ${htmlRows}
                               ? { backgroundColor: k.color, borderColor: k.color }
                               : { borderColor: k.color + '60', color: k.color }}>
                             {k.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* קטגוריות — רק בטופס ספירה */}
+                  {exportMode === 'countSheet' && (
+                  <div>
+                    <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">קטגוריות (בלי בחירה — הכול)</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.keys(countSheetCats).map(c => (
+                        <label key={c} className="cursor-pointer">
+                          <input type="checkbox" className="hidden" checked={!!countSheetCats[c]}
+                            onChange={e => setCountSheetCats(p => ({ ...p, [c]: e.target.checked }))} />
+                          <span className={`inline-block px-3 py-1.5 rounded-lg border-2 font-bold text-sm transition-all ${countSheetCats[c] ? 'bg-gray-800 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-600'}`}>
+                            {CAT_EMOJI[c] || '🏷️'} {c}
                           </span>
                         </label>
                       ))}
