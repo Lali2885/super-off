@@ -560,6 +560,16 @@
     };
 
     // ===[INVENTORY]===
+    // Enter או חץ למטה בשדה כמות: מבצע את הפעולה ויורד למוצר הבא באותה עמודה
+    const stockCellKeyDown = (e, col, apply) => {
+      if (e.key !== 'Enter' && e.key !== 'ArrowDown') return;
+      e.preventDefault();
+      if (apply() === false) return;
+      const inputs = [...document.querySelectorAll(`input[data-stock-col="${col}"]`)];
+      const next = inputs[inputs.indexOf(e.currentTarget) + 1];
+      if (next) { next.focus(); next.select(); }
+    };
+
     // צביעת רקע הדף בגוון בהיר של הכשרות הפעילה
     const useKashrutPageTint = (kashrutList, activeKashrut) => {
       const color = (kashrutList.find(k => k.name === activeKashrut) || {}).color || '#6366f1';
@@ -838,7 +848,7 @@
         const current = frozenStock[key] || 0;
         if (delta > current) {
           alert(`אי אפשר למשוך ${Math.floor(delta/TRAYS_PER_CARTON)} קרטונים — במלאי יש רק ${Math.floor(current/TRAYS_PER_CARTON)} קרטונים`);
-          return;
+          return false;
         }
         setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
         setWithdrawTrays(prev => ({ ...prev, [key]: 0 }));
@@ -892,7 +902,7 @@
               <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
                 <input type="number" min="0" step="1" value={eC||''} placeholder="0"
                   onChange={e => setEFromCartons(key, e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
+                  data-stock-col="entry" onKeyDown={e => stockCellKeyDown(e, 'entry', () => applyEntry(key))}
                   className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
               </td>
             )}
@@ -903,7 +913,7 @@
               <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
                 <input type="number" min="0" step="1" value={wC||''} placeholder="0"
                   onChange={e => setWFromCartons(key, e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
+                  data-stock-col="withdraw" onKeyDown={e => stockCellKeyDown(e, 'withdraw', () => applyWithdraw(key))}
                   className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
               </td>
             )}
@@ -979,7 +989,7 @@
               );
             });
           })()}
-          <p className="text-xs text-gray-400 text-center">הקלד וּלחץ Enter לביצוע</p>
+          <p className="text-xs text-gray-400 text-center">הקלידי כמות ולחצי Enter או חץ למטה — הפעולה מתבצעת ועוברים למוצר הבא</p>
 
           {/* סקשן דגים */}
           {/* סקשן מ.ל / מ.ל.ה — עבור הכשרות הפעילה */}
@@ -1031,7 +1041,7 @@
               const current = frozenStock[key] || 0;
               if (delta > current) {
                 alert(`אי אפשר למשוך ${delta} קרטונים — במלאי יש רק ${current} קרטונים`);
-                return;
+                return false;
               }
               setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
               setStickerWithdraw(prev => ({ ...prev, [key]: 0 }));
@@ -1082,13 +1092,13 @@
                                 <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
                                   <input type="number" min="0" value={eC||''} placeholder="0"
                                     onChange={e => setStickerEntry(prev => ({ ...prev, [p.key]: Math.max(0, parseInt(e.target.value)||0) }))}
-                                    onKeyDown={e => e.key === 'Enter' && applyStickerEntry(p.key)}
+                                    data-stock-col="entry" onKeyDown={e => stockCellKeyDown(e, 'entry', () => applyStickerEntry(p.key))}
                                     className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
                                 </td>
                                 <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
                                   <input type="number" min="0" value={wC||''} placeholder="0"
                                     onChange={e => setStickerWithdraw(prev => ({ ...prev, [p.key]: Math.max(0, parseInt(e.target.value)||0) }))}
-                                    onKeyDown={e => e.key === 'Enter' && applyStickerWithdraw(p.key)}
+                                    data-stock-col="withdraw" onKeyDown={e => stockCellKeyDown(e, 'withdraw', () => applyStickerWithdraw(p.key))}
                                     className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
                                 </td>
                                 <td className="p-2.5 text-center bg-blue-50/60 border-r-2 border-blue-400">
@@ -1254,7 +1264,7 @@
         const current = frozenStock[key] || 0;
         if (delta > current) {
           alert(`אי אפשר למשוך ${delta} קרטונים — במלאי יש רק ${current} קרטונים`);
-          return;
+          return false;
         }
         setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
         setWithdrawCartons(prev => ({ ...prev, [key]: 0 }));
@@ -1305,13 +1315,13 @@
             <td className="p-1 text-center bg-green-50/30 border-r-2 border-green-400">
               <input type="number" min="0" step="1" value={eC||''} placeholder="0"
                 onChange={e => setEntryCartons(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
-                onKeyDown={e => e.key === 'Enter' && applyEntry(key)}
+                data-stock-col="entry" onKeyDown={e => stockCellKeyDown(e, 'entry', () => applyEntry(key))}
                 className="w-16 p-1.5 text-center text-base font-bold border border-green-200 text-green-700 rounded-lg bg-white focus:ring-1 focus:ring-green-400 outline-none" />
             </td>
             <td className="p-1 text-center bg-red-50/30 border-r-2 border-red-400">
               <input type="number" min="0" step="1" value={wC||''} placeholder="0"
                 onChange={e => setWithdrawCartons(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
-                onKeyDown={e => e.key === 'Enter' && applyWithdraw(key)}
+                data-stock-col="withdraw" onKeyDown={e => stockCellKeyDown(e, 'withdraw', () => applyWithdraw(key))}
                 className="w-16 p-1.5 text-center text-base font-bold border border-red-200 text-red-700 rounded-lg bg-white focus:ring-1 focus:ring-red-400 outline-none" />
             </td>
             <td className="p-2.5 text-center bg-blue-50/60 border-r-2 border-blue-400">
