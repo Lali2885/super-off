@@ -136,6 +136,24 @@
     const SUPABASE_KEY = 'sb_publishable_qamU2RU-O_cwKOL_a-JI2A_q0PTIsPW';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // --- בטיחות נתונים ---
+    // Supabase מחזיר עד 1000 שורות לבקשה — טוענים בדפים עד שמקבלים הכל
+    const fetchAll = async (build) => {
+      let all = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await build().range(from, from + 999);
+        if (error) return { data: null, error };
+        all = all.concat(data || []);
+        if (!data || data.length < 1000) return { data: all, error: null };
+      }
+    };
+    // שמירה שנכשלה — מודיעים למסך במקום לבלוע בשקט
+    const reportSaveError = (label, error) => {
+      console.error('[save-error]', label, error);
+      window.dispatchEvent(new CustomEvent('so-save-error', { detail: { label, message: error?.message || String(error) } }));
+    };
+    const checkSave = (label) => (res) => { if (res?.error) reportSaveError(label, res.error); return res; };
+
     // ===[ICONS]===
     // --- Inline Vector Icons to ensure zero external dependency issues ---
     const Icons = {
@@ -836,7 +854,7 @@
           date: new Date().toISOString().split('T')[0],
           timestamp: new Date().toISOString()
         };
-        db.from('frozen_stock_log').insert([{ data: entry }]).then();
+        db.from('frozen_stock_log').insert([{ data: entry }]).then(checkSave('יומן מלאי'));
       };
 
       const applyEntry = (key) => {
@@ -1037,7 +1055,7 @@
               setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
               setStickerEntry(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
-              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
+              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
             };
             const applyStickerWithdraw = (key) => {
               const delta = stickerWithdraw[key] || 0;
@@ -1050,7 +1068,7 @@
               setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
               setStickerWithdraw(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
-              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
+              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
             };
 
             return (
@@ -1252,7 +1270,7 @@
 
       const logAction = (action, key, cartons) => {
         const [, name, kashrut, mark] = key.split('|');
-        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then();
+        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
       };
 
       const applyEntry = (key) => {
@@ -1472,11 +1490,12 @@
 
       useEffect(() => {
         const loadBsBalance = () => Promise.all([
-          db.from('beit_shemesh_shipments').select('*'),
-          db.from('beit_shemesh_withdrawals').select('*')
+          fetchAll(() => db.from('beit_shemesh_shipments').select('*').order('id')),
+          fetchAll(() => db.from('beit_shemesh_withdrawals').select('*').order('id'))
         ]).then(([shRes, wdRes]) => {
+          if (shRes.error || wdRes.error) { reportSaveError('טעינת יתרות קירור', shRes.error || wdRes.error); return; } // לא מציגים 0 כשהטעינה נכשלה
           const map = {};
-          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+          (shRes.data || []).forEach(s => (s.pallets || []).forEach(p => (p.products || []).forEach(pr => {
             const dt = pr.dateType || '';
             const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
@@ -1499,11 +1518,12 @@
 
       useEffect(() => {
         const loadGvBalance = () => Promise.all([
-          db.from('gavash_shipments').select('*'),
-          db.from('gavash_withdrawals').select('*')
+          fetchAll(() => db.from('gavash_shipments').select('*').order('id')),
+          fetchAll(() => db.from('gavash_withdrawals').select('*').order('id'))
         ]).then(([shRes, wdRes]) => {
+          if (shRes.error || wdRes.error) { reportSaveError('טעינת יתרות קירור', shRes.error || wdRes.error); return; } // לא מציגים 0 כשהטעינה נכשלה
           const map = {};
-          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+          (shRes.data || []).forEach(s => (s.pallets || []).forEach(p => (p.products || []).forEach(pr => {
             const dt = pr.dateType || '';
             const key = dt ? `STICKER|${pr.name || ''}|${pr.kashrut || ''}|${dt}` : (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
@@ -2759,16 +2779,18 @@ setTimeout(function(){
 
         if (editingOrder) {
           // שומרים שדות שהטופס לא מנהל (createdAt, packaging וכו')
-          setOrders(prev => prev.map(o => o.id === editingOrder.id ? { ...editingOrder, ...newOrder, items: [...allItems, ...(editingOrder.items || []).filter(i => i.qty === '-')], id: editingOrder.id, status: editingOrder.status, createdAt: editingOrder.createdAt || newOrder.createdAt } : o));
+          // ממזגים על המצב העדכני (o) ולא על העותק מרגע פתיחת הטופס — כדי לא להחזיר סטטוס/שליח/אריזה ישנים
+          setOrders(prev => prev.map(o => o.id === editingOrder.id ? { ...o, ...newOrder, items: [...allItems, ...(o.items || []).filter(i => i.qty === '-')], id: o.id, status: o.status, createdAt: o.createdAt || newOrder.createdAt } : o));
         } else {
           // insert ולא upsert: אם מכשיר אחר תפס את המספר באותו רגע — מקבלים שגיאת כפילות ועוברים למספר הבא
           try {
             for (let attempt = 0; attempt < 10; attempt++) {
               const { error } = await db.from('orders').insert({ id: newOrder.id, data: newOrder });
-              if (!error || error.code !== '23505') break;
+              if (error && error.code !== '23505') { reportSaveError('הזמנה חדשה', error); break; }
+              if (!error) break;
               newOrder.id++;
             }
-          } catch (err) {}
+          } catch (err) { reportSaveError('הזמנה חדשה', err); }
           // ייתכן שעדכון חי מהשרת כבר הביא את ההזמנה
           setOrders(prev => prev.some(o => o.id === newOrder.id) ? prev : [newOrder, ...prev]);
         }
@@ -5081,6 +5103,51 @@ setTimeout(function(){
               <p className="text-xs text-gray-400">מומלץ: תמונה מרובעת, PNG עם רקע שקוף</p>
             </div>
           </div>
+          <BackupCard />
+        </div>
+      );
+    };
+
+    // גיבוי מלא — מוריד קובץ JSON עם כל הטבלאות. קריאה בלבד, לא משנה כלום בשרת
+    const BACKUP_TABLES = ['orders', 'fresh_stock', 'frozen_stock', 'settings', 'inventory_log', 'frozen_stock_log',
+      'beit_shemesh_shipments', 'beit_shemesh_withdrawals', 'gavash_shipments', 'gavash_withdrawals', 'app_users'];
+    const BackupCard = () => {
+      const [status, setStatus] = useState('');
+      const [busy, setBusy] = useState(false);
+      const runBackup = async () => {
+        setBusy(true); setStatus('מוריד נתונים מהשרת...');
+        const backup = { createdAt: new Date().toISOString(), tables: {} };
+        const counts = [];
+        for (const t of BACKUP_TABLES) {
+          // סיסמאות לא נכנסות לקובץ הגיבוי
+          const cols = t === 'app_users' ? 'id,username,is_admin,active,permissions,created_at' : '*';
+          const { data, error } = await fetchAll(() => db.from(t).select(cols).order('id'));
+          if (error) { setStatus(`הגיבוי נכשל בטבלה ${t}: ${error.message}. לא נוצר קובץ — נסו שוב.`); setBusy(false); return; }
+          backup.tables[t] = data;
+          counts.push(`${t}: ${data.length}`);
+        }
+        const blob = new Blob([JSON.stringify(backup, null, 1)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `super-off-backup-${new Date().toLocaleDateString('sv-SE')}.json`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        setStatus(`✓ הגיבוי ירד בהצלחה (${counts.join(' · ')})`);
+        setBusy(false);
+      };
+      return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4">
+          <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 className="font-extrabold text-gray-800">גיבוי מלא</h2>
+            <p className="text-sm text-gray-500 mt-0.5">מוריד למחשב קובץ עם כל הנתונים: הזמנות, מלאי, יומנים, קירורים, רשימות והגדרות. מומלץ פעם בשבוע ולפני כל שינוי גדול.</p>
+          </div>
+          <div className="p-5 space-y-3">
+            <button onClick={runBackup} disabled={busy}
+              className="px-5 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-colors text-sm disabled:opacity-50">
+              {busy ? 'מגבה...' : '⬇ הורדת גיבוי מלא'}
+            </button>
+            {status && <p className="text-sm text-gray-700">{status}</p>}
+          </div>
         </div>
       );
     };
@@ -5122,8 +5189,8 @@ setTimeout(function(){
       const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         const [exRes, wdRes] = await Promise.all([
-          db.from('beit_shemesh_shipments').select('*').order('date', { ascending: false }),
-          db.from('beit_shemesh_withdrawals').select('*').order('date', { ascending: false })
+          fetchAll(() => db.from('beit_shemesh_shipments').select('*').order('date', { ascending: false }).order('id')),
+          fetchAll(() => db.from('beit_shemesh_withdrawals').select('*').order('date', { ascending: false }).order('id'))
         ]);
         if (!exRes.error && exRes.data) setShipments(exRes.data);
         if (!wdRes.error && wdRes.data) setWithdrawals(wdRes.data);
@@ -5213,7 +5280,7 @@ setTimeout(function(){
       const deleteExit = async (id) => {
         if (!window.confirm('למחוק יציאה זו?')) return;
         const { error } = await db.from('beit_shemesh_shipments').delete().eq('id', id);
-        if (!error) setShipments(prev => prev.filter(s => s.id !== id));
+        if (!error) setShipments(prev => prev.filter(s => s.id !== id)); else reportSaveError('מחיקה', error);
       };
 
       // ── Withdrawal functions ──
@@ -5293,7 +5360,7 @@ setTimeout(function(){
       const deleteWithdrawal = async (id) => {
         if (!window.confirm('למחוק משיכה זו?')) return;
         const { error } = await db.from('beit_shemesh_withdrawals').delete().eq('id', id);
-        if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id));
+        if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id)); else reportSaveError('מחיקה', error);
       };
 
       const exportWithdrawalPDF = (w) => {
@@ -6261,8 +6328,8 @@ setTimeout(function(){
       const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         const [exRes, wdRes] = await Promise.all([
-          db.from('gavash_shipments').select('*').order('date', { ascending: false }),
-          db.from('gavash_withdrawals').select('*').order('date', { ascending: false })
+          fetchAll(() => db.from('gavash_shipments').select('*').order('date', { ascending: false }).order('id')),
+          fetchAll(() => db.from('gavash_withdrawals').select('*').order('date', { ascending: false }).order('id'))
         ]);
         if (!exRes.error && exRes.data) setShipments(exRes.data);
         if (!wdRes.error && wdRes.data) setWithdrawals(wdRes.data);
@@ -6384,7 +6451,7 @@ setTimeout(function(){
       const deleteExit = async (id) => {
         if (!window.confirm('למחוק יציאה זו?')) return;
         const { error } = await db.from('gavash_shipments').delete().eq('id', id);
-        if (!error) setShipments(prev => prev.filter(s => s.id !== id));
+        if (!error) setShipments(prev => prev.filter(s => s.id !== id)); else reportSaveError('מחיקה', error);
       };
 
       // ── Withdrawal functions ──
@@ -6409,7 +6476,7 @@ setTimeout(function(){
       const deleteWithdrawal = async (id) => {
         if (!window.confirm('למחוק משיכה זו?')) return;
         const { error } = await db.from('gavash_withdrawals').delete().eq('id', id);
-        if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id));
+        if (!error) setWithdrawals(prev => prev.filter(w => w.id !== id)); else reportSaveError('מחיקה', error);
       };
 
       // ── Report data ──
@@ -7267,11 +7334,12 @@ setTimeout(function(){
 
       useEffect(() => {
         Promise.all([
-          db.from('beit_shemesh_shipments').select('*'),
-          db.from('beit_shemesh_withdrawals').select('*')
+          fetchAll(() => db.from('beit_shemesh_shipments').select('*').order('id')),
+          fetchAll(() => db.from('beit_shemesh_withdrawals').select('*').order('id'))
         ]).then(([shRes, wdRes]) => {
+          if (shRes.error || wdRes.error) { reportSaveError('טעינת יתרות קירור', shRes.error || wdRes.error); return; } // לא מציגים 0 כשהטעינה נכשלה
           const map = {};
-          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+          (shRes.data || []).forEach(s => (s.pallets || []).forEach(p => (p.products || []).forEach(pr => {
             const key = (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
           })));
@@ -7291,15 +7359,16 @@ setTimeout(function(){
 
       useEffect(() => {
         Promise.all([
-          db.from('gavash_shipments').select('*'),
-          db.from('gavash_withdrawals').select('*')
+          fetchAll(() => db.from('gavash_shipments').select('*').order('id')),
+          fetchAll(() => db.from('gavash_withdrawals').select('*').order('id'))
         ]).then(([shRes, wdRes]) => {
+          if (shRes.error || wdRes.error) { reportSaveError('טעינת יתרות קירור', shRes.error || wdRes.error); return; } // לא מציגים 0 כשהטעינה נכשלה
           const map = {};
-          (shRes.data || []).forEach(s => s.pallets.forEach(p => p.products.forEach(pr => {
+          (shRes.data || []).forEach(s => (s.pallets || []).forEach(p => (p.products || []).forEach(pr => {
             const key = (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) + Number(pr.cartons || 0);
           })));
-          (wdRes.data || []).forEach(w => w.products.forEach(pr => {
+          (wdRes.data || []).forEach(w => (w.products || []).forEach(pr => {
             const key = (pr.name || '') + '|' + (pr.kashrut || '');
             map[key] = (map[key] || 0) - Number(pr.cartons || 0);
           }));
@@ -7335,7 +7404,7 @@ setTimeout(function(){
       // === סוף חישובי ניתוח קירורים ===
 
       useEffect(() => {
-        db.from('frozen_stock_log').select('*').order('created_at', { ascending: false }).limit(1000).then(({ data }) => setStoreLog(data || []));
+        fetchAll(() => db.from('frozen_stock_log').select('*').order('created_at', { ascending: false }).order('id')).then(({ data }) => setStoreLog(data || []));
       }, []);
 
       const exportStorageReport = () => {
@@ -7380,6 +7449,8 @@ setTimeout(function(){
           frozenSummary
         };
         setInventoryLog(prev => [snapshot, ...prev]);
+        // שומרים רק את הבדיקה החדשה — לא את כל היומן (שמירת הכל החזירה לשרת בדיקות שנמחקו ממכשיר אחר)
+        db.from('inventory_log').insert({ id: snapshot.id, data: snapshot }).then(checkSave('בדיקת מלאי'));
         setCheckNote('');
       };
 
@@ -7564,7 +7635,7 @@ setTimeout(function(){
                           onClick={() => {
                             if (viewArchive?.id === entry.id) setViewArchive(null);
                             setInventoryLog(prev => prev.filter(e => e.id !== entry.id));
-                            db.from('inventory_log').delete().eq('id', entry.id).then();
+                            db.from('inventory_log').delete().eq('id', entry.id).then(checkSave('מחיקת בדיקת מלאי'));
                           }}
                           className="text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
                           מחק
@@ -8078,7 +8149,6 @@ setTimeout(function(){
       }, [appUser]);
       const [appLoading, setAppLoading] = useState(false);
       const dataLoadedRef = useRef(false);
-      const skipSaveRef = useRef(false);
       const remoteOrdersRef = useRef(null);  // המערך האחרון שהגיע מהשרת — לא שומרים אותו חזרה
       const syncedOrdersRef = useRef([]);    // מצב ההזמנות בשמירה הקודמת — להשוואה
       const initialLoadDoneRef = useRef(false);
@@ -8086,10 +8156,7 @@ setTimeout(function(){
       const scrollToTop = useCallback(() => { if (mainScrollRef.current) mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
 
       // 1. מלאי טרי — מפתח: 'מוצר|כשרות'
-      const [stock, setStock] = useState({
-        'עוף שלם|לנדא': 50, 'כרעיים|לנדא': 45,
-        'שניצל|קהילות': 5, 'בשר טחון|קהילות': 8
-      });
+      const [stock, setStock] = useState({});
       const [frozenProductsList, setFrozenProductsList] = useState(() => [
         ...FROZEN_PRODUCTS.flatMap((name, i) =>
           FROZEN_KASHRUT.map((kashrut, j) => ({ id: `${i + 1}_${j + 1}`, name, sku: '', storageTypes: ['frozen'], kashrut }))
@@ -8103,19 +8170,8 @@ setTimeout(function(){
       const [frozenStock, setFrozenStock] = useState(initFrozenStock);
 
       // 2. הזמנות לקוחות
-      const [orders, setOrders] = useState([
-        {
-          id: 1044, createdAt: new Date().toLocaleDateString('he-IL'), customer: 'משפחת ישראלי', phone: '050-1234567', type: 'delivery', neighborhood: 'רמות',
-          items: [
-            { name: 'עוף שלם', cleanName: 'עוף שלם', qty: 10, checks: ['להוריד עור'], kashrut: 'לנדא' },
-            { name: 'עוף מפורק (שניצל)', cleanName: 'עוף מפורק', qty: 5, checks: ['כל עוף במגש'], kashrut: 'לנדא' },
-            { name: 'סלמון (מנות)', cleanName: 'סלמון', qty: 15, checks: ['6 במגש'], kashrut: 'קהילות' }
-          ],
-          status: 'new', courier: '', kashrut: 'לנדא',
-          street: 'רחוב הרצל 12', entrance: 'ב', floor: '3', apt: '10', mobile: '052-9876543',
-          flags: { mustCoordinate: true, notifyReady: true, chargeStatus: 'charge' }
-        }
-      ]);
+      // נטענות מהשרת — בלי הזמנת דוגמה (שעלולה להישמר בטעות)
+      const [orders, setOrders] = useState([]);
 
       // 3. רשימות מערכת קבועות
       const [couriersList, setCouriersList] = useState([
@@ -8175,72 +8231,99 @@ setTimeout(function(){
 
       const [inventoryLog, setInventoryLog] = useState([]);
 
+      // --- בטיחות נתונים: מה שהגיע מהשרת לאחרונה, לכל ישות (כ-JSON) ---
+      // ערך שזהה למה שהשרת שלח — לא נשמר חזרה. מחליף את טיימר ה-300ms, שגרם לפעולות ללכת לאיבוד או להד ישן שדורס
+      const remoteRef = useRef({});
+      // השוואה לפי תוכן בלבד — סדר השדות באובייקט לא משנה
+      const stableJson = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, key) => (o[key] = x[key], o), {}) : x);
+      const fromRemote = (key, value) => { remoteRef.current[key] = stableJson(value); return value; };
+      const ordersFetchSeqRef = useRef(0);
+      const [dataReady, setDataReady] = useState(false);
+      const [loadError, setLoadError] = useState(null);
+      const [loadAttempt, setLoadAttempt] = useState(0);
+      const [saveErrors, setSaveErrors] = useState([]);
+
+      useEffect(() => {
+        const onErr = (e) => setSaveErrors(prev => [...prev.filter(x => x.label !== e.detail.label), { ...e.detail, at: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) }]);
+        window.addEventListener('so-save-error', onErr);
+        return () => window.removeEventListener('so-save-error', onErr);
+      }, []);
+
+      const applySettingsRow = (id, data, isInitial) => {
+        if (id === 'kashrutList') setKashrutList(fromRemote(id, data));
+        if (id === 'butchersList') setButchersList(fromRemote(id, data));
+        if (id === 'couriersList') setCouriersList(fromRemote(id, data));
+        if (id === 'neighborhoodData') setNeighborhoodData(fromRemote(id, data));
+        if (id === 'contactsList') setContactsList(fromRemote(id, data));
+        if (id === 'orderFormSkuMap') setOrderFormSkuMap(fromRemote(id, data));
+        if (id === 'appSettings') {
+          fromRemote(id, { logoImage: data?.logoImage || '', companyVat: data?.companyVat || '' });
+          setLogoImage(data?.logoImage || '');
+          setCompanyVat(data?.companyVat || '');
+        }
+        if (id === 'frozenProductsList') {
+          if (!isInitial) { setFrozenProductsList(fromRemote(id, data)); return; }
+          const raw = data.map(p => ({ sku: '', storageTypes: ['frozen'], ...p }));
+          const needsMigration = raw.every(p => !p.kashrut);
+          let loaded = needsMigration
+            ? raw.flatMap((p, i) => FROZEN_KASHRUT.map((k, j) => ({ ...p, id: `${p.id}_${j + 1}`, kashrut: k })))
+            : raw;
+          // מיגרציה לדגים: מחיקת כפולות לפי כשרות, שמירה כ-'כללי'
+          const fishNames = new Set(NEW_PRODUCTS_TEMPLATE.filter(p => p.category === 'דגים').map(p => p.name));
+          const seenFish = new Set();
+          loaded = loaded.filter(p => {
+            if (!fishNames.has(p.name)) return true;
+            if (seenFish.has(p.name)) return false;
+            seenFish.add(p.name);
+            p.kashrut = 'כללי';
+            p.category = 'דגים';
+            return true;
+          });
+          fromRemote(id, data); // אם המיגרציה שינתה משהו — הערך שונה מהשרת ולכן יישמר פעם אחת
+          setFrozenProductsList(loaded);
+        }
+      };
+
       // --- Supabase: טעינת נתונים ---
+      // אם משהו בטעינה נכשל — לא פותחים את המערכת ולא שומרים כלום (אחרת נתוני ברירת המחדל היו דורסים את השרת)
       useEffect(() => {
         if (!appUser || initialLoadDoneRef.current) return;
         initialLoadDoneRef.current = true;
         const load = async () => {
           setAppLoading(true);
+          setLoadError(null);
           try {
-            skipSaveRef.current = true;
-
-            const [ordersRes, freshRes, frozenRes, settingsRes, logRes] = await Promise.all([
-              db.from('orders').select('data').order('created_at', { ascending: false }),
+            const results = await Promise.all([
+              fetchAll(() => db.from('orders').select('data').order('created_at', { ascending: false }).order('id')),
               db.from('fresh_stock').select('data').eq('id', 'main').maybeSingle(),
               db.from('frozen_stock').select('data').eq('id', 'main').maybeSingle(),
               db.from('settings').select('*'),
-              db.from('inventory_log').select('data').order('created_at', { ascending: false })
+              fetchAll(() => db.from('inventory_log').select('data').order('created_at', { ascending: false }).order('id'))
             ]);
+            const failed = results.find(r => r.error);
+            if (failed) throw failed.error;
+            const [ordersRes, freshRes, frozenRes, settingsRes, logRes] = results;
 
-            if (ordersRes.data?.length) { const o = ordersRes.data.map(r => r.data); remoteOrdersRef.current = o; setOrders(o); }
-            if (freshRes.data) setStock(freshRes.data.data);
-            if (frozenRes.data) setFrozenStock(frozenRes.data.data);
-            if (settingsRes.data) {
-              settingsRes.data.forEach(row => {
-                if (row.id === 'kashrutList') setKashrutList(row.data);
-                if (row.id === 'butchersList') setButchersList(row.data);
-                if (row.id === 'couriersList') setCouriersList(row.data);
-                if (row.id === 'frozenProductsList') {
-                  const raw = row.data.map(p => ({ sku: '', storageTypes: ['frozen'], ...p }));
-                  const needsMigration = raw.every(p => !p.kashrut);
-                  let loaded = needsMigration
-                    ? raw.flatMap((p, i) => FROZEN_KASHRUT.map((k, j) => ({ ...p, id: `${p.id}_${j + 1}`, kashrut: k })))
-                    : raw;
-                  // מיגרציה לדגים: מחיקת כפולות לפי כשרות, שמירה כ-'כללי'
-                  const fishNames = new Set(NEW_PRODUCTS_TEMPLATE.filter(p => p.category === 'דגים').map(p => p.name));
-                  const seenFish = new Set();
-                  loaded = loaded.filter(p => {
-                    if (!fishNames.has(p.name)) return true;
-                    if (seenFish.has(p.name)) return false;
-                    seenFish.add(p.name);
-                    p.kashrut = 'כללי';
-                    p.category = 'דגים';
-                    return true;
-                  });
+            const o = (ordersRes.data || []).map(r => r.data);
+            remoteOrdersRef.current = o;
+            setOrders(o);
+            if (freshRes.data) setStock(fromRemote('stock', freshRes.data.data));
+            if (frozenRes.data) setFrozenStock(fromRemote('frozenStock', frozenRes.data.data));
+            (settingsRes.data || []).forEach(row => applySettingsRow(row.id, row.data, true));
+            setInventoryLog((logRes.data || []).map(r => r.data));
 
-                  setFrozenProductsList(loaded);
-                }
-                if (row.id === 'neighborhoodData') setNeighborhoodData(row.data);
-                if (row.id === 'contactsList') setContactsList(row.data);
-                if (row.id === 'orderFormSkuMap') setOrderFormSkuMap(row.data);
-                if (row.id === 'appSettings') {
-                  if (row.data?.logoImage) setLogoImage(row.data.logoImage);
-                  if (row.data?.companyVat) setCompanyVat(row.data.companyVat);
-                }
-              });
-            }
-            if (logRes.data?.length) setInventoryLog(logRes.data.map(r => r.data));
-
-            // אין real-time — רענון ידני בלבד
-
-          } finally {
-            skipSaveRef.current = false;
             dataLoadedRef.current = true;
+            setDataReady(true);
+          } catch (err) {
+            console.error('[load-error]', err);
+            setLoadError(err?.message || String(err));
+            initialLoadDoneRef.current = false; // מאפשר "נסה שוב"
+          } finally {
             setAppLoading(false);
           }
         };
         load();
-      }, [appUser]);
+      }, [appUser, loadAttempt]);
 
       // --- Supabase: שמירה ---
       // שומרים רק את מה שהמכשיר הזה שינה — כדי לא לדרוס/למחוק הזמנות שמכשיר אחר יצר או עדכן
@@ -8249,98 +8332,84 @@ setTimeout(function(){
         syncedOrdersRef.current = orders;
         if (!dataLoadedRef.current || orders === remoteOrdersRef.current) return;
         const prevById = new Map(prev.map(o => [o.id, o]));
-        orders.forEach(o => { if (prevById.get(o.id) !== o) db.from('orders').upsert({ id: o.id, data: o }).then(); });
+        orders.forEach(o => { if (prevById.get(o.id) !== o) db.from('orders').upsert({ id: o.id, data: o }).then(checkSave(`הזמנה #${o.id}`)); });
         const ids = new Set(orders.map(o => o.id));
-        prev.forEach(o => { if (!ids.has(o.id)) db.from('orders').delete().eq('id', o.id).then(); });
+        prev.forEach(o => { if (!ids.has(o.id)) db.from('orders').delete().eq('id', o.id).then(checkSave(`מחיקת הזמנה #${o.id}`)); });
       }, [orders]);
 
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('fresh_stock').upsert({ id: 'main', data: stock, updated_at: new Date().toISOString() }).then();
-      }, [stock]);
+      const saveIfChanged = (key, value, label, doSave) => {
+        if (!dataLoadedRef.current) return;
+        const json = stableJson(value);
+        if (remoteRef.current[key] === json) return;
+        remoteRef.current[key] = json;
+        doSave().then(res => {
+          if (res?.error) { remoteRef.current[key] = undefined; reportSaveError(label, res.error); }
+        });
+      };
+      const saveSetting = (key, value, label) => saveIfChanged(key, value, label, () => db.from('settings').upsert({ id: key, data: value }));
 
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('frozen_stock').upsert({ id: 'main', data: frozenStock, updated_at: new Date().toISOString() }).then();
-      }, [frozenStock]);
+      useEffect(() => { saveIfChanged('stock', stock, 'מלאי טרי', () => db.from('fresh_stock').upsert({ id: 'main', data: stock, updated_at: new Date().toISOString() })); }, [stock]);
+      useEffect(() => { saveIfChanged('frozenStock', frozenStock, 'מלאי', () => db.from('frozen_stock').upsert({ id: 'main', data: frozenStock, updated_at: new Date().toISOString() })); }, [frozenStock]);
+      useEffect(() => { saveSetting('kashrutList', kashrutList, 'רשימת כשרויות'); }, [kashrutList]);
+      useEffect(() => { saveSetting('butchersList', butchersList, 'רשימת קצבים'); }, [butchersList]);
+      useEffect(() => { saveSetting('couriersList', couriersList, 'רשימת שליחים'); }, [couriersList]);
+      useEffect(() => { saveSetting('frozenProductsList', frozenProductsList, 'רשימת מוצרים'); }, [frozenProductsList]);
+      useEffect(() => { saveSetting('neighborhoodData', neighborhoodData, 'שכונות'); }, [neighborhoodData]);
+      useEffect(() => { saveSetting('contactsList', contactsList, 'אנשי קשר'); }, [contactsList]);
+      useEffect(() => { saveSetting('orderFormSkuMap', orderFormSkuMap, 'מק"טים בטופס הזמנה'); }, [orderFormSkuMap]);
+      useEffect(() => { saveSetting('appSettings', { logoImage, companyVat }, 'הגדרות'); }, [logoImage, companyVat]);
+      // inventory_log: בדיקה חדשה נשמרת ישירות ב-StatsView (insert), מחיקה — delete. אין שמירה גורפת של כל היומן
 
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'kashrutList', data: kashrutList }).then();
-      }, [kashrutList]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'butchersList', data: butchersList }).then();
-      }, [butchersList]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'couriersList', data: couriersList }).then();
-      }, [couriersList]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'frozenProductsList', data: frozenProductsList }).then();
-      }, [frozenProductsList]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'neighborhoodData', data: neighborhoodData }).then();
-      }, [neighborhoodData]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'contactsList', data: contactsList }).then();
-      }, [contactsList]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'orderFormSkuMap', data: orderFormSkuMap }).then();
-      }, [orderFormSkuMap]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        db.from('settings').upsert({ id: 'appSettings', data: { logoImage, companyVat } }).then();
-      }, [logoImage, companyVat]);
-      useEffect(() => {
-        if (!dataLoadedRef.current || skipSaveRef.current) return;
-        inventoryLog.forEach(entry => db.from('inventory_log').upsert({ id: entry.id, data: entry }).then());
-      }, [inventoryLog]);
+      // --- רענון הזמנות מהשרת (עדכון חי / חזרה לאפליקציה) ---
+      const refetchOrders = async () => {
+        const seq = ++ordersFetchSeqRef.current;
+        const res = await fetchAll(() => db.from('orders').select('data').order('created_at', { ascending: false }).order('id'));
+        if (res.error || !res.data || seq !== ordersFetchSeqRef.current) return; // תשובה ישנה שהגיעה מאוחר — מתעלמים
+        const o = res.data.map(r => r.data);
+        remoteOrdersRef.current = o;
+        setOrders(o);
+      };
 
       // --- Supabase Realtime ---
       useEffect(() => {
-        if (!appUser) return;
-        const pause = () => { skipSaveRef.current = true; setTimeout(() => { skipSaveRef.current = false; }, 300); };
+        if (!appUser || !dataReady) return;
 
         const channel = db.channel('realtime-sync')
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'frozen_stock', filter: 'id=eq.main' }, (payload) => {
-            if (payload.new?.data) { pause(); setFrozenStock(payload.new.data); }
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'frozen_stock', filter: 'id=eq.main' }, (payload) => {
+            if (payload.new?.data) setFrozenStock(fromRemote('frozenStock', payload.new.data));
           })
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fresh_stock', filter: 'id=eq.main' }, (payload) => {
-            if (payload.new?.data) { pause(); setStock(payload.new.data); }
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'fresh_stock', filter: 'id=eq.main' }, (payload) => {
+            if (payload.new?.data) setStock(fromRemote('stock', payload.new.data));
           })
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
-            const res = await db.from('orders').select('data').order('created_at', { ascending: false });
-            if (res.error || !res.data) return;
-            const o = res.data.map(r => r.data);
-            remoteOrdersRef.current = o;
-            setOrders(o);
-          })
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'settings' }, async (payload) => {
-            if (!payload.new?.id || !payload.new?.data) return;
-            pause();
-            const { id, data } = payload.new;
-            if (id === 'kashrutList') setKashrutList(data);
-            if (id === 'frozenProductsList') setFrozenProductsList(data);
-            if (id === 'couriersList') setCouriersList(data);
-            if (id === 'butchersList') setButchersList(data);
-            if (id === 'neighborhoodData') setNeighborhoodData(data);
-            if (id === 'contactsList') setContactsList(data);
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { refetchOrders(); })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, (payload) => {
+            if (!payload.new?.id || payload.new?.data === undefined) return;
+            applySettingsRow(payload.new.id, payload.new.data, false);
           })
           .subscribe();
 
-        return () => { db.removeChannel(channel); };
-      }, [appUser]);
+        // טלפון שחזר מרקע — החיבור החי אולי נותק בינתיים; מושכים מצב עדכני לפני שהמשתמש ממשיך לעבוד
+        const onVisible = async () => {
+          if (document.visibilityState !== 'visible') return;
+          const [fz, fr] = await Promise.all([
+            db.from('frozen_stock').select('data').eq('id', 'main').maybeSingle(),
+            db.from('fresh_stock').select('data').eq('id', 'main').maybeSingle()
+          ]);
+          if (!fz.error && fz.data) setFrozenStock(fromRemote('frozenStock', fz.data.data));
+          if (!fr.error && fr.data) setStock(fromRemote('stock', fr.data.data));
+          refetchOrders();
+        };
+        document.addEventListener('visibilitychange', onVisible);
+
+        return () => { db.removeChannel(channel); document.removeEventListener('visibilitychange', onVisible); };
+      }, [appUser, dataReady]);
 
       const handleSignOut = () => {
         localStorage.removeItem('appUser');
         setAppUser(null);
         dataLoadedRef.current = false;
         initialLoadDoneRef.current = false;
+        setDataReady(false);
       };
 
       const menuItems = [
@@ -8393,7 +8462,19 @@ setTimeout(function(){
 
       if (!appUser) return <LoginScreen onLogin={user => { setAppUser(user); }} />;
 
-      if (appLoading) return (
+      if (loadError && !appLoading) return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 max-w-md w-full text-center space-y-4">
+            <div className="text-4xl font-black text-red-600">סופר עוף</div>
+            <div className="text-xl font-extrabold text-gray-900">לא הצלחנו לטעון את הנתונים מהשרת</div>
+            <div className="text-gray-600">כדי שלא יידרסו נתונים, המערכת לא נפתחת בלי טעינה מלאה. בדקו את החיבור לאינטרנט ונסו שוב.</div>
+            <button onClick={() => setLoadAttempt(n => n + 1)} className="w-full py-3 rounded-xl bg-red-600 text-white font-bold text-lg hover:bg-red-700">נסה שוב</button>
+            <div className="text-xs text-gray-500 break-words" dir="ltr">{loadError}</div>
+          </div>
+        </div>
+      );
+
+      if (appLoading || !dataReady) return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl font-black text-red-600 mb-3">סופר עוף</div>
@@ -8404,6 +8485,14 @@ setTimeout(function(){
 
       return (
         <div className="flex h-screen bg-gray-100 font-sans text-gray-800 overflow-hidden">
+          {saveErrors.length > 0 && (
+            <div role="alert" className="fixed top-0 inset-x-0 z-[100] bg-red-600 text-white px-4 py-3 shadow-lg flex flex-wrap items-center gap-3">
+              <span className="font-extrabold">⚠ תקלה מול השרת — ייתכן שפעולה לא נשמרה:</span>
+              <span className="flex-1 min-w-[200px]">{saveErrors.map(e => `${e.label} (${e.at})`).join(' · ')} — בדקו את החיבור לאינטרנט. מומלץ לרענן את הדף ולבדוק שהנתונים נכונים לפני שממשיכים.</span>
+              <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-lg bg-white text-red-700 font-bold">רענון</button>
+              <button onClick={() => setSaveErrors([])} className="px-4 py-2 rounded-lg border border-white/60 font-bold">סגור</button>
+            </div>
+          )}
           {/* Mobile Header */}
           <div className="md:hidden fixed top-0 right-0 w-full bg-white border-b border-gray-200 p-4 z-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
