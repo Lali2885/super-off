@@ -14,7 +14,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }));
     }
   </script>
   
@@ -152,6 +152,8 @@
       console.error('[save-error]', label, error);
       window.dispatchEvent(new CustomEvent('so-save-error', { detail: { label, message: error?.message || String(error) } }));
     };
+    // תאריך היום לפי שעון ישראל (YYYY-MM-DD). toISOString נותן UTC — בין חצות ל-02:00/03:00 יוצא תאריך של אתמול
+    const localToday = () => new Date().toLocaleDateString('sv-SE');
     const checkSave = (label) => (res) => { if (res?.error) reportSaveError(label, res.error); return res; };
 
     // ===[ICONS]===
@@ -851,7 +853,7 @@
           kashrut,
           trays,
           cartons: Math.floor(trays / TRAYS_PER_CARTON),
-          date: new Date().toISOString().split('T')[0],
+          date: localToday(),
           timestamp: new Date().toISOString()
         };
         db.from('frozen_stock_log').insert([{ data: entry }]).then(checkSave('יומן מלאי'));
@@ -1055,7 +1057,7 @@
               setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
               setStickerEntry(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
-              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
+              db.from('frozen_stock_log').insert([{ data: { action: 'כניסה-מדבקה', product: name, kashrut, mark, cartons: delta, date: localToday(), timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
             };
             const applyStickerWithdraw = (key) => {
               const delta = stickerWithdraw[key] || 0;
@@ -1068,7 +1070,7 @@
               setFrozenStock(prev => ({ ...prev, [key]: (prev[key] || 0) - delta }));
               setStickerWithdraw(prev => ({ ...prev, [key]: 0 }));
               const [, name, kashrut, mark] = key.split('|');
-              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
+              db.from('frozen_stock_log').insert([{ data: { action: 'משיכה-מדבקה', product: name, kashrut, mark, cartons: delta, date: localToday(), timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
             };
 
             return (
@@ -1270,7 +1272,7 @@
 
       const logAction = (action, key, cartons) => {
         const [, name, kashrut, mark] = key.split('|');
-        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
+        db.from('frozen_stock_log').insert([{ data: { action, product: name, kashrut, mark, cartons, date: localToday(), timestamp: new Date().toISOString(), user: appUser?.username || '—' } }]).then(checkSave('יומן מלאי'));
       };
 
       const applyEntry = (key) => {
@@ -1478,7 +1480,7 @@
       const [bsBalance, setBsBalance] = useState({});
       const [gvBalance, setGvBalance] = useState({});
       const [logEntries, setLogEntries] = useState([]);
-      const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+      const [logDate, setLogDate] = useState(localToday());
       const [logLoaded, setLogLoaded] = useState(false);
 
       const hiddenFeatures = (!appUser || appUser.is_admin) ? [] : (appUser.permissions?.hiddenFeatures || []);
@@ -1597,25 +1599,21 @@
 
       const handleReset = async () => {
         if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
-        const today = new Date().toISOString().split('T')[0];
+        const today = localToday();
         const isFullReset = resetKashrut === 'all' && resetCategory === 'all';
-        setFrozenStock(prev => {
-          const next = { ...prev };
-          Object.keys(next).forEach(k => { if (shouldResetKey(k)) delete next[k]; });
-          return next;
-        });
+        // קודם השרת (על המצב העדכני שלו), ורק אחרי הצלחה — המסך. כך אין שתי כתיבות מתחרות ואין איפוס חלקי בשקט
+        const { data: cur, error: readErr } = await db.from('frozen_stock').select('*').eq('id', 'main').single();
+        if (readErr) { setResetError('אין חיבור לשרת — המלאי לא אופס. נסו שוב.'); return; }
+        const next = { ...(cur?.data || {}) };
+        Object.keys(next).forEach(k => { if (shouldResetKey(k)) delete next[k]; });
+        const { error: writeErr } = await db.from('frozen_stock').upsert({ id: 'main', data: next, updated_at: new Date().toISOString() });
+        if (writeErr) { setResetError('השמירה בשרת נכשלה — המלאי לא אופס. נסו שוב.'); return; }
+        setFrozenStock(next);
         if (isFullReset) {
-          setLogEntries(prev => prev.filter(e => e.date !== today));
+          const { error: logErr } = await db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today);
+          if (logErr) reportSaveError('מחיקת יומן היום באיפוס', logErr);
+          else setLogEntries(prev => prev.filter(e => e.date !== today));
         }
-        await Promise.all([
-          db.from('frozen_stock').select('*').eq('id', 'main').single().then(({ data }) => {
-            const cur = data?.data || {};
-            const next = { ...cur };
-            Object.keys(next).forEach(k => { if (shouldResetKey(k)) delete next[k]; });
-            return db.from('frozen_stock').upsert({ id: 'main', data: next, updated_at: new Date().toISOString() });
-          }),
-          ...(isFullReset ? [db.from('frozen_stock_log').delete().filter('data->>date', 'eq', today)] : [])
-        ]);
         setResetModal(false);
         setResetPassword('');
         setResetError('');
@@ -2509,8 +2507,8 @@ setTimeout(function(){
       const [entrance, setEntrance] = useState('');
       const [floor, setFloor] = useState('');
       const [apt, setApt] = useState('');
-      const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().split('T')[0]);
-      const [pickupTime, setPickupTime] = useState(() => new Date().toISOString().split('T')[0]);
+      const [deliveryDate, setDeliveryDate] = useState(() => localToday());
+      const [pickupTime, setPickupTime] = useState(() => localToday());
       const [kashrut, setKashrut] = useState('');
       const [flags, setFlags] = useState({ mustCoordinate: false, notifyReady: false });
       const [chargeStatus, setChargeStatus] = useState('');
@@ -2718,7 +2716,7 @@ setTimeout(function(){
         setEditingOrder(null);
         setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]);
         setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
-        setDeliveryDate(new Date().toISOString().split('T')[0]); setPickupTime(new Date().toISOString().split('T')[0]); setKashrut('');
+        setDeliveryDate(localToday()); setPickupTime(localToday()); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
         setAssignedButcher('');
@@ -3282,7 +3280,7 @@ setTimeout(function(){
                         <input type="date" value={pickupTime?.split('T')[0] || ''} onChange={e => setPickupTime(e.target.value + (pickupTime?.includes('T') ? 'T' + pickupTime.split('T')[1] : 'T00:00'))}
                           className="p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
                         <select value={pickupTime?.includes('T') ? pickupTime.split('T')[1] : ''}
-                          onChange={e => setPickupTime((pickupTime?.split('T')[0] || new Date().toISOString().split('T')[0]) + 'T' + e.target.value)}
+                          onChange={e => setPickupTime((pickupTime?.split('T')[0] || localToday()) + 'T' + e.target.value)}
                           className="p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
                           <option value="">-- שעה --</option>
                           {Array.from({ length: 48 }, (_, i) => {
@@ -5154,7 +5152,7 @@ setTimeout(function(){
 
     // ===[BEIT-SHEMESH]===
     const BeitShemeshView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localToday();
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       const [bsTab, setBsTab] = useState('inventory');
       const [invTab, setInvTab] = useState('pallets');
@@ -6292,7 +6290,7 @@ setTimeout(function(){
     };
 
     const GavashView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localToday();
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       const [bsTab, setBsTab] = useState('inventory');
       const [shipments, setShipments] = useState([]);
@@ -6350,7 +6348,7 @@ setTimeout(function(){
 
       const saveGvEdits = async () => {
         setGvEditSaving(true);
-        const today = new Date().toISOString().split('T')[0];
+        const today = localToday();
         const wdProds = [], shProds = [];
         inventoryMap.forEach(item => {
           const key = (item.sku || item.name) + '|' + (item.kashrut || '') + '|' + (item.dateType || '');
@@ -7319,7 +7317,7 @@ setTimeout(function(){
     // ===[STATS]===
     // --- Stats View ---
     const StatsView = ({ orders, frozenStock, frozenProductsList, kashrutList, inventoryLog, setInventoryLog }) => {
-      const [checkDate, setCheckDate] = useState(new Date().toISOString().split('T')[0]);
+      const [checkDate, setCheckDate] = useState(localToday());
       const [checkNote, setCheckNote] = useState('');
       const [viewArchive, setViewArchive] = useState(null);
       const [bsBalance, setBsBalance] = useState({});
@@ -8236,7 +8234,11 @@ setTimeout(function(){
       const remoteRef = useRef({});
       // השוואה לפי תוכן בלבד — סדר השדות באובייקט לא משנה
       const stableJson = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, key) => (o[key] = x[key], o), {}) : x);
-      const fromRemote = (key, value) => { remoteRef.current[key] = stableJson(value); return value; };
+      const fromRemote = (key, value) => {
+        remoteRef.current[key] = stableJson(value);
+        if (key === 'frozenStock') frozenConfirmedRef.current = { ...(value || {}) };
+        return value;
+      };
       const ordersFetchSeqRef = useRef(0);
       const [dataReady, setDataReady] = useState(false);
       const [loadError, setLoadError] = useState(null);
@@ -8308,7 +8310,8 @@ setTimeout(function(){
             remoteOrdersRef.current = o;
             setOrders(o);
             if (freshRes.data) setStock(fromRemote('stock', freshRes.data.data));
-            if (frozenRes.data) setFrozenStock(fromRemote('frozenStock', frozenRes.data.data));
+            // אין עדיין שורת מלאי בשרת — מתחילים ממלאי ריק (ולא מברירת המחדל), כדי שהשינוי הראשון יישמר נכון
+            setFrozenStock(fromRemote('frozenStock', frozenRes.data ? frozenRes.data.data : {}));
             (settingsRes.data || []).forEach(row => applySettingsRow(row.id, row.data, true));
             setInventoryLog((logRes.data || []).map(r => r.data));
 
@@ -8349,7 +8352,50 @@ setTimeout(function(){
       const saveSetting = (key, value, label) => saveIfChanged(key, value, label, () => db.from('settings').upsert({ id: key, data: value }));
 
       useEffect(() => { saveIfChanged('stock', stock, 'מלאי טרי', () => db.from('fresh_stock').upsert({ id: 'main', data: stock, updated_at: new Date().toISOString() })); }, [stock]);
-      useEffect(() => { saveIfChanged('frozenStock', frozenStock, 'מלאי', () => db.from('frozen_stock').upsert({ id: 'main', data: frozenStock, updated_at: new Date().toISOString() })); }, [frozenStock]);
+      // מלאי קפוא: שומרים את השינוי (כמה נוסף/ירד בכל מוצר) ולא את כל המסמך.
+      // לפני כל כתיבה קוראים את המצב העדכני מהשרת ומחילים עליו את השינוי — כך שני מכשירים שעובדים במקביל
+      // מצטרפים זה לזה במקום לדרוס. שמירות רצות בתור, אחת אחרי השנייה
+      // frozenConfirmedRef = המצב שכל השינויים שלו כבר נשלחו לשרת (או הגיע מהשרת). שינוי חדש = ההפרש ממנו.
+      // שמירה שנכשלה מחזירה את ההפרש שלה ל"ממתין", כך שהשמירה הבאה תכלול אותו — בלי כפילות ובלי אובדן
+      const frozenSaveChainRef = useRef(Promise.resolve());
+      const frozenConfirmedRef = useRef(null);
+      const frozenPendingRef = useRef(0);
+      useEffect(() => {
+        if (!dataLoadedRef.current || !frozenConfirmedRef.current) return;
+        const base = frozenConfirmedRef.current;
+        const target = frozenStock;
+        if (stableJson(target) === stableJson(base)) return;
+        const deltas = {};
+        Object.keys(target).forEach(k => {
+          const d = (Number(target[k]) || 0) - (Number(base[k]) || 0);
+          if (d !== 0 || !(k in base)) deltas[k] = d;
+        });
+        const removed = Object.keys(base).filter(k => !(k in target)).map(k => [k, base[k]]);
+        frozenConfirmedRef.current = { ...target };
+        frozenPendingRef.current++;
+        const revert = (err) => {
+          // ההפרש לא הגיע לשרת — מחזירים אותו לממתין
+          const c = { ...frozenConfirmedRef.current };
+          Object.entries(deltas).forEach(([k, d]) => { c[k] = (Number(c[k]) || 0) - d; if (d === 0 && !(k in base)) delete c[k]; });
+          removed.forEach(([k, v]) => { c[k] = v; });
+          frozenConfirmedRef.current = c;
+          reportSaveError('מלאי', err);
+        };
+        frozenSaveChainRef.current = frozenSaveChainRef.current.then(async () => {
+          const { data, error } = await db.from('frozen_stock').select('data').eq('id', 'main').maybeSingle();
+          if (error) return revert(error);
+          const server = { ...(data?.data || {}) };
+          Object.entries(deltas).forEach(([k, d]) => { server[k] = (Number(server[k]) || 0) + d; });
+          removed.forEach(([k]) => { delete server[k]; });
+          const w = await db.from('frozen_stock').upsert({ id: 'main', data: server, updated_at: new Date().toISOString() });
+          if (w.error) return revert(w.error);
+          // אחרי השמירה האחרונה בתור — אם מכשיר אחר שינה בינתיים, מציגים את התוצאה המשולבת
+          if (frozenPendingRef.current === 1 && stableJson(server) !== stableJson(frozenConfirmedRef.current)) {
+            frozenConfirmedRef.current = { ...server };
+            setFrozenStock(server);
+          }
+        }).catch(revert).finally(() => { frozenPendingRef.current--; });
+      }, [frozenStock]);
       useEffect(() => { saveSetting('kashrutList', kashrutList, 'רשימת כשרויות'); }, [kashrutList]);
       useEffect(() => { saveSetting('butchersList', butchersList, 'רשימת קצבים'); }, [butchersList]);
       useEffect(() => { saveSetting('couriersList', couriersList, 'רשימת שליחים'); }, [couriersList]);
