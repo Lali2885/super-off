@@ -2398,12 +2398,13 @@ ${htmlRows}
 
         const [tDate, tTime] = (order.timeString || '').split('T');
         const whenText = tDate ? [tDate.split('-').reverse().join('/'), tTime && tTime !== '00:00' ? tTime : ''].filter(Boolean).join(' ') : '';
-        const addressText = order.type === 'delivery' ? [order.fullAddress, order.neighborhood].filter(Boolean).join(', ') : '';
+        const addressText = order.type === 'delivery' ? [order.fullAddress, order.neighborhood, order.city && order.city !== 'ירושלים' ? order.city : ''].filter(Boolean).join(', ') : '';
         const flagsText = [
           order.flags?.mustCoordinate && '🚨 לתאם',
           order.flags?.notifyReady && '📞 להודיע שמוכן',
           order.flags?.chargeStatus === 'charge' && '💳 לחייב',
           order.flags?.chargeStatus === 'noCharge' && '🆓 לא לחייב',
+          order.collect?.type && `💰 לגבות: ${order.collect.type}${order.collect.amount ? ' ' + order.collect.amount + ' ₪' : ''}`,
         ].filter(Boolean);
 
         const headerHtml = `
@@ -2522,6 +2523,9 @@ setTimeout(function(){
       const [kashrut, setKashrut] = useState('');
       const [flags, setFlags] = useState({ mustCoordinate: false, notifyReady: false });
       const [chargeStatus, setChargeStatus] = useState('');
+      const [city, setCity] = useState('ירושלים');
+      const [collectType, setCollectType] = useState(''); // גבייה במסירה: צ׳ק / מזומן / אשראי
+      const [collectAmount, setCollectAmount] = useState('');
       const [assignedButcher, setAssignedButcher] = useState('');
 
       const [orderSkuRow, setOrderSkuRow] = useState({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '', storageType: '', needsStorageToggle: false });
@@ -2696,6 +2700,8 @@ setTimeout(function(){
         setKashrut(order.kashrut || '');
         setFlags({ mustCoordinate: order.flags?.mustCoordinate || false, notifyReady: order.flags?.notifyReady || false });
         setChargeStatus(order.flags?.chargeStatus || '');
+        setCity(order.city || 'ירושלים');
+        setCollectType(order.collect?.type || ''); setCollectAmount(order.collect?.amount || '');
         setAssignedButcher(order.assignedButcher || '');
         setOrderNotes(order.orderNotes || '');
 
@@ -2725,7 +2731,7 @@ setTimeout(function(){
         setIsModalOpen(false);
         setEditingOrder(null);
         setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]);
-        setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt('');
+        setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt(''); setCity('ירושלים'); setCollectType(''); setCollectAmount('');
         setDeliveryDate(localToday()); setPickupTime(localToday()); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
@@ -2780,6 +2786,8 @@ setTimeout(function(){
           kashrut: allItems.find(i => i.kashrut)?.kashrut || '',
           assignedButcher,
           flags: { ...flags, chargeStatus },
+          city: orderType === 'delivery' ? (city.trim() || 'ירושלים') : '',
+          collect: collectType ? { type: collectType, amount: collectAmount } : null,
           items: allItems,
           orderNotes,
           status: 'new'
@@ -3271,8 +3279,9 @@ setTimeout(function(){
                     {orderType === 'delivery' ? (
                       <div className="space-y-2 pt-2 border-t border-gray-100">
                         <div className="flex gap-2">
-                          <input type="text" required={orderType === 'delivery'} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="עיר / שכונה *" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
-                          <input type="text" value={street} onChange={e => setStreet(e.target.value)} placeholder="רחוב" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+                          <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="עיר" title="עיר — ברירת מחדל ירושלים" className={`w-1/4 p-2.5 border rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400 ${city.trim() && city.trim() !== 'ירושלים' ? 'border-pink-400 bg-pink-50 font-bold' : 'border-gray-300'}`} />
+                          <input type="text" required={orderType === 'delivery'} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="שכונה *" className="w-1/4 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+                          <input type="text" value={street} onChange={e => setStreet(e.target.value)} placeholder="רחוב ומספר" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
                         </div>
                         <div className="flex gap-2">
                           <input type="text" value={entrance} onChange={e => setEntrance(e.target.value)} placeholder="כניסה" className="w-1/3 p-2.5 border border-gray-300 rounded-md text-sm text-center" />
@@ -3314,6 +3323,15 @@ setTimeout(function(){
                       <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.mustCoordinate} onChange={e => setFlags({...flags, mustCoordinate: e.target.checked})} className="accent-purple-600" /> לתאם חובה</label>
                       <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.notifyReady} onChange={e => setFlags({...flags, notifyReady: e.target.checked})} className="accent-purple-600" /> להודיע שמוכן</label>
                     </div>
+                    {orderType === 'delivery' && (
+                      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100 text-sm">
+                        <span className="font-bold text-gray-600">גבייה במסירה:</span>
+                        <select value={collectType} onChange={e => setCollectType(e.target.value)} className="p-2 border border-gray-300 rounded-md bg-white">
+                          <option value="">אין (שולם מראש)</option><option value="צ׳ק">צ׳ק</option><option value="מזומן">מזומן</option><option value="אשראי">אשראי</option>
+                        </select>
+                        {collectType && <input type="number" min="0" inputMode="decimal" value={collectAmount} onChange={e => setCollectAmount(e.target.value)} placeholder="סכום ₪" className="w-28 p-2 border border-gray-300 rounded-md" />}
+                      </div>
+                    )}
                   </div>
 
                   {/* ----------------- הוספת פריט לפי מקט ----------------- */}
@@ -3799,295 +3817,397 @@ setTimeout(function(){
     };
 
     // ===[DELIVERIES]===
-    // --- Deliveries View ---
-    const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList, butchersList }) => {
-      const [activeTab, setActiveTab] = useState('delivery');
-      const [routeMode, setRouteMode] = useState(false);
-      const [routeStops, setRouteStops] = useState([]); // [{orderId, address, customer}]
-      const [origin, setOrigin] = useState(''); // נקודת מוצא
+    // נתוני סבב נשמרים על כל הזמנה: order.route = { id, name, time, courier, date, seq }
+    // מצב מסירה: order.delivery = { status: 'done' | 'failed', reason, collected, at, by, onwayAt }
+    const DEFAULT_WA_READY = 'שלום {שם}, ההזמנה שלך (#{מספר}) מוכנה לאיסוף בסופר עוף.\nמחכים לך!';
+    const normPhone = (p) => { const d = String(p || '').replace(/\D/g, ''); if (d.startsWith('972')) return d; if (d.startsWith('0')) return '972' + d.slice(1); return d; };
+    const waLink = (phone, text) => `https://wa.me/${normPhone(phone)}?text=${encodeURIComponent(text)}`;
+    const navAddress = (o) => [o.street || o.neighborhood, (o.city || 'ירושלים')].filter(Boolean).join(', ');
+    const wazeLink = (o) => `https://waze.com/ul?q=${encodeURIComponent(navAddress(o))}&navigate=yes`;
+    const hhmm = () => new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+    const DeliveriesView = ({ orders, setOrders, couriersList, kashrutList, butchersList, neighborhoodData = [], appUser, waReadyTemplate }) => {
+      const today = localToday();
+      const isAdmin = !!appUser?.is_admin;
+      const myCourierId = appUser?.permissions?.courierId || '';
+      const courierOnly = !isAdmin && !!myCourierId; // שליח רואה רק את המסלול שלו
+      const [activeTab, setActiveTab] = useState(courierOnly ? 'mine' : 'delivery');
+      const [viewCourier, setViewCourier] = useState(myCourierId || couriersList[0]?.id || '');
+      const [selected, setSelected] = useState([]);
+      const [modal, setModal] = useState(null); // { type: 'collect' | 'fail', order }
+      const [origin, setOrigin] = useState(() => { try { return localStorage.getItem('so-route-origin') || ''; } catch { return ''; } });
       const [returnModal, setReturnModal] = useState(null);
       const [returnStep, setReturnStep] = useState('destination');
       const [returnPackaging, setReturnPackaging] = useState({ cartons: '', bags: '', fishBags: '' });
 
+      const updateOrder = (id, fn) => setOrders(prev => prev.map(o => o.id === id ? fn(o) : o));
+      const kColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6b7280';
+      const kashrutsOf = (o) => [...new Set((o.items || []).map(i => i.kashrut).filter(Boolean))];
+      const courierName = (id) => couriersList.find(c => c.id === id)?.name || 'ללא שליח';
+      const hoodIdx = (name) => { const i = (neighborhoodData || []).findIndex(n => n.name === name); return i < 0 ? 999 : i; };
+      const fmtDay = (d) => d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '';
+
+      const readyDeliveries = orders.filter(o => o.type === 'delivery' && o.status === 'completed');
+      const pickupOrders = orders.filter(o => o.type === 'pickup' && o.status === 'completed');
+      const unassigned = readyDeliveries.filter(o => !o.route)
+        .sort((a, b) => hoodIdx(a.neighborhood) - hoodIdx(b.neighborhood) || (a.street || '').localeCompare(b.street || '', 'he'));
+
+      // סבבים: הזמנות שממתינות למסירה + מה שנמסר היום באותו סבב
+      const routes = useMemo(() => {
+        const m = new Map();
+        orders.forEach(o => {
+          if (o.type !== 'delivery' || !o.route) return;
+          if (!(o.status === 'completed' || (o.status === 'delivered' && o.route.date === today))) return;
+          const r = m.get(o.route.id) || { ...o.route, stops: [] };
+          r.stops.push(o); m.set(o.route.id, r);
+        });
+        return [...m.values()]
+          .map(r => ({ ...r, stops: r.stops.sort((a, b) => (a.route.seq || 0) - (b.route.seq || 0)) }))
+          .sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.id - b.id);
+      }, [orders, today]);
+
+      const isPending = (o) => o.status === 'completed' && o.delivery?.status !== 'failed';
+
+      // --- ניהול סבבים ---
+      const addToRoute = (route) => {
+        const target = route || { id: Date.now(), name: `סבב ${routes.length + 1}`, time: '', courier: '', date: today };
+        const base = route ? Math.max(0, ...route.stops.map(s => s.route.seq || 0)) + 1 : 0;
+        const ids = [...selected];
+        const meta = { id: target.id, name: target.name, time: target.time, courier: target.courier, date: target.date || today };
+        setOrders(prev => prev.map(o => ids.includes(o.id) ? { ...o, route: { ...meta, seq: base + ids.indexOf(o.id) }, delivery: null } : o));
+        setSelected([]);
+      };
+      const updateRoute = (rid, patch) => setOrders(prev => prev.map(o => o.route?.id === rid ? { ...o, route: { ...o.route, ...patch } } : o));
+      const reorder = (route, newStops) => {
+        const seqOf = new Map(newStops.map((s, i) => [s.id, i]));
+        setOrders(prev => prev.map(o => seqOf.has(o.id) ? { ...o, route: { ...o.route, seq: seqOf.get(o.id) } } : o));
+      };
+      const moveStop = (route, idx, dir) => {
+        const arr = [...route.stops]; const j = idx + dir;
+        if (j < 0 || j >= arr.length) return;
+        [arr[idx], arr[j]] = [arr[j], arr[idx]]; reorder(route, arr);
+      };
+      const sortByHood = (route) => reorder(route, [...route.stops].sort((a, b) =>
+        (a.status === 'delivered') - (b.status === 'delivered') || hoodIdx(a.neighborhood) - hoodIdx(b.neighborhood) || (a.street || '').localeCompare(b.street || '', 'he')));
+      const removeFromRoute = (o) => updateOrder(o.id, x => ({ ...x, route: null, delivery: null }));
+      const openGoogleMaps = (route) => {
+        const stops = route.stops.filter(isPending).slice(0, 10).map(navAddress); // גוגל מקבל עד ~10 עצירות
+        if (!stops.length) return;
+        const all = origin.trim() ? [origin.trim(), ...stops] : stops;
+        window.open('https://www.google.com/maps/dir/' + all.map(encodeURIComponent).join('/'), '_blank');
+      };
+      const printRoute = (route) => {
+        const rows = route.stops.map((o, i) => `<tr><td>${i + 1}</td><td><b>${escHtml(o.customer || '')}</b><br>${escHtml(o.phone || '')}${o.mobile ? ' · ' + escHtml(o.mobile) : ''}</td>
+          <td><b>${escHtml(o.street || '')}</b>, ${escHtml(o.neighborhood || '')}${o.city && o.city !== 'ירושלים' ? ', ' + escHtml(o.city) : ''}<br>${escHtml([o.entrance && 'כניסה ' + o.entrance, o.floor && 'קומה ' + o.floor, o.apt && 'דירה ' + o.apt].filter(Boolean).join(' · '))}</td>
+          <td>${[o.packaging?.cartons && o.packaging.cartons + ' קרטונים', o.packaging?.bags && o.packaging.bags + ' שקיות', o.packaging?.fishBags && o.packaging.fishBags + ' שק׳ דגים'].filter(Boolean).join('<br>')}</td>
+          <td>${o.flags?.mustCoordinate ? 'לתאם!<br>' : ''}${o.collect?.type ? 'לגבות: ' + escHtml(o.collect.type) + (o.collect.amount ? ' ' + escHtml(String(o.collect.amount)) + ' ₪' : '') : ''}</td><td style="width:60px"></td></tr>`).join('');
+        const w = window.open('', '_blank');
+        if (!w) return;
+        w.document.write(`<html dir="rtl"><head><title>${escHtml(route.name)}</title><style>body{font-family:Arial;padding:16px}table{width:100%;border-collapse:collapse;font-size:15px}td,th{border:1px solid #000;padding:6px;vertical-align:top;text-align:right}th{background:#eee}</style></head><body>
+          <h2>${escHtml(route.name)}${route.time ? ' · ' + escHtml(route.time) : ''} · ${escHtml(courierName(route.courier))} · ${fmtDay(route.date)}</h2>
+          <table><thead><tr><th>#</th><th>לקוח</th><th>כתובת</th><th>אריזה</th><th>הערות</th><th>חתימה</th></tr></thead><tbody>${rows}</tbody></table>
+          <script>window.onload=()=>window.print()<\/script></body></html>`);
+        w.document.close();
+      };
+
+      // --- פעולות שליח / חנות ---
+      const markDelivered = (o, collected = '') => {
+        updateOrder(o.id, x => ({ ...x, status: 'delivered', delivery: { ...(x.delivery || {}), status: 'done', collected, at: new Date().toISOString(), by: appUser?.username || '' } }));
+        setModal(null);
+      };
+      const markFailed = (o, reason) => {
+        updateOrder(o.id, x => ({ ...x, delivery: { ...(x.delivery || {}), status: 'failed', reason, at: new Date().toISOString(), by: appUser?.username || '' } }));
+        setModal(null);
+      };
+      const sendOnWay = (o) => {
+        window.open(waLink(o.mobile || o.phone, `שלום ${o.customer || ''}, השליח של סופר עוף בדרך אליכם.`), '_blank');
+        updateOrder(o.id, x => ({ ...x, delivery: { ...(x.delivery || {}), onwayAt: hhmm() } }));
+      };
+      const sendReady = (o) => {
+        const text = (waReadyTemplate || DEFAULT_WA_READY).replaceAll('{שם}', o.customer || '').replaceAll('{מספר}', String(o.id));
+        window.open(waLink(o.mobile || o.phone, text), '_blank');
+        updateOrder(o.id, x => ({ ...x, notifiedAt: `${fmtDay(today)} ${hhmm()}` }));
+      };
+      const markPicked = (o) => updateOrder(o.id, x => ({ ...x, status: 'delivered', delivery: { status: 'done', at: new Date().toISOString(), by: appUser?.username || '' } }));
+
+      // --- החזרת הזמנה (קיים) ---
       const openReturnModal = (order) => {
-        setReturnModal(order);
-        setReturnStep('destination');
-        setReturnPackaging({
-          cartons: order.packaging?.cartons ?? '',
-          bags: order.packaging?.bags ?? '',
-          fishBags: order.packaging?.fishBags ?? ''
-        });
+        setReturnModal(order); setReturnStep('destination');
+        setReturnPackaging({ cartons: order.packaging?.cartons ?? '', bags: order.packaging?.bags ?? '', fishBags: order.packaging?.fishBags ?? '' });
       };
-
       const confirmReturnToPacking = () => {
-        setOrders(prev => prev.map(o => o.id === returnModal.id
-          ? { ...o, status: 'packing', packaging: {
-              cartons: Number(returnPackaging.cartons) || 0,
-              bags: Number(returnPackaging.bags) || 0,
-              fishBags: Number(returnPackaging.fishBags) || 0
-            }}
-          : o
-        ));
+        setOrders(prev => prev.map(o => o.id === returnModal.id ? { ...o, status: 'packing', route: null, delivery: null, packaging: {
+          cartons: Number(returnPackaging.cartons) || 0, bags: Number(returnPackaging.bags) || 0, fishBags: Number(returnPackaging.fishBags) || 0 } } : o));
         setReturnModal(null);
       };
-
       const confirmReturnToWork = (butcherName) => {
-        setOrders(prev => prev.map(o => o.id === returnModal.id
-          ? { ...o, status: 'new', assignedButcher: butcherName, packaging: undefined }
-          : o
-        ));
+        setOrders(prev => prev.map(o => o.id === returnModal.id ? { ...o, status: 'new', assignedButcher: butcherName, packaging: undefined, route: null, delivery: null } : o));
         setReturnModal(null);
       };
 
-      const deliveryOrders = orders.filter(o => o.type === 'delivery' && o.status === 'completed');
-      const pickupOrders   = orders.filter(o => o.type === 'pickup'   && o.status === 'completed');
-
-      const buildAddress = (order) => {
-        const parts = [order.street, order.neighborhood].filter(Boolean);
-        if (order.floor) parts.push(`קומה ${order.floor}`);
-        return parts.join(', ') + ', ישראל';
+      // --- רכיבי תצוגה ---
+      const KChips = ({ o }) => (
+        <>{kashrutsOf(o).map(k => (
+          <span key={k} className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: kColor(k) }}>{k}</span>
+        ))}</>
+      );
+      const Tags = ({ o }) => (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <KChips o={o} />
+          {o.city && o.city !== 'ירושלים' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-100 text-pink-800 border border-pink-200">📍 {o.city} — סבב מיוחד</span>}
+          {o.flags?.mustCoordinate && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">לתאם</span>}
+          {o.collect?.type && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900">לגבות: {o.collect.type}{o.collect.amount ? ` ${o.collect.amount} ₪` : ''}</span>}
+          {o.timeString && o.timeString.slice(0, 10) !== today && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">📅 {fmtDay(o.timeString.slice(0, 10))}</span>}
+          {o.delivery?.status === 'done' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">✓ נמסר{o.delivery.collected ? ` · ${o.delivery.collected}` : ''}</span>}
+          {o.delivery?.status === 'failed' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800">לא נמסר: {o.delivery.reason}</span>}
+          {o.delivery?.onwayAt && o.status === 'completed' && o.delivery?.status !== 'failed' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">הודעת "בדרך" {o.delivery.onwayAt}</span>}
+        </div>
+      );
+      const Pack = ({ o }) => {
+        const p = o.packaging || {};
+        const parts = [p.cartons > 0 && `${p.cartons} קרטונים`, p.bags > 0 && `${p.bags} שקיות`, p.fishBags > 0 && `${p.fishBags} שקיות דגים`].filter(Boolean);
+        return <div className="text-sm text-gray-600 font-bold">{parts.length ? parts.join(' · ') : 'לא הוזנו פרטי אריזה'}</div>;
       };
+      const addrLine = (o) => [o.street, o.neighborhood, o.city && o.city !== 'ירושלים' ? o.city : ''].filter(Boolean).join(', ');
+      const addrExtra = (o) => [o.entrance && `כניסה ${o.entrance}`, o.floor && `קומה ${o.floor}`, o.apt && `דירה ${o.apt}`].filter(Boolean).join(' · ');
 
-      const toggleStop = (order) => {
-        const exists = routeStops.find(s => s.orderId === order.id);
-        if (exists) {
-          setRouteStops(prev => prev.filter(s => s.orderId !== order.id));
-        } else {
-          setRouteStops(prev => [...prev, {
-            orderId: order.id,
-            customer: order.customer,
-            address: buildAddress(order),
-            neighborhood: order.neighborhood
-          }]);
-        }
-      };
+      const tabs = courierOnly ? [] : [
+        { id: 'delivery', label: '🚚 משלוחים וסבבים', count: readyDeliveries.length },
+        { id: 'mine', label: '📱 תצוגת שליח', count: null },
+        { id: 'pickup', label: '🏪 איסוף בחנות', count: pickupOrders.length },
+      ];
 
-      const moveStop = (idx, dir) => {
-        setRouteStops(prev => {
-          const arr = [...prev];
-          const target = idx + dir;
-          if (target < 0 || target >= arr.length) return arr;
-          [arr[idx], arr[target]] = [arr[target], arr[idx]];
-          return arr;
-        });
-      };
-
-      const openGoogleMaps = () => {
-        const stops = origin ? [origin, ...routeStops.map(s => s.address)] : routeStops.map(s => s.address);
-        if (stops.length < 1) return;
-        const encoded = stops.map(s => encodeURIComponent(s)).join('/');
-        const url = `https://www.google.com/maps/dir/${encoded}`;
-        window.open(url, '_blank');
-      };
-
-      const markAsDone = (orderId) => {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: 'delivered' } : o));
-      };
-
-      const assignCourier = (orderId, courierId) => {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, courier: courierId } : o));
-      };
-
-      const renderCard = (order, isDelivery) => (
-        <div key={order.id} className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col hover:shadow-md transition-shadow overflow-hidden">
-          {/* שם */}
-          <div className="px-4 pt-4 pb-2">
-            <div className="font-extrabold text-lg text-gray-900">{order.customer}</div>
-            <div className="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
-              <span>#{order.id}</span>
-              {order.phone && <span><Icons.Phone className="w-3 h-3 inline ml-0.5 text-gray-400" />{order.phone}</span>}
-              {order.mobile && <span><Icons.Phone className="w-3 h-3 inline ml-0.5 text-gray-400" />{order.mobile}</span>}
+      // ===== מסך שליח =====
+      const renderCourier = () => {
+        const myRoutes = routes.filter(r => r.courier === viewCourier);
+        const stops = myRoutes.flatMap(r => r.stops.map(o => ({ o, r })));
+        const pending = stops.filter(s => isPending(s.o));
+        const next = pending[0];
+        const doneN = stops.length - pending.length;
+        return (
+          <div className="max-w-md mx-auto space-y-4">
+            {!courierOnly && (
+              <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-indigo-900 font-bold text-sm">
+                כך השליח רואה בטלפון:
+                <select value={viewCourier} onChange={e => setViewCourier(e.target.value)} className="flex-1 p-2 rounded-lg border border-indigo-200 bg-white">
+                  {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
+            <div>
+              <h2 className="text-2xl font-black text-gray-900">המסלול שלי</h2>
+              <div className="text-gray-600 font-bold mt-1">{myRoutes.map(r => `${r.name}${r.time ? ' · ' + r.time : ''}`).join(' / ') || 'אין סבבים כרגע'} · {doneN} מתוך {stops.length} הושלמו</div>
+              <div className="h-3 rounded-full bg-gray-200 overflow-hidden mt-2"><div className="h-full bg-green-600" style={{ width: `${stops.length ? doneN / stops.length * 100 : 0}%` }} /></div>
             </div>
-          </div>
-
-          {/* כתובת — משלוח בלבד */}
-          {isDelivery && (
-            <div className="px-4 py-2 bg-blue-50/60 border-y border-blue-100 text-sm text-blue-900 font-medium">
-              <Icons.MapPin className="w-3.5 h-3.5 inline ml-1 text-blue-500" />
-              {order.neighborhood && <strong>{order.neighborhood} — </strong>}
-              {order.street}{order.entrance ? ` כניסה ${order.entrance}` : ''}{order.floor ? ` קומה ${order.floor}` : ''}{order.apt ? ` דירה ${order.apt}` : ''}
-            </div>
-          )}
-
-          {/* אריזה */}
-          <div className="px-4 py-3 flex gap-3 flex-wrap">
-            {order.packaging?.cartons > 0 && (
-              <div className="flex flex-col items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 min-w-[64px]">
-                <span className="text-xl">📦</span>
-                <span className="font-black text-lg text-gray-900">{order.packaging.cartons}</span>
-                <span className="text-[10px] text-gray-400 font-bold">קרטונים</span>
+            {next ? (
+              <div className="bg-white rounded-2xl border-4 border-gray-900 overflow-hidden">
+                <div className="bg-gray-900 text-white px-4 py-2 font-bold text-sm flex justify-between"><span>העצירה הבאה · {stops.indexOf(next) + 1} מתוך {stops.length}</span><span>{next.r.name}</span></div>
+                <div className="p-4 space-y-3">
+                  <div className="text-lg font-extrabold">{next.o.customer} <span className="text-sm text-gray-500 font-bold">#{next.o.id}</span></div>
+                  <div className="text-2xl font-black leading-tight">{next.o.street || next.o.neighborhood}<div className="text-base text-gray-600 font-bold">{next.o.neighborhood}, {next.o.city || 'ירושלים'}</div></div>
+                  {addrExtra(next.o) && <div className="bg-gray-100 rounded-lg px-3 py-2 font-bold">{addrExtra(next.o)}</div>}
+                  <Tags o={next.o} />
+                  <Pack o={next.o} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <a href={wazeLink(next.o)} target="_blank" rel="noopener" className="flex flex-col items-center justify-center gap-1 min-h-[72px] rounded-xl font-bold text-sm bg-sky-400 text-sky-950"><Icons.Navigation className="w-6 h-6" />נווט בוויז</a>
+                    <a href={`tel:${next.o.mobile || next.o.phone}`} className="flex flex-col items-center justify-center gap-1 min-h-[72px] rounded-xl font-bold text-sm border-2 border-gray-200 bg-white text-gray-800"><Icons.Phone className="w-6 h-6" />התקשר</a>
+                    <button onClick={() => sendOnWay(next.o)} className="flex flex-col items-center justify-center gap-1 min-h-[72px] rounded-xl font-bold text-sm bg-green-700 text-white"><Icons.Send className="w-6 h-6" />"אני בדרך"</button>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2">
+                    <button onClick={() => next.o.collect?.type ? setModal({ type: 'collect', order: next.o }) : markDelivered(next.o)} className="col-span-3 min-h-[60px] rounded-xl bg-green-700 hover:bg-green-800 text-white font-black text-lg">✓ נמסר</button>
+                    <button onClick={() => setModal({ type: 'fail', order: next.o })} className="col-span-2 min-h-[60px] rounded-xl border-2 border-gray-300 bg-white font-bold">לא נמסר</button>
+                  </div>
+                </div>
               </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500 font-bold">{stops.length ? 'כל העצירות הושלמו 👏' : 'אין לך סבבים כרגע'}</div>
             )}
-            {order.packaging?.bags > 0 && (
-              <div className="flex flex-col items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 min-w-[64px]">
-                <span className="text-xl">🛍️</span>
-                <span className="font-black text-lg text-gray-900">{order.packaging.bags}</span>
-                <span className="text-[10px] text-gray-400 font-bold">שקיות</span>
+            {stops.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-4 py-2 font-extrabold border-b border-gray-100">כל העצירות</div>
+                {stops.map((s, i) => (
+                  <div key={s.o.id} className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
+                    <span className={`w-8 h-8 rounded-full text-white font-black flex items-center justify-center shrink-0 ${s.o.delivery?.status === 'done' || s.o.status === 'delivered' ? 'bg-green-600' : s.o.delivery?.status === 'failed' ? 'bg-red-700' : 'bg-gray-900'}`}>{i + 1}</span>
+                    <div className="flex-1 min-w-0"><div className="font-bold">{s.o.customer}</div><div className="text-sm text-gray-600">{addrLine(s.o)}</div><Tags o={s.o} /></div>
+                  </div>
+                ))}
               </div>
-            )}
-            {order.packaging?.fishBags > 0 && (
-              <div className="flex flex-col items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 min-w-[64px]">
-                <span className="text-xl">🐟</span>
-                <span className="font-black text-lg text-gray-900">{order.packaging.fishBags}</span>
-                <span className="text-[10px] text-gray-400 font-bold">שקיות דגים</span>
-              </div>
-            )}
-            {!order.packaging?.cartons && !order.packaging?.bags && !order.packaging?.fishBags && (
-              <span className="text-xs text-gray-400 italic">לא הוזנו פרטי אריזה</span>
             )}
           </div>
+        );
+      };
 
-          {/* שיוך שליח + כפתורים */}
-          <div className="p-3 border-t border-gray-100 space-y-2 mt-auto">
-            {isDelivery && (
-              <select value={order.courier || ''} onChange={e => assignCourier(order.id, e.target.value)}
-                className="w-full p-2 border border-gray-200 rounded-lg text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-blue-400">
-                <option value="">-- שיוך לשליח --</option>
-                {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+      // ===== ניהול סבבים =====
+      const renderOffice = () => (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+          <div className="lg:col-span-2 space-y-3">
+            <div className="flex items-center justify-between"><h2 className="text-xl font-extrabold">ממתינים לשיבוץ</h2><span className="text-sm font-bold text-gray-500">{unassigned.length} משלוחים</span></div>
+            {selected.length > 0 && (
+              <div className="sticky top-0 z-10 bg-gray-900 text-white rounded-xl p-3 flex flex-wrap items-center gap-2">
+                <span className="font-bold flex-1">נבחרו {selected.length}</span>
+                {routes.map(r => <button key={r.id} onClick={() => addToRoute(r)} className="px-3 py-2 rounded-lg bg-white text-gray-900 font-bold text-sm">ל{r.name}</button>)}
+                <button onClick={() => addToRoute(null)} className="px-3 py-2 rounded-lg bg-red-600 text-white font-bold text-sm">+ סבב חדש</button>
+              </div>
             )}
-            <button
-              onClick={() => openReturnModal(order)}
-              className="w-full py-2 rounded-xl text-xs font-bold bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 transition-colors">
-              ↩ החזר הזמנה
-            </button>
-            <Button variant="success" icon={Icons.CheckCircle}
-              className="w-full bg-green-600 hover:bg-green-700 py-2.5 font-bold justify-center"
-              onClick={() => markAsDone(order.id)}>
-              {isDelivery ? 'נמסר ללקוח ✓' : 'נאסף בחנות ✓'}
-            </Button>
+            {unassigned.length === 0 && <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500 font-bold">אין משלוחים ממתינים לשיבוץ</div>}
+            {unassigned.map((o, i) => {
+              const sel = selected.includes(o.id);
+              const showHood = i === 0 || unassigned[i - 1].neighborhood !== o.neighborhood;
+              return (
+                <React.Fragment key={o.id}>
+                  {showHood && <div className="text-sm font-extrabold text-gray-500 pt-2">📍 {o.neighborhood || 'ללא שכונה'}</div>}
+                  <label className={`flex gap-3 items-start p-3 rounded-xl bg-white cursor-pointer border-2 ${sel ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
+                    <input type="checkbox" checked={sel} onChange={() => setSelected(p => sel ? p.filter(x => x !== o.id) : [...p, o.id])} className="w-5 h-5 mt-1 accent-gray-900" />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="font-extrabold text-base">{o.customer} <span className="text-sm text-gray-400 font-bold">#{o.id}</span></div>
+                      <div className="text-sm font-bold text-gray-700">{addrLine(o)}{addrExtra(o) && <span className="text-gray-500 font-medium"> · {addrExtra(o)}</span>}</div>
+                      <Tags o={o} />
+                      <Pack o={o} />
+                    </div>
+                  </label>
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          <div className="lg:col-span-3 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-extrabold flex-1">סבבים היום</h2>
+              <input value={origin} onChange={e => { setOrigin(e.target.value); try { localStorage.setItem('so-route-origin', e.target.value); } catch {} }} placeholder="נקודת יציאה (כתובת החנות)" className="p-2 border border-gray-300 rounded-lg text-sm w-64" />
+            </div>
+            {routes.length === 0 && <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500 font-bold">עוד אין סבבים — סמני משלוחים ולחצי "סבב חדש"</div>}
+            {routes.map(r => {
+              const finished = r.stops.filter(s => !isPending(s)).length;
+              return (
+                <div key={r.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 border-b border-gray-200">
+                    <input value={r.name} onChange={e => updateRoute(r.id, { name: e.target.value })} className="font-black text-lg bg-transparent w-28 outline-none border-b border-transparent focus:border-gray-400" aria-label="שם הסבב" />
+                    <input type="time" value={r.time || ''} onChange={e => updateRoute(r.id, { time: e.target.value })} className="p-2 border border-gray-300 rounded-lg text-sm font-bold" aria-label="שעת יציאה" />
+                    <select value={r.courier || ''} onChange={e => updateRoute(r.id, { courier: e.target.value })} className={`p-2 border rounded-lg text-sm font-bold bg-white ${r.courier ? 'border-gray-300' : 'border-red-400 text-red-700'}`} aria-label="שליח">
+                      <option value="">— בחרי שליח —</option>
+                      {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <span className="mr-auto text-sm font-bold text-gray-500">{finished}/{r.stops.length} הושלמו</span>
+                  </div>
+                  {r.stops.map((o, idx) => {
+                    const done = o.status === 'delivered', failed = o.delivery?.status === 'failed';
+                    return (
+                      <div key={o.id} className="flex items-start gap-3 px-3 py-3 border-b border-gray-100">
+                        <span className={`w-8 h-8 rounded-full text-white font-black flex items-center justify-center shrink-0 ${done ? 'bg-green-600' : failed ? 'bg-red-700' : 'bg-gray-900'}`}>{idx + 1}</span>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="font-extrabold">{o.customer} <span className="text-xs text-gray-400">#{o.id}</span></div>
+                          <div className="text-sm font-bold text-gray-700">{addrLine(o)}</div>
+                          <Tags o={o} />
+                        </div>
+                        {!done && (
+                          <div className="flex items-center gap-1">
+                            <div className="flex flex-col gap-1">
+                              <button onClick={() => moveStop(r, idx, -1)} disabled={idx === 0} className="w-9 h-7 rounded border border-gray-200 bg-white disabled:opacity-30" aria-label="הזז למעלה">▲</button>
+                              <button onClick={() => moveStop(r, idx, 1)} disabled={idx === r.stops.length - 1} className="w-9 h-7 rounded border border-gray-200 bg-white disabled:opacity-30" aria-label="הזז למטה">▼</button>
+                            </div>
+                            <button onClick={() => removeFromRoute(o)} className="w-9 h-9 rounded border border-gray-200 bg-white text-gray-500 hover:text-red-600 flex items-center justify-center" aria-label="הוצא מהסבב" title="הוצא מהסבב"><Icons.X className="w-4 h-4" /></button>
+                            <button onClick={() => openReturnModal(o)} className="w-9 h-9 rounded border border-orange-200 bg-orange-50 text-orange-800 font-bold" aria-label="החזר הזמנה" title="החזר הזמנה">↩</button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="flex flex-wrap gap-2 p-3">
+                    <button onClick={() => sortByHood(r)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white font-bold text-sm">סדר לפי שכונות</button>
+                    <button onClick={() => openGoogleMaps(r)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white font-bold text-sm flex items-center gap-1"><Icons.MapPin className="w-4 h-4" />מסלול בגוגל מפות</button>
+                    <button onClick={() => printRoute(r)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white font-bold text-sm flex items-center gap-1"><Icons.Printer className="w-4 h-4" />דף מסלול לשליח</button>
+                    {r.stops.filter(isPending).length > 10 && <span className="text-xs text-amber-700 font-bold self-center">גוגל מפות מציג עד 10 עצירות — יוצגו 10 הראשונות</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       );
 
-      const activeOrders = activeTab === 'delivery' ? deliveryOrders : pickupOrders;
-      const isDelivery = activeTab === 'delivery';
+      // ===== איסוף בחנות =====
+      const renderPickup = () => (
+        pickupOrders.length === 0 ? (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500 font-bold">אין הזמנות ממתינות לאיסוף</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pickupOrders.map(o => (
+              <div key={o.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-3">
+                <div className="flex justify-between gap-2"><div><div className="font-extrabold text-lg">{o.customer}</div><div className="text-sm text-gray-500">#{o.id} · {o.mobile || o.phone}</div></div>
+                  {o.timeString && <span className="text-sm font-bold bg-gray-100 rounded-full px-3 py-1 h-fit">{fmtDay(o.timeString.slice(0, 10))}{o.timeString.includes('T') && o.timeString.split('T')[1] !== '00:00' ? ' ' + o.timeString.split('T')[1] : ''}</span>}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <KChips o={o} />
+                  {o.flags?.notifyReady && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">להודיע שמוכן</span>}
+                  {o.notifiedAt && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">✓ נשלחה הודעה · {o.notifiedAt}</span>}
+                </div>
+                <Pack o={o} />
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => sendReady(o)} disabled={!normPhone(o.mobile || o.phone)}
+                    className={`py-3 rounded-xl font-bold text-white bg-green-700 hover:bg-green-800 disabled:opacity-40 ${o.flags?.notifyReady && !o.notifiedAt ? 'ring-4 ring-green-200' : ''}`}>
+                    {o.notifiedAt ? 'שלח שוב' : 'וואטסאפ: מוכן'}
+                  </button>
+                  <button onClick={() => markPicked(o)} className="py-3 rounded-xl font-bold text-white bg-gray-900 hover:bg-black">✓ נאסף</button>
+                </div>
+                <button onClick={() => openReturnModal(o)} className="w-full py-2 rounded-xl text-xs font-bold bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200">↩ החזר הזמנה</button>
+              </div>
+            ))}
+          </div>
+        )
+      );
 
       return (
         <div className="animate-in fade-in duration-300">
-          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">מערך משלוחים והפצה</h1>
-              <p className="text-gray-500 mt-1">הזמנות מוכנות הממתינות למסירה או לאיסוף</p>
-            </div>
-            {activeTab === 'delivery' && deliveryOrders.length > 0 && (
-              <button onClick={() => { setRouteMode(!routeMode); setRouteStops([]); }}
-                className={`flex items-center gap-2 px-4 py-2.5 font-bold text-sm rounded-xl shadow-sm transition-colors border-2 ${routeMode ? 'bg-green-600 text-white border-green-600' : 'bg-white text-green-700 border-green-300 hover:bg-green-50'}`}>
-                🗺️ {routeMode ? 'סגור בניית מסלול' : 'בנה מסלול משלוחים'}
-              </button>
-            )}
+          <div className="mb-5">
+            <h1 className="text-3xl font-extrabold text-gray-900">{courierOnly ? 'המסלול שלי' : 'מערך משלוחים והפצה'}</h1>
+            {!courierOnly && <p className="text-gray-500 mt-1">שיבוץ לסבבים, מסלול לשליח ואיסוף מהחנות</p>}
           </div>
+          {tabs.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {tabs.map(t => (
+                <button key={t.id} onClick={() => setActiveTab(t.id)}
+                  className={`flex-1 min-w-[150px] py-3 rounded-xl font-bold text-base border-2 flex items-center justify-center gap-2 ${activeTab === t.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+                  {t.label}{t.count ? <span className={`text-xs px-2 py-0.5 rounded-full font-black ${activeTab === t.id ? 'bg-white/25' : 'bg-gray-100'}`}>{t.count}</span> : null}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {/* בניית מסלול */}
-          {routeMode && activeTab === 'delivery' && (
-            <div className="mb-6 bg-white rounded-2xl border-2 border-green-200 shadow-sm overflow-hidden">
-              <div className="p-4 bg-green-50 border-b border-green-100 flex items-center gap-3">
-                <span className="text-2xl">🗺️</span>
-                <div>
-                  <h3 className="font-extrabold text-green-900">בניית מסלול משלוחים</h3>
-                  <p className="text-xs text-green-700">בחר הזמנות, סדר את העצירות, ופתח בגוגל מפות</p>
-                </div>
-              </div>
+          {(courierOnly || activeTab === 'mine') && renderCourier()}
+          {!courierOnly && activeTab === 'delivery' && renderOffice()}
+          {!courierOnly && activeTab === 'pickup' && renderPickup()}
 
-              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* בחירת עצירות */}
-                <div>
-                  <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">בחר הזמנות למסלול</div>
-                  <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
-                    {deliveryOrders.map(order => {
-                      const selected = !!routeStops.find(s => s.orderId === order.id);
-                      return (
-                        <label key={order.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                          <input type="checkbox" checked={selected} onChange={() => toggleStop(order)} className="accent-green-600 w-4 h-4" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sm text-gray-900">{order.customer}</div>
-                            <div className="text-xs text-gray-500 truncate">
-                              <Icons.MapPin className="w-3 h-3 inline ml-0.5" />
-                              {order.neighborhood}{order.street ? ` — ${order.street}` : ''}
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
+          {/* חלונות שליח */}
+          {modal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}>
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
+                {modal.type === 'collect' && (<>
+                  <h3 className="font-extrabold text-lg">{modal.order.customer} — מה נגבה?</h3>
+                  <p className="font-bold">לגבות: {modal.order.collect.type}{modal.order.collect.amount ? ` על סך ${modal.order.collect.amount} ₪` : ''}</p>
+                  <div className="grid gap-2">
+                    <button onClick={() => markDelivered(modal.order, `נגבה ${modal.order.collect.type}`)} className="py-3 rounded-xl bg-green-700 text-white font-bold">נגבה {modal.order.collect.type}</button>
+                    <button onClick={() => markDelivered(modal.order, 'נגבה בתשלום אחר')} className="py-3 rounded-xl border-2 border-gray-200 font-bold">נגבה בתשלום אחר</button>
+                    <button onClick={() => markDelivered(modal.order, 'לא נגבה')} className="py-3 rounded-xl border-2 border-red-200 text-red-700 font-bold">נמסר — לא נגבה</button>
                   </div>
-                </div>
-
-                {/* סדר המסלול */}
-                <div>
-                  <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">סדר עצירות ({routeStops.length} נבחרו)</div>
-
-                  {/* נקודת מוצא */}
-                  <div className="mb-3">
-                    <label className="block text-xs font-bold text-gray-500 mb-1">📍 נקודת מוצא (אופציונלי)</label>
-                    <input type="text" value={origin} onChange={e => setOrigin(e.target.value)}
-                      placeholder="למשל: סופר עוף, ירושלים"
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-400" />
+                </>)}
+                {modal.type === 'fail' && (<>
+                  <h3 className="font-extrabold text-lg">{modal.order.customer} — למה לא נמסר?</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['לא היה בבית', 'לא עונה לטלפון', 'כתובת שגויה', 'ביקש לדחות', 'אחר'].map(r => (
+                      <button key={r} onClick={() => markFailed(modal.order, r)} className="py-3 rounded-xl border-2 border-gray-200 font-bold">{r}</button>
+                    ))}
                   </div>
-
-                  {routeStops.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl">בחר הזמנות מהרשימה</div>
-                  ) : (
-                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                      {routeStops.map((stop, idx) => (
-                        <div key={stop.orderId} className="flex items-center gap-2 bg-gray-50 rounded-xl p-2.5 border border-gray-200">
-                          <span className="w-6 h-6 rounded-full bg-green-600 text-white text-xs font-black flex items-center justify-center shrink-0">{idx + 1}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sm text-gray-900 truncate">{stop.customer}</div>
-                            <div className="text-[10px] text-gray-500 truncate">{stop.neighborhood}</div>
-                          </div>
-                          <div className="flex flex-col gap-0.5">
-                            <button onClick={() => moveStop(idx, -1)} disabled={idx === 0}
-                              className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none px-1">▲</button>
-                            <button onClick={() => moveStop(idx, 1)} disabled={idx === routeStops.length - 1}
-                              className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none px-1">▼</button>
-                          </div>
-                          <button onClick={() => toggleStop({ id: stop.orderId })} className="text-gray-300 hover:text-red-400 transition-colors">
-                            <Icons.X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={openGoogleMaps}
-                    disabled={routeStops.length === 0}
-                    className="mt-4 w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 text-white shadow-md">
-                    <span>🗺️</span> פתח מסלול בגוגל מפות ({routeStops.length} עצירות)
-                  </button>
-                </div>
+                  <p className="text-sm text-gray-500">ההזמנה נשארת בסבב מסומנת באדום, והמשרד יכול לשבץ אותה מחדש.</p>
+                </>)}
+                <button onClick={() => setModal(null)} className="w-full py-2 rounded-xl border border-gray-200 text-gray-600 font-bold">ביטול</button>
               </div>
             </div>
           )}
 
-          {/* טאבים */}
-          <div className="flex gap-2 mb-6">
-            <button onClick={() => setActiveTab('delivery')}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 flex items-center justify-center gap-2 ${activeTab === 'delivery' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'}`}>
-              🚚 משלוחים
-              {deliveryOrders.length > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${activeTab === 'delivery' ? 'bg-white/30' : 'bg-blue-100'}`}>{deliveryOrders.length}</span>}
-            </button>
-            <button onClick={() => setActiveTab('pickup')}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 flex items-center justify-center gap-2 ${activeTab === 'pickup' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'}`}>
-              🏪 איסוף בחנות
-              {pickupOrders.length > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${activeTab === 'pickup' ? 'bg-white/30' : 'bg-indigo-100'}`}>{pickupOrders.length}</span>}
-            </button>
-          </div>
-
-          {activeOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-gray-300 text-gray-400">
-              <span className="text-4xl mb-3 opacity-30">{isDelivery ? '🚚' : '🏪'}</span>
-              <h2 className="text-xl font-bold text-gray-500">אין {isDelivery ? 'משלוחים' : 'איסופים'} ממתינים</h2>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {activeOrders.map(order => renderCard(order, isDelivery))}
-            </div>
-          )}
           {/* מודאל החזרת הזמנה */}
           {returnModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-sm animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-xl border border-orange-100 w-full max-w-sm">
                 <div className="p-4 bg-orange-50 border-b border-orange-100 flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-orange-900">↩ החזרת הזמנה</h3>
@@ -4095,80 +4215,41 @@ setTimeout(function(){
                   </div>
                   <button onClick={() => setReturnModal(null)} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
                 </div>
-
                 {returnStep === 'destination' && (
                   <div className="p-5 space-y-3">
                     <p className="text-sm font-bold text-gray-700 text-center mb-2">להיכן להחזיר את ההזמנה?</p>
-                    <button onClick={() => setReturnStep('butcher')}
-                      className="w-full py-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 font-bold text-orange-900 text-base transition-all">
-                      🔪 החזר לעבודה (קצב)
-                    </button>
-                    <button onClick={() => setReturnStep('packing')}
-                      className="w-full py-4 rounded-xl border-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-400 font-bold text-yellow-900 text-base transition-all">
-                      📦 החזר לאריזה
-                    </button>
+                    <button onClick={() => setReturnStep('butcher')} className="w-full py-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 font-bold text-orange-900 text-base">🔪 החזר לעבודה (קצב)</button>
+                    <button onClick={() => setReturnStep('packing')} className="w-full py-4 rounded-xl border-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 font-bold text-yellow-900 text-base">📦 החזר לאריזה</button>
                   </div>
                 )}
-
                 {returnStep === 'butcher' && (
                   <div className="p-4 space-y-2">
-                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-1">← חזור</button>
+                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 mb-1">← חזור</button>
                     <p className="text-sm font-bold text-gray-700 mb-3">שייך לקצב:</p>
-                    {butchersList.length === 0 && (
-                      <p className="text-sm text-gray-400 text-center py-4">אין קצבים מוגדרים — הוסף בניהול רשימות</p>
-                    )}
+                    {butchersList.length === 0 && <p className="text-sm text-gray-400 text-center py-4">אין קצבים מוגדרים — הוסף בניהול רשימות</p>}
                     {butchersList.map(b => (
-                      <button key={b.id} onClick={() => confirmReturnToWork(b.name)}
-                        className="w-full py-3 px-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 hover:border-orange-400 font-bold text-orange-900 text-base transition-all text-right">
-                        🔪 {b.name}
-                      </button>
+                      <button key={b.id} onClick={() => confirmReturnToWork(b.name)} className="w-full py-3 px-4 rounded-xl border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 font-bold text-orange-900 text-base text-right">🔪 {b.name}</button>
                     ))}
-                    <button onClick={() => confirmReturnToWork('')}
-                      className="w-full py-2.5 px-4 rounded-xl border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 font-bold text-gray-600 text-sm transition-all text-center">
-                      ללא שיוך לקצב
-                    </button>
+                    <button onClick={() => confirmReturnToWork('')} className="w-full py-2.5 px-4 rounded-xl border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 font-bold text-gray-600 text-sm">ללא שיוך לקצב</button>
                   </div>
                 )}
-
                 {returnStep === 'packing' && (
                   <div className="p-5 space-y-4">
-                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">← חזור</button>
+                    <button type="button" onClick={() => setReturnStep('destination')} className="text-xs text-gray-400 hover:text-gray-600">← חזור</button>
                     <p className="text-sm font-bold text-gray-700">עדכן פרטי אריזה (אם השתנה):</p>
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="text-center">
-                        <div className="text-2xl mb-1">📦</div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1.5">קרטונים</label>
-                        <input type="number" min="0" step="1" placeholder="0"
-                          value={returnPackaging.cartons}
-                          onChange={e => setReturnPackaging(p => ({ ...p, cartons: e.target.value }))}
-                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl mb-1">🛍️</div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1.5">שקיות</label>
-                        <input type="number" min="0" step="1" placeholder="0"
-                          value={returnPackaging.bags}
-                          onChange={e => setReturnPackaging(p => ({ ...p, bags: e.target.value }))}
-                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl mb-1">🐟</div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1.5">שקיות דגים</label>
-                        <input type="number" min="0" step="1" placeholder="0"
-                          value={returnPackaging.fishBags}
-                          onChange={e => setReturnPackaging(p => ({ ...p, fishBags: e.target.value }))}
-                          className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none" />
-                      </div>
+                      {[['cartons', 'קרטונים'], ['bags', 'שקיות'], ['fishBags', 'שקיות דגים']].map(([k, l]) => (
+                        <div key={k} className="text-center">
+                          <label className="block text-xs font-bold text-gray-500 mb-1.5">{l}</label>
+                          <input type="number" min="0" step="1" placeholder="0" value={returnPackaging[k]}
+                            onChange={e => setReturnPackaging(p => ({ ...p, [k]: e.target.value }))}
+                            className="w-full p-2 text-center text-lg font-black border-2 border-gray-200 rounded-xl outline-none focus:border-yellow-400" />
+                        </div>
+                      ))}
                     </div>
                     <div className="flex gap-3 pt-1">
-                      <button onClick={() => setReturnModal(null)}
-                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors">
-                        ביטול
-                      </button>
-                      <button onClick={confirmReturnToPacking}
-                        className="flex-1 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-sm border border-yellow-600 transition-colors">
-                        ✅ אשר החזרה לאריזה
-                      </button>
+                      <button onClick={() => setReturnModal(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm">ביטול</button>
+                      <button onClick={confirmReturnToPacking} className="flex-1 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-sm">✅ אשר החזרה לאריזה</button>
                     </div>
                   </div>
                 )}
@@ -5059,7 +5140,7 @@ setTimeout(function(){
 
 
     // ===[SETTINGS]===
-    const SettingsView = ({ logoImage, setLogoImage, companyVat, setCompanyVat }) => {
+    const SettingsView = ({ logoImage, setLogoImage, companyVat, setCompanyVat, waReadyTemplate, setWaReadyTemplate }) => {
       const handleLogoUpload = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -5109,6 +5190,16 @@ setTimeout(function(){
                 )}
               </div>
               <p className="text-xs text-gray-400">מומלץ: תמונה מרובעת, PNG עם רקע שקוף</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4">
+            <div className="px-5 py-4 bg-gray-50 border-b border-gray-200">
+              <h2 className="font-extrabold text-gray-800">הודעת וואטסאפ "ההזמנה מוכנה"</h2>
+              <p className="text-sm text-gray-500 mt-0.5">נשלחת מכפתור הוואטסאפ במסך איסוף בחנות. {'{שם}'} = שם הלקוח, {'{מספר}'} = מספר ההזמנה</p>
+            </div>
+            <div className="p-5 space-y-2">
+              <textarea rows={3} value={waReadyTemplate || DEFAULT_WA_READY} onChange={e => setWaReadyTemplate(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl text-base outline-none focus:border-green-500" />
+              <button onClick={() => setWaReadyTemplate('')} className="text-sm text-gray-500 hover:text-gray-800 font-bold">החזר לנוסח ברירת המחדל</button>
             </div>
           </div>
           <BackupCard />
@@ -7813,7 +7904,7 @@ setTimeout(function(){
     };
 
     // --- Users Management View ---
-    const UsersManagementView = () => {
+    const UsersManagementView = ({ couriersList = [] }) => {
       const [users, setUsers] = useState([]);
       const [loading, setLoading] = useState(true);
       const [showModal, setShowModal] = useState(false);
@@ -7843,6 +7934,7 @@ setTimeout(function(){
             pages: user.permissions?.pages || [],
             canEdit: user.permissions?.canEdit || [],
             hiddenFeatures: user.permissions?.hiddenFeatures || [],
+            courierId: user.permissions?.courierId || '',
           }
         });
         setFormError('');
@@ -7858,7 +7950,7 @@ setTimeout(function(){
           const hiddenFeatures = pages.includes(pageId)
             ? (f.permissions.hiddenFeatures || [])
             : (f.permissions.hiddenFeatures || []).filter(fid => !fid.startsWith(pageId + '.'));
-          return { ...f, permissions: { pages, canEdit, hiddenFeatures } };
+          return { ...f, permissions: { ...f.permissions, pages, canEdit, hiddenFeatures } };
         });
       };
       const toggleEdit = (pageId) => {
@@ -7880,10 +7972,10 @@ setTimeout(function(){
         });
       };
       const selectAllPages = () => {
-        setForm(f => ({ ...f, permissions: { pages: ALL_PAGES.map(p => p.id), canEdit: ALL_PAGES.map(p => p.id), hiddenFeatures: f.permissions.hiddenFeatures || [] } }));
+        setForm(f => ({ ...f, permissions: { ...f.permissions, pages: ALL_PAGES.map(p => p.id), canEdit: ALL_PAGES.map(p => p.id), hiddenFeatures: f.permissions.hiddenFeatures || [] } }));
       };
       const clearAllPages = () => {
-        setForm(f => ({ ...f, permissions: { pages: [], canEdit: [], hiddenFeatures: [] } }));
+        setForm(f => ({ ...f, permissions: { ...f.permissions, pages: [], canEdit: [], hiddenFeatures: [] } }));
       };
 
       const handleSave = async () => {
@@ -7992,6 +8084,16 @@ setTimeout(function(){
                     <input type="checkbox" id="isAdminCb" checked={form.is_admin} onChange={e => setForm(f => ({ ...f, is_admin: e.target.checked }))} className="w-4 h-4 accent-purple-600" />
                     <label htmlFor="isAdminCb" className="font-bold text-sm text-gray-700">מנהל — גישה לכל העמודים</label>
                   </div>
+                  {!form.is_admin && (
+                    <div className="flex flex-wrap items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                      <label htmlFor="courierSel" className="font-bold text-sm text-gray-700">שליח:</label>
+                      <select id="courierSel" value={form.permissions.courierId || ''} onChange={e => { const v = e.target.value; setForm(f => ({ ...f, permissions: { ...f.permissions, courierId: v, pages: v && !f.permissions.pages.includes('deliveries') ? [...f.permissions.pages, 'deliveries'] : f.permissions.pages } })); }} className="flex-1 p-2 border border-gray-300 rounded-lg text-sm bg-white">
+                        <option value="">— לא שליח —</option>
+                        {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                      <p className="w-full text-xs text-gray-500">משתמש שמקושר לשליח רואה במערך משלוחים רק את "המסלול שלי" — הסבבים שלו.</p>
+                    </div>
+                  )}
                   {!form.is_admin && (
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -8188,6 +8290,7 @@ setTimeout(function(){
       const [orderFormSkuMap, setOrderFormSkuMap] = useState({});
       const [logoImage, setLogoImage] = useState('');
       const [companyVat, setCompanyVat] = useState('');
+      const [waReadyTemplate, setWaReadyTemplate] = useState(''); // נוסח הודעת וואטסאפ "ההזמנה מוכנה" (ריק = ברירת מחדל)
 
       const [butchersList, setButchersList] = useState([
         { id: '1', name: 'משה' },
@@ -8259,9 +8362,10 @@ setTimeout(function(){
         if (id === 'contactsList') setContactsList(fromRemote(id, data));
         if (id === 'orderFormSkuMap') setOrderFormSkuMap(fromRemote(id, data));
         if (id === 'appSettings') {
-          fromRemote(id, { logoImage: data?.logoImage || '', companyVat: data?.companyVat || '' });
+          fromRemote(id, { logoImage: data?.logoImage || '', companyVat: data?.companyVat || '', waReadyTemplate: data?.waReadyTemplate || '' });
           setLogoImage(data?.logoImage || '');
           setCompanyVat(data?.companyVat || '');
+          setWaReadyTemplate(data?.waReadyTemplate || '');
         }
         if (id === 'frozenProductsList') {
           if (!isInitial) { setFrozenProductsList(fromRemote(id, data)); return; }
@@ -8413,7 +8517,7 @@ setTimeout(function(){
       useEffect(() => { saveSetting('neighborhoodData', neighborhoodData, 'שכונות'); }, [neighborhoodData]);
       useEffect(() => { saveSetting('contactsList', contactsList, 'אנשי קשר'); }, [contactsList]);
       useEffect(() => { saveSetting('orderFormSkuMap', orderFormSkuMap, 'מק"טים בטופס הזמנה'); }, [orderFormSkuMap]);
-      useEffect(() => { saveSetting('appSettings', { logoImage, companyVat }, 'הגדרות'); }, [logoImage, companyVat]);
+      useEffect(() => { saveSetting('appSettings', { logoImage, companyVat, waReadyTemplate }, 'הגדרות'); }, [logoImage, companyVat, waReadyTemplate]);
       // inventory_log: בדיקה חדשה נשמרת ישירות ב-StatsView (insert), מחיקה — delete. אין שמירה גורפת של כל היומן
 
       // --- רענון הזמנות מהשרת (עדכון חי / חזרה לאפליקציה) ---
@@ -8474,7 +8578,7 @@ setTimeout(function(){
         { id: 'beit-shemesh', label: 'קירור לירוי', icon: Icons.Package },
         { id: 'gavash', label: 'קירור גב"ש', icon: Icons.Package },
         { id: 'orders', label: 'ניהול הזמנות', icon: Icons.ShoppingCart, badge: orders.filter(o => o.status === 'new').length.toString(), badgeColor: 'bg-red-500' },
-        { id: 'deliveries', label: 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
+        { id: 'deliveries', label: (!appUser?.is_admin && appUser?.permissions?.courierId) ? 'המסלול שלי' : 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
         { id: 'contacts', label: 'אנשי קשר', icon: Icons.User },
         { id: 'lists', label: 'ניהול רשימות', icon: Icons.List },
         { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
@@ -8495,7 +8599,7 @@ setTimeout(function(){
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
-            return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} butchersList={butchersList} />;
+            return <DeliveriesView orders={orders} setOrders={setOrders} couriersList={couriersList} kashrutList={kashrutList} butchersList={butchersList} neighborhoodData={neighborhoodData} appUser={appUser} waReadyTemplate={waReadyTemplate} />;
           case 'contacts':
             return <ContactsView contactsList={contactsList} setContactsList={setContactsList} />;
           case 'lists':
@@ -8509,9 +8613,9 @@ setTimeout(function(){
           case 'gavash':
             return <GavashView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} appUser={appUser} />;
           case 'settings':
-            return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
+            return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} waReadyTemplate={waReadyTemplate} setWaReadyTemplate={setWaReadyTemplate} />;
           case 'users':
-            return <UsersManagementView />;
+            return <UsersManagementView couriersList={couriersList} />;
           default:
             return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
         }
