@@ -7393,8 +7393,8 @@ setTimeout(function(){
       const _addM = (map, date, field, c) => { const m=(date||'').slice(0,7); if(!m) return; if(!map[m]) map[m]={In:0,Out:0}; map[m][field]+=Number(c||0); };
       const _wdProds = (w) => (w.pallets && w.pallets.length) ? w.pallets.flatMap(p=>p.products||[]) : (w.products||[]);
       const _storeM={};
-      storeLog.forEach(r=>{ const d=r.data||{}; const m=(d.date||'').slice(0,7); if(!m) return; if(!_storeM[m]) _storeM[m]={In:0,Out:0}; const c = d.trays != null ? Number(d.trays) / TRAYS_PER_CARTON : Number(d.cartons || 0); /* לפי מגשים — פחות מקרטון לא נספר יותר כ-0 */ if((d.action||'').includes('כניסה')) _storeM[m].In+=c; else if((d.action||'').includes('משיכה')) _storeM[m].Out+=c; });
-      const storeMonthlyAll = Object.entries(_storeM).map(([m,v])=>[m,{In:Math.round(v.In*10)/10,Out:Math.round(v.Out*10)/10}]).sort(([a],[b])=>a.localeCompare(b));
+      storeLog.forEach(r=>{ const d=r.data||{}; const m=(d.date||'').slice(0,7); if(!m) return; if(!_storeM[m]) _storeM[m]={In:0,Out:0}; if((d.action||'').includes('כניסה')) _storeM[m].In+=Number(d.cartons||0); else if((d.action||'').includes('משיכה')) _storeM[m].Out+=Number(d.cartons||0); });
+      const storeMonthlyAll = Object.entries(_storeM).sort(([a],[b])=>a.localeCompare(b));
       const _bsM={}, _gvM={};
       bsShipments.forEach(s=>(s.pallets||[]).forEach(p=>(p.products||[]).forEach(pr=>_addM(_bsM,s.date,'In',pr.cartons))));
       bsWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>_addM(_bsM,w.date,'Out',pr.cartons)));
