@@ -1488,7 +1488,7 @@
       const showWithdrawal = !hiddenFeatures.includes('inventory.withdrawal');
       const showExport     = !hiddenFeatures.includes('inventory.export');
       const showLog        = !hiddenFeatures.includes('inventory.log');
-      const showReset      = !hiddenFeatures.includes('inventory.reset');
+      const showReset      = !!appUser?.is_admin && !hiddenFeatures.includes('inventory.reset'); // איפוס — מנהל בלבד
 
       useEffect(() => {
         const loadBsBalance = () => Promise.all([
@@ -1598,7 +1598,8 @@
       };
 
       const handleReset = async () => {
-        if (resetPassword !== '1234') { setResetError('סיסמא שגויה'); return; }
+        if (!appUser?.is_admin) { setResetError('איפוס מלאי — למנהל בלבד'); return; }
+        if (resetPassword.trim() !== 'אפס') { setResetError('כדי לאשר יש להקליד את המילה: אפס'); return; }
         const today = localToday();
         const isFullReset = resetKashrut === 'all' && resetCategory === 'all';
         // קודם השרת (על המצב העדכני שלו), ורק אחרי הצלחה — המסך. כך אין שתי כתיבות מתחרות ואין איפוס חלקי בשקט
@@ -2134,13 +2135,13 @@ ${htmlRows}
                   </div>
                   <p className="text-xs text-gray-500">פעולה זו לא ניתנת לביטול. <span className="font-bold text-red-600">הנתונים יימחקו לצמיתות.</span></p>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">סיסמא לאישור:</label>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">לאישור הקלידי את המילה <span className="text-red-600">אפס</span>:</label>
                     <input
-                      type="password"
+                      type="text"
                       value={resetPassword}
                       onChange={e => { setResetPassword(e.target.value); setResetError(''); }}
                       onKeyDown={e => e.key === 'Enter' && handleReset()}
-                      placeholder="הכניסי סיסמא"
+                      placeholder="אפס"
                       className="w-full p-2.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-red-400"
                       autoFocus
                     />
@@ -6289,7 +6290,7 @@ setTimeout(function(){
       );
     };
 
-    const GavashView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [] }) => {
+    const GavashView = ({ frozenProductsList = [], companyVat = '', scrollToTop = () => {}, kashrutList = [], appUser = null }) => {
       const today = localToday();
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       const [bsTab, setBsTab] = useState('inventory');
@@ -6508,6 +6509,7 @@ setTimeout(function(){
 
       const [gvResetting, setGvResetting] = useState(false);
       const resetGvInventory = async () => {
+        if (!appUser?.is_admin) { alert('איפוס מלאי — למנהל בלבד'); return; }
         const prods = inventoryMap.filter(item => item.totalIn - item.totalOut > 0).map(item => {
           const prod = { id: Date.now() + Math.random(), name: item.name, kashrut: item.kashrut, cartons: item.totalIn - item.totalOut, reset: true };
           if (item.sku) prod.sku = item.sku;
@@ -7054,9 +7056,9 @@ setTimeout(function(){
                   <button onClick={exportInventoryStatePdf} className="flex items-center gap-1.5 text-xs font-bold bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors">
                     <span>📄</span> הורד PDF
                   </button>
-                  <button onClick={resetGvInventory} disabled={gvResetting || gvEditMode} className="flex items-center gap-1.5 text-xs font-bold bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50">
+                  {appUser?.is_admin && <button onClick={resetGvInventory} disabled={gvResetting || gvEditMode} className="flex items-center gap-1.5 text-xs font-bold bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50">
                     <span>🔄</span> {gvResetting ? 'מאפס...' : 'איפוס מלאי'}
-                  </button>
+                  </button>}
                 </div>
               </div>
               <p className="text-sm text-gray-400 mb-5">
@@ -8496,7 +8498,7 @@ setTimeout(function(){
           case 'beit-shemesh':
             return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
           case 'gavash':
-            return <GavashView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
+            return <GavashView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} appUser={appUser} />;
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} />;
           case 'users':
