@@ -33,14 +33,14 @@
   </script>
 
   <!-- React & ReactDOM (Production) -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
   
   <!-- Babel compiler for JSX on-the-fly -->
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
 
   <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 
   <!-- SheetJS for Excel export -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
@@ -154,6 +154,12 @@
     };
     // תאריך היום לפי שעון ישראל (YYYY-MM-DD). toISOString נותן UTC — בין חצות ל-02:00/03:00 יוצא תאריך של אתמול
     const localToday = () => new Date().toLocaleDateString('sv-SE');
+    // escape לטקסט שנכנס ל-HTML שנבנה ידנית (חלונות הדפסה)
+    const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const escDeep = (v) => typeof v === 'string' ? escHtml(v)
+      : Array.isArray(v) ? v.map(escDeep)
+      : (v && typeof v === 'object') ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, escDeep(x)]))
+      : v;
     const checkSave = (label) => (res) => { if (res?.error) reportSaveError(label, res.error); return res; };
 
     // ===[ICONS]===
@@ -2358,7 +2364,10 @@ ${htmlRows}
       const [editingOrder, setEditingOrder] = useState(null);
       const [deleteConfirmOrder, setDeleteConfirmOrder] = useState(null);
 
-      const printAllBons = (order) => {
+      const printAllBons = (rawOrder) => {
+        // כל טקסט מהמשתמש (שם, כתובת, הערות) עובר escape לפני שנכנס ל-HTML של חלון ההדפסה.
+        // סוג האחסון נקבע לפני ה-escape, כי הוא מזוהה לפי שם המוצר המקורי
+        const order = escDeep({ ...rawOrder, items: (rawOrder.items || []).map(i => ({ ...i, _st: resolveItemStorage(i) })) });
         const allRegular = (order.items || []).filter(i => i.qty !== '-');
         const packingItem = (order.items || []).find(i => i.qty === '-');
         const buildGroups = (items) => {
@@ -2373,9 +2382,9 @@ ${htmlRows}
           });
           return groups;
         };
-        const freshGroups  = buildGroups(allRegular.filter(i => resolveItemStorage(i) === 'fresh'));
-        const frozenGroups = buildGroups(allRegular.filter(i => resolveItemStorage(i) === 'frozen'));
-        const fishGroups   = buildGroups(allRegular.filter(i => resolveItemStorage(i) === 'fish'));
+        const freshGroups  = buildGroups(allRegular.filter(i => i._st === 'fresh'));
+        const frozenGroups = buildGroups(allRegular.filter(i => i._st === 'frozen'));
+        const fishGroups   = buildGroups(allRegular.filter(i => i._st === 'fish'));
         if (freshGroups.length === 0 && frozenGroups.length === 0 && fishGroups.length === 0) return;
 
         const logoHtml = logoImage ? `<img src="${logoImage}" style="width:64px;height:64px;object-fit:contain;" />` : '';
@@ -7384,8 +7393,8 @@ setTimeout(function(){
       const _addM = (map, date, field, c) => { const m=(date||'').slice(0,7); if(!m) return; if(!map[m]) map[m]={In:0,Out:0}; map[m][field]+=Number(c||0); };
       const _wdProds = (w) => (w.pallets && w.pallets.length) ? w.pallets.flatMap(p=>p.products||[]) : (w.products||[]);
       const _storeM={};
-      storeLog.forEach(r=>{ const d=r.data||{}; const m=(d.date||'').slice(0,7); if(!m) return; if(!_storeM[m]) _storeM[m]={In:0,Out:0}; if((d.action||'').includes('כניסה')) _storeM[m].In+=Number(d.cartons||0); else if((d.action||'').includes('משיכה')) _storeM[m].Out+=Number(d.cartons||0); });
-      const storeMonthlyAll = Object.entries(_storeM).sort(([a],[b])=>a.localeCompare(b));
+      storeLog.forEach(r=>{ const d=r.data||{}; const m=(d.date||'').slice(0,7); if(!m) return; if(!_storeM[m]) _storeM[m]={In:0,Out:0}; const c = d.trays != null ? Number(d.trays) / TRAYS_PER_CARTON : Number(d.cartons || 0); /* לפי מגשים — פחות מקרטון לא נספר יותר כ-0 */ if((d.action||'').includes('כניסה')) _storeM[m].In+=c; else if((d.action||'').includes('משיכה')) _storeM[m].Out+=c; });
+      const storeMonthlyAll = Object.entries(_storeM).map(([m,v])=>[m,{In:Math.round(v.In*10)/10,Out:Math.round(v.Out*10)/10}]).sort(([a],[b])=>a.localeCompare(b));
       const _bsM={}, _gvM={};
       bsShipments.forEach(s=>(s.pallets||[]).forEach(p=>(p.products||[]).forEach(pr=>_addM(_bsM,s.date,'In',pr.cartons))));
       bsWithdrawals.forEach(w=>_wdProds(w).forEach(pr=>_addM(_bsM,w.date,'Out',pr.cartons)));
