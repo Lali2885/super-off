@@ -7776,6 +7776,8 @@ setTimeout(function(){
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     };
+    // אימייל פנימי ל-Supabase Auth — תואם ל-public.so_email בשרת (db/01_auth_prepare.sql)
+    const soEmail = async (username) => (await hashPassword(username)).slice(0, 32) + '@superoff.local';
 
     const ALL_PAGES = [
       { id: 'inventory',    label: 'מלאי סחורה כללי' },
@@ -7878,21 +7880,17 @@ setTimeout(function(){
       const handleSave = async () => {
         setSaving(true); setFormError('');
         try {
-          if (editingUser) {
-            const update = { username: form.username, is_admin: form.is_admin, permissions: form.permissions };
-            if (form.password) update.password_hash = await hashPassword(form.password);
-            const { error: err } = await db.from('app_users').update(update).eq('id', editingUser.id);
-            if (err) throw err;
-          } else {
-            if (!form.password) { setFormError('סיסמה נדרשת'); setSaving(false); return; }
-            if (!form.username.trim()) { setFormError('שם משתמש נדרש'); setSaving(false); return; }
-            const hash = await hashPassword(form.password);
-            const { error: err } = await db.from('app_users').insert({
-              username: form.username, password_hash: hash, is_admin: form.is_admin,
-              active: true, permissions: form.permissions
-            });
-            if (err) throw err;
-          }
+          if (!editingUser && !form.password) { setFormError('סיסמה נדרשת'); setSaving(false); return; }
+          if (!form.username.trim()) { setFormError('שם משתמש נדרש'); setSaving(false); return; }
+          // דרך פונקציה בשרת (מנהל בלבד) — מעדכנת גם את חשבון הכניסה המאובטח
+          const { error: err } = await db.rpc('admin_save_user', {
+            p_id: editingUser ? editingUser.id : null,
+            p_username: form.username,
+            p_password_hash: form.password ? await hashPassword(form.password) : null,
+            p_is_admin: form.is_admin,
+            p_permissions: form.permissions
+          });
+          if (err) throw err;
           await loadUsers();
           setShowModal(false);
         } catch (e) {
@@ -7902,7 +7900,8 @@ setTimeout(function(){
       };
 
       const toggleActive = async (user) => {
-        await db.from('app_users').update({ active: !user.active }).eq('id', user.id);
+        const { error: err } = await db.rpc('admin_set_active', { p_id: user.id, p_active: !user.active });
+        if (err) alert('שגיאה: ' + err.message);
         await loadUsers();
       };
 
@@ -8057,36 +8056,26 @@ setTimeout(function(){
       const [password, setPassword] = useState('');
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState('');
-      const [isFirstSetup, setIsFirstSetup] = useState(false);
+      const isFirstSetup = false; // משתמשים חדשים נוצרים רק ע"י מנהל (ניהול משתמשים)
 
-      useEffect(() => {
-        db.from('app_users').select('id', { count: 'exact', head: true }).then(({ count }) => {
-          if (count === 0) setIsFirstSetup(true);
-        });
-      }, []);
-
+      // כניסה דרך Supabase Auth — הסיסמה נבדקת בשרת, ורק משתמש מחובר יכול לגשת לנתונים
       const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true); setError('');
-        const hash = await hashPassword(password);
-        if (isFirstSetup) {
-          const allIds = ALL_PAGES.map(p => p.id);
-          const { error: err } = await db.from('app_users').insert({
-            username, password_hash: hash, is_admin: true, active: true,
-            permissions: { pages: allIds, canEdit: allIds }
-          });
-          if (err) { setError('שגיאה ביצירת משתמש: ' + err.message); setLoading(false); return; }
-          const user = { username, is_admin: true, permissions: { pages: allIds, canEdit: allIds } };
-          localStorage.setItem('appUser', JSON.stringify(user));
-          onLogin(user);
-        } else {
-          const { data, error: err } = await db.from('app_users').select('*').eq('username', username).eq('password_hash', hash).eq('active', true).maybeSingle();
-          if (err) { setError('שגיאה: ' + err.message); setLoading(false); return; }
-          if (!data) { setError('שם משתמש או סיסמה שגויים'); setLoading(false); return; }
+        try {
+          const hash = await hashPassword(password);
+          const { data: auth, error: authErr } = await db.auth.signInWithPassword({ email: await soEmail(username), password: hash });
+          if (authErr) { setError(/invalid/i.test(authErr.message) ? 'שם משתמש או סיסמה שגויים' : 'שגיאה: ' + authErr.message); setLoading(false); return; }
+          const { data, error: err } = await db.from('app_users').select('id,username,is_admin,active,permissions').eq('id', auth.user.id).maybeSingle();
+          if (err || !data || !data.active) {
+            await db.auth.signOut();
+            setError(err ? 'שגיאה: ' + err.message : 'המשתמש אינו פעיל');
+            setLoading(false); return;
+          }
           const user = { id: data.id, username: data.username, is_admin: data.is_admin, permissions: data.permissions };
           localStorage.setItem('appUser', JSON.stringify(user));
           onLogin(user);
-        }
+        } catch (ex) { setError('שגיאה: ' + (ex?.message || ex)); setLoading(false); }
       };
 
       return (
@@ -8297,6 +8286,16 @@ setTimeout(function(){
           setAppLoading(true);
           setLoadError(null);
           try {
+            // חייבים חיבור מאובטח פעיל; בלעדיו (למשל כניסה מגרסה ישנה) — חוזרים למסך הכניסה
+            const { data: { session } } = await db.auth.getSession();
+            if (!session) { localStorage.removeItem('appUser'); initialLoadDoneRef.current = false; setAppUser(null); return; }
+            // פרטי המשתמש מהשרת בכל טעינה: משתמש שהושבת יוצא, הרשאות שעודכנו נכנסות לתוקף
+            const me = await db.from('app_users').select('id,username,is_admin,active,permissions').eq('id', session.user.id).maybeSingle();
+            if (me.error) throw me.error;
+            if (!me.data || !me.data.active) { await db.auth.signOut(); localStorage.removeItem('appUser'); initialLoadDoneRef.current = false; setAppUser(null); return; }
+            const fresh = { id: me.data.id, username: me.data.username, is_admin: me.data.is_admin, permissions: me.data.permissions };
+            if (JSON.stringify(fresh) !== JSON.stringify(appUser)) { localStorage.setItem('appUser', JSON.stringify(fresh)); setAppUser(fresh); }
+
             const results = await Promise.all([
               fetchAll(() => db.from('orders').select('data').order('created_at', { ascending: false }).order('id')),
               db.from('fresh_stock').select('data').eq('id', 'main').maybeSingle(),
@@ -8453,6 +8452,7 @@ setTimeout(function(){
       }, [appUser, dataReady]);
 
       const handleSignOut = () => {
+        db.auth.signOut();
         localStorage.removeItem('appUser');
         setAppUser(null);
         dataLoadedRef.current = false;
