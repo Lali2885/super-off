@@ -199,6 +199,10 @@
     .so-btn.danger { color: #991B1B; border-color: #FECACA; }
     .so-btn.danger:hover { background: #FEF2F2; }
     .so-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .so-btn.danger-solid { background: #B91C1C; border-color: #B91C1C; color: #fff; }
+    .so-btn.danger-solid:hover { background: #991B1B; }
+    .so-modal-f .so-btn { flex: 1; }
+    .so-delwarn { font-size: .9rem; font-weight: 700; color: #991B1B; }
     .so-ktabs { display: flex; flex-wrap: wrap; gap: .6rem; }
     .so-ktab { display: flex; align-items: center; gap: .7rem; min-height: 3.6rem; padding: .4rem 1.1rem .4rem 1.3rem; border-radius: .9rem; border: 3px solid var(--k); background: var(--surface); color: var(--k-ink); font-weight: 800; font-size: 1.15rem; text-align: right; line-height: 1.2; }
     .so-ktab[aria-selected="true"] { background: var(--k); color: #fff; box-shadow: 0 .3rem .9rem -0.3rem var(--k); }
@@ -4608,7 +4612,22 @@ setTimeout(function(){
 
     // ===[LISTS]===
     // --- ListEditor Helpers ---
+    // חלון אישור לפני מחיקה ברשימות — מחיקה כאן נשמרת מיד בשרת ואין "בטל"
+    const ConfirmDelete = ({ title, text, onCancel, onConfirm }) => (
+      <div className="so-modal-bg" onClick={e => { if (e.target === e.currentTarget) onCancel(); }}>
+        <div className="so-modal" role="alertdialog" aria-modal="true" aria-label={title}>
+          <div className="so-modal-h"><h2>{title}</h2></div>
+          <div className="so-modal-b"><div className="lead">{text}</div><div className="so-delwarn">אי אפשר לבטל את המחיקה אחרי האישור.</div></div>
+          <div className="so-modal-f" style={{ gap: '.6rem' }}>
+            <button className="so-btn" onClick={onCancel} autoFocus>ביטול</button>
+            <button className="so-btn danger-solid" onClick={onConfirm}><LineIcon name="trash" />כן, למחוק</button>
+          </div>
+        </div>
+      </div>
+    );
+
     const ListEditor = ({ title, items, setItems, placeholder, showColor = false }) => {
+      const [pendingDel, setPendingDel] = useState(null);
       const [newItemName, setNewItemName] = useState('');
       const [newItemColor, setNewItemColor] = useState('#6366f1');
 
@@ -4645,11 +4664,17 @@ setTimeout(function(){
                   <input type="color" value={item.color || '#6366f1'} onChange={e => handleColorChange(item.id, e.target.value)} className="so-color sm" aria-label={`צבע — ${item.name}`} />
                 )}
                 <b>{item.name}</b>
-                <button onClick={() => handleRemove(item.id)} className="so-iconbtn danger" title="מחיקה" aria-label={`מחיקה — ${item.name}`}><LineIcon name="trash" /></button>
+                <button onClick={() => setPendingDel(item)} className="so-iconbtn danger" title="מחיקה" aria-label={`מחיקה — ${item.name}`}><LineIcon name="trash" /></button>
               </li>
             ))}
             {items.length === 0 && <li className="so-lempty">הרשימה ריקה</li>}
           </ul>
+          {pendingDel && (
+            <ConfirmDelete title={`מחיקה מ"${title}"`}
+              text={showColor ? `למחוק את סוג הכשרות "${pendingDel.name}"? מוצרים שמשויכים לכשרות הזו לא יימחקו, אבל היא תיעלם מהבחירה.` : `למחוק את "${pendingDel.name}" מהרשימה?`}
+              onCancel={() => setPendingDel(null)}
+              onConfirm={() => { handleRemove(pendingDel.id); setPendingDel(null); }} />
+          )}
         </section>
       );
     };
@@ -4943,6 +4968,7 @@ setTimeout(function(){
       const [selectedId, setSelectedId]   = useState('');
       const [newNeighborhood, setNewNeighborhood] = useState('');
       const [newStreet, setNewStreet]     = useState('');
+      const [pendingDel, setPendingDel]   = useState(null); // { kind: 'hood', n } | { kind: 'street', street }
 
       const selectedN = neighborhoodData.find(n => n.id === selectedId);
 
@@ -4984,7 +5010,7 @@ setTimeout(function(){
                   <div key={n.id} onClick={() => setSelectedId(n.id)} className={`so-hooditem ${selectedId === n.id ? 'sel' : ''}`}>
                     <LineIcon name="pin" />
                     <span className="nm">{n.name} <small>({n.streets.length} רחובות)</small></span>
-                    <button onClick={e => { e.stopPropagation(); removeNeighborhood(n.id); }} className="so-iconbtn danger sm" title="מחיקת שכונה" aria-label={`מחיקת שכונה — ${n.name}`}><LineIcon name="trash" /></button>
+                    <button onClick={e => { e.stopPropagation(); setPendingDel({ kind: 'hood', n }); }} className="so-iconbtn danger sm" title="מחיקת שכונה" aria-label={`מחיקת שכונה — ${n.name}`}><LineIcon name="trash" /></button>
                   </div>
                 ))}
               </div>
@@ -5005,7 +5031,7 @@ setTimeout(function(){
                     {selectedN.streets.map(street => (
                       <div key={street} className="so-hooditem">
                         <span className="nm">{street}</span>
-                        <button onClick={() => removeStreet(street)} className="so-iconbtn danger sm" title="מחיקת רחוב" aria-label={`מחיקת רחוב — ${street}`}><LineIcon name="trash" /></button>
+                        <button onClick={() => setPendingDel({ kind: 'street', street })} className="so-iconbtn danger sm" title="מחיקת רחוב" aria-label={`מחיקת רחוב — ${street}`}><LineIcon name="trash" /></button>
                       </div>
                     ))}
                     {selectedN.streets.length === 0 && <div className="so-lempty">אין רחובות — הוסיפי למעלה</div>}
@@ -5014,6 +5040,15 @@ setTimeout(function(){
               )}
             </div>
           </div>
+          {pendingDel && (
+            <ConfirmDelete
+              title={pendingDel.kind === 'hood' ? 'מחיקת שכונה' : 'מחיקת רחוב'}
+              text={pendingDel.kind === 'hood'
+                ? `למחוק את השכונה "${pendingDel.n.name}"${pendingDel.n.streets.length ? ` יחד עם ${pendingDel.n.streets.length} הרחובות שלה` : ''}?`
+                : `למחוק את הרחוב "${pendingDel.street}" מהשכונה "${selectedN?.name || ''}"?`}
+              onCancel={() => setPendingDel(null)}
+              onConfirm={() => { if (pendingDel.kind === 'hood') removeNeighborhood(pendingDel.n.id); else removeStreet(pendingDel.street); setPendingDel(null); }} />
+          )}
         </section>
       );
     };
@@ -5032,6 +5067,7 @@ setTimeout(function(){
       const [newCatName, setNewCatName] = useState('');
       const [showNewCatInput, setShowNewCatInput] = useState(false);
       const [pendingCats, setPendingCats] = useState([]);
+      const [pendingDel, setPendingDel] = useState(null); // שם המוצר למחיקה
       const tableRef = useRef(null);
 
       useEffect(() => {
@@ -5302,7 +5338,7 @@ setTimeout(function(){
                             </div>
                           </td>
                           <td className="px-4 py-2">
-                            <button onClick={() => removeGroup(p.name)} className="so-iconbtn danger sm" title="מחיקת מוצר" aria-label={`מחיקת מוצר — ${p.name}`}>
+                            <button onClick={() => setPendingDel(p.name)} className="so-iconbtn danger sm" title="מחיקת מוצר" aria-label={`מחיקת מוצר — ${p.name}`}>
                               <LineIcon name="trash" />
                             </button>
                           </td>
@@ -5314,6 +5350,17 @@ setTimeout(function(){
               </tbody>
             </table>
           </div>
+
+          {pendingDel && (() => {
+            const variants = items.filter(x => x.name === pendingDel);
+            const ks = [...new Set(variants.map(x => x.kashrut).filter(Boolean))];
+            return (
+              <ConfirmDelete title="מחיקת מוצר"
+                text={`למחוק את "${pendingDel}" מרשימת המוצרים${ks.length > 1 ? ` — מכל הכשרויות (${ks.join(', ')})` : ks.length ? ` (${ks[0]})` : ''}?`}
+                onCancel={() => setPendingDel(null)}
+                onConfirm={() => { removeGroup(pendingDel); setPendingDel(null); }} />
+            );
+          })()}
 
           {/* מודל הוספת מוצר */}
           {showAddModal && (
