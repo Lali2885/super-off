@@ -247,6 +247,61 @@
     .so-subcard { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
     .so-subcard-h { display: flex; align-items: center; gap: .6rem; padding: .75rem 1rem; background: #F7F5F2; border-bottom: 1px solid var(--line); cursor: pointer; user-select: none; }
     .so-subcard-title { display: inline-flex; align-items: center; gap: .45rem; font-weight: 900; font-size: 1.05rem; }
+
+    /* ===== מסך הזמנות ===== */
+    .so-btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .so-btn.primary:hover { background: #991B1B; }
+    .so-ostats { flex: 1 1 20rem; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem 1rem; font-size: .9rem; font-weight: 600; color: var(--muted); }
+    .so-ostats span { display: inline-flex; align-items: center; gap: .3rem; }
+    .so-ostats b { color: var(--ink); font-size: 1.15rem; font-weight: 900; }
+    .so-ostats .sep { width: 1px; height: 1.2rem; background: var(--line); }
+    .so-kanban { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; align-items: start; }
+    .so-col { background: #E8E5E0; border-radius: 1.1rem; padding: .7rem; display: flex; flex-direction: column; gap: .6rem; min-width: 0; transition: box-shadow .15s; }
+    .so-col.dragover { box-shadow: 0 0 0 4px #FACC15; background: #FEF9C3; }
+    .so-col-h { display: flex; align-items: center; gap: .55rem; padding: .3rem .4rem; }
+    .so-col-h i { width: .7rem; height: .7rem; border-radius: 50%; }
+    .so-col-h h2 { margin: 0; font-size: 1.15rem; font-weight: 900; }
+    .so-col-h b { margin-inline-start: auto; font-size: 1.1rem; }
+    .so-colempty { text-align: center; color: var(--muted); font-size: .9rem; padding: 1.5rem .5rem; border: 2px dashed #CFCAC3; border-radius: .9rem; }
+    .so-colhint { text-align: center; font-size: .78rem; color: var(--muted); font-weight: 600; }
+    .so-dropzone { border: 2px dashed #CA8A04; border-radius: .9rem; padding: 1rem; text-align: center; font-weight: 800; color: #854D0E; background: #FEF9C3; }
+    .so-ocard { background: #fff; border-radius: .9rem; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); display: flex; }
+    .so-ocard.dimmed { opacity: .7; }
+    .so-ocard.draggable { cursor: grab; }
+    .so-ocard.dragging { opacity: .5; }
+    .so-ostripe { width: .55rem; flex-shrink: 0; }
+    .so-obody { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .so-oclick { padding: .8rem .9rem .55rem; display: flex; flex-direction: column; gap: .5rem; }
+    .so-oclick.clickable { cursor: pointer; }
+    .so-oclick.clickable:hover { background: #FCFBFA; }
+    .so-ohead { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .5rem; }
+    .so-ohead > div { flex: 1 1 9rem; min-width: 0; }
+    .so-ohead b { font-size: 1.1rem; font-weight: 800; display: block; overflow-wrap: anywhere; }
+    .so-ohead small { font-size: .8rem; color: var(--muted); }
+    .so-when { margin-inline-start: auto; white-space: nowrap; font-size: .85rem; font-weight: 800; background: #F1EFEB; padding: .2rem .6rem; border-radius: 999px; }
+    .so-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .so-tag { font-size: .8rem; font-weight: 700; padding: .15rem .6rem; border-radius: 999px; background: #F1EFEB; color: #3F3B37; display: inline-flex; align-items: center; gap: .3rem; }
+    .so-tag .so-ico { width: 1.05em; height: 1.05em; }
+    .so-tag.warn { background: #FEF3C7; color: #78350F; }
+    .so-tag.pay { background: #DBEAFE; color: #1E3A8A; }
+    .so-tag.ok { background: var(--in-bg); color: var(--in); }
+    .so-tag.butcher { background: #FFEDD5; color: #9A3412; }
+    .so-onote { font-size: .85rem; font-weight: 600; color: #991B1B; background: #FEF2F2; border: 1px solid #FECACA; border-radius: .6rem; padding: .35rem .6rem; white-space: pre-wrap; }
+    .so-oitems { font-size: .95rem; color: #2E2B28; line-height: 1.5; }
+    .so-ocats { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .7rem; font-size: .75rem; font-weight: 700; color: var(--muted); }
+    .so-ocat { display: inline-flex; align-items: center; gap: .25rem; }
+    .so-chev { margin-inline-start: auto; font-size: .75rem; color: #A8A29E; font-weight: 700; }
+    .so-oact { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; padding: .55rem .9rem .8rem; border-top: 1px solid var(--line-soft); }
+    .so-iconbtn { width: 2.6rem; height: 2.6rem; border-radius: .6rem; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; color: #3F3B37; padding: 0; }
+    .so-iconbtn:hover { background: #F7F5F2; }
+    .so-iconbtn.danger { color: #991B1B; }
+    .so-iconbtn.danger:hover { background: #FEF2F2; }
+    .so-obtn { flex: 1 1 8rem; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 2.6rem; padding: 0 1rem; border-radius: .6rem; border: 0; background: var(--ink); color: #fff; font-weight: 800; font-size: .95rem; }
+    .so-obtn:hover { background: #2E2B33; }
+    .so-obtn.ok { background: var(--in); }
+    .so-obtn.ok:hover { background: #14532D; }
+    .so-odetail { padding: .6rem .9rem .9rem; border-top: 1px solid var(--line-soft); }
+    @media (max-width: 1100px) { .so-kanban { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 860px) {
       .so-actions .so-btn { flex: 1 1 auto; }
       .so-ktab { flex: 1 1 9rem; }
@@ -358,6 +413,11 @@
       tag: <><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.3"/></>,
       download: <path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>,
       trash: <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>,
+      plus: <path d="M12 5v14M5 12h14"/>,
+      check: <path d="M20 6 9 17l-5-5"/>,
+      print: <><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></>,
+      edit: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>,
+      undo: <path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>,
       // קטגוריות מוצרים
       'עוף': <><path d="M13.6 3.2c4-.6 7.5 2.4 7.2 6.4-.3 3.7-4 6.6-7.8 5.9a5 5 0 0 1-1.3-.4l-3.4 3.4a2.1 2.1 0 1 1-2.6 2.4 2.1 2.1 0 1 1 1.1-3.8l3.4-3.4a5.5 5.5 0 0 1-.6-2.2c-.2-4.1 1.6-7.7 4-8.3z"/><path d="M15 7c1.2.2 2.2 1.2 2.3 2.5"/></>,
       'הודו': <path d="M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.3-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.8V21"/>,
@@ -2991,58 +3051,31 @@ setTimeout(function(){
 
       return (
         <div className="animate-in fade-in duration-300 relative">
-          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">ניהול הזמנות</h1>
-              <p className="text-gray-500 mt-1">ניהול הזמנות פתוחות בתור, הדפסת בונים וסימוני חיתוך</p>
-            </div>
-            <Button variant="purple" icon={Icons.Plus} className="px-6 py-3 text-base shadow-md font-bold" onClick={() => setIsModalOpen(true)}>
-              הזמנה חדשה (טופס מלא)
-            </Button>
-          </div>
-
-          {/* סטטיסטיקות הזמנות */}
-          {(() => {
-            const _totalOrders = orders.length;
-            const _newOrders = orders.filter(o => o.status === 'new' && !o.assignedButcher).length;
-            const _assignedOrders = orders.filter(o => o.status === 'new' && o.assignedButcher).length;
-            const _completedOrders = orders.filter(o => o.status === 'completed' || o.status === 'delivered').length;
-            const _deliveryOrders = orders.filter(o => o.type === 'delivery').length;
-            const _pickupOrders = orders.filter(o => o.type === 'pickup').length;
-            const _ordersByKashrut = kashrutList.map(k => ({ ...k, count: orders.filter(o => o.kashrut === k.name).length }));
-            const _ordersByButcher = butchersList.map(b => ({ ...b, count: orders.filter(o => o.assignedButcher === b.name).length }));
-            return (
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 mb-6">
-                <div className="flex flex-wrap gap-x-5 gap-y-2 items-center">
-                  {[
-                    { icon: '📦', value: _totalOrders,     label: 'סה״כ',      color: '#8b5cf6' },
-                    { icon: '🆕', value: _newOrders,       label: 'ממתינות',   color: '#ef4444' },
-                    { icon: '🔪', value: _assignedOrders,  label: 'משויכות',   color: '#f97316' },
-                    { icon: '✅', value: _completedOrders, label: 'הושלמו',    color: '#22c55e' },
-                    { icon: '🚚', value: _deliveryOrders,  label: 'משלוחים',   color: '#3b82f6' },
-                    { icon: '🏪', value: _pickupOrders,    label: 'איסוף',     color: '#6366f1' },
-                  ].map(s => (
-                    <div key={s.label} className="flex items-center gap-1.5">
-                      <span className="text-base">{s.icon}</span>
-                      <span className="text-lg font-black" style={{ color: s.color }}>{s.value}</span>
-                      <span className="text-xs text-gray-400">{s.label}</span>
-                    </div>
-                  ))}
+          <div className="so-actions mb-4">
+            {(() => {
+              const nNew = orders.filter(o => o.status === 'new' && !o.assignedButcher).length;
+              const nWork = orders.filter(o => o.status === 'new' && o.assignedButcher).length;
+              const nPack = orders.filter(o => o.status === 'packing').length;
+              const nDone = orders.filter(o => o.status === 'completed').length;
+              const nDel = orders.filter(o => o.type === 'delivery' && ['new', 'packing', 'completed'].includes(o.status)).length;
+              const nPick = orders.filter(o => o.type === 'pickup' && ['new', 'packing', 'completed'].includes(o.status)).length;
+              const byButcher = butchersList.map(b => [b.name, orders.filter(o => o.assignedButcher === b.name && o.status !== 'delivered').length]).filter(([, n]) => n > 0);
+              return (
+                <div className="so-ostats">
+                  <span><b>{nNew}</b> חדשות</span>
+                  <span><b>{nWork}</b> בעבודה</span>
+                  <span><b>{nPack}</b> באריזה</span>
+                  <span><b>{nDone}</b> מוכנות</span>
+                  <span className="sep"></span>
+                  <span><LineIcon name="truck" /><b>{nDel}</b> משלוחים</span>
+                  <span><LineIcon name="box" /><b>{nPick}</b> איסוף</span>
+                  {byButcher.length > 0 && <span className="sep"></span>}
+                  {byButcher.map(([n, c]) => <span key={n}>{n}: <b>{c}</b></span>)}
                 </div>
-                {butchersList.length > 0 && (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 items-center mt-2 pt-2 border-t border-gray-100">
-                    <span className="text-xs font-bold text-gray-500">🔪 לפי קצב:</span>
-                    {_ordersByButcher.map(b => (
-                      <div key={b.id} className="flex items-center gap-1">
-                        <span className="text-sm font-black text-orange-500">{b.count}</span>
-                        <span className="text-xs text-gray-500">{b.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+              );
+            })()}
+            <button className="so-btn primary" onClick={() => setIsModalOpen(true)}><LineIcon name="plus" />הזמנה חדשה</button>
+          </div>
 
           {(() => {
             const newOrders      = orders.filter(o => o.status === 'new' && !o.assignedButcher);
@@ -3069,104 +3102,90 @@ setTimeout(function(){
               const hasFish = regularItems.some(i => resolveItemStorage(i) === 'fish');
               const hasFrozen = regularItems.some(i => resolveItemStorage(i) === 'frozen');
               const hasFresh = regularItems.some(i => resolveItemStorage(i) === 'fresh');
+              // כשרויות ההזמנה — לפס הצבע ולתגיות
+              const orderKs = [...new Set(regularItems.map(i => i.kashrut).filter(Boolean))];
+              if (!orderKs.length && order.kashrut) orderKs.push(order.kashrut);
+              const isMixed = orderKs.length > 1;
+              const stripeStyle = isMixed
+                ? { background: `repeating-linear-gradient(180deg, ${orderKs.map((k, i) => `${kStyle(k).c} ${i * 0.7}rem ${(i + 1) * 0.7}rem`).join(', ')})` }
+                : { background: kStyle(orderKs[0]).c };
+              // שורת סיכום פריטים (כמו בדמו): "10 עוף שלם · 5 עוף מפורק"
+              const summaryMap = new Map();
+              regularItems.forEach(i => { const k = i.cleanName || i.name; summaryMap.set(k, (summaryMap.get(k) || 0) + (parseFloat(i.qty) || 0)); });
+              const itemsSummary = [...summaryMap.entries()].map(([n, q]) => q ? `${q} ${n}` : n).join(' · ');
               return (
-              <div key={order.id}
+              <article key={order.id}
                 draggable={draggable}
                 onDragStart={draggable ? () => setDraggingId(order.id) : undefined}
                 onDragEnd={draggable ? () => setDraggingId(null) : undefined}
-                className={`bg-white rounded-xl shadow-sm border flex flex-col transition-all ${dimmed ? 'border-gray-100 opacity-70' : 'border-gray-200'} ${draggable ? 'active:cursor-grabbing active:opacity-60 active:scale-95' : ''} ${draggingId === order.id ? 'opacity-50' : ''}`}>
+                className={`so-ocard ${dimmed ? 'dimmed' : ''} ${draggable ? 'draggable' : ''} ${draggingId === order.id ? 'dragging' : ''}`}>
+                <div className="so-ostripe" style={stripeStyle}></div>
+                <div className="so-obody">
 
                 {/* כותרת — תמיד גלויה, לחיצה פותחת/סוגרת */}
                 <div onClick={!dimmed ? () => toggleOrderExpand(order.id) : undefined}
-                  className={`p-4 rounded-xl ${!dimmed ? 'cursor-pointer hover:bg-gray-50/60' : ''}`}>
-                  <div className="flex justify-between items-start mb-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-extrabold text-base text-gray-900 truncate">#{order.id} | {order.customer}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        <Icons.Phone className="w-3 h-3 inline ml-1 text-gray-400" />{order.phone}
-                      </div>
+                  className={`so-oclick ${!dimmed ? 'clickable' : ''}`}>
+                  <div className="so-ohead">
+                    <div>
+                      <b>{order.customer}</b>
+                      <small>#{order.id}{order.phone ? ` · ${order.phone}` : ''}</small>
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0 mr-2">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${order.type === 'delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
-                        {order.type === 'delivery' ? <Icons.Truck className="w-3 h-3" /> : <Icons.Package className="w-3 h-3" />}
-                        {order.type === 'delivery' ? 'משלוח' : 'איסוף'}
-                      </span>
-                      {order.timeString && <span className="text-[10px] text-gray-400">⏰ {order.timeString}</span>}
-                      {order.createdAt && <span className="text-[10px] text-gray-400">📅 {order.createdAt}</span>}
-                    </div>
+                    {(order.timeString || order.createdAt) && (
+                      <span className="so-when" title={order.createdAt ? `נוצרה: ${order.createdAt}` : undefined}>{order.timeString || order.createdAt}</span>
+                    )}
                   </div>
 
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {order.assignedButcher && <span className="text-[10px] bg-orange-100 text-orange-800 border border-orange-200 px-1.5 py-0.5 rounded font-bold">🔪 {order.assignedButcher}</span>}
-                    {order.neighborhood && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold"><Icons.MapPin className="w-2.5 h-2.5 inline" /> {order.neighborhood}</span>}
-                    {order.flags?.mustCoordinate && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">🚨 תאום</span>}
-                    {order.flags?.notifyReady && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-bold">📞 להודיע</span>}
-                    {order.flags?.chargeStatus === 'charge' && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">💳 לחייב</span>}
-                    {order.flags?.chargeStatus === 'noCharge' && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">🆓 לא לחייב</span>}
+                  <div className="so-tags">
+                    {orderKs.map(k => <KChip key={k} k={k} />)}
+                    <span className="so-tag"><LineIcon name={order.type === 'delivery' ? 'truck' : 'box'} />{order.type === 'delivery' ? 'משלוח' : 'איסוף'}{order.neighborhood ? ` · ${order.neighborhood}` : ''}</span>
+                    {order.assignedButcher && <span className="so-tag butcher">קצב: {order.assignedButcher}</span>}
+                    {order.flags?.mustCoordinate && <span className="so-tag warn">לתאם</span>}
+                    {order.flags?.notifyReady && <span className="so-tag warn">להודיע שמוכן</span>}
+                    {order.flags?.chargeStatus === 'charge' && <span className="so-tag pay">לחייב</span>}
+                    {order.flags?.chargeStatus === 'noCharge' && <span className="so-tag ok">לא לחייב</span>}
                   </div>
 
                   {order.orderNotes && (
-                    <div className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-2 py-1.5 mb-2 font-medium whitespace-pre-wrap">📝 {order.orderNotes}</div>
+                    <div className="so-onote">{order.orderNotes}</div>
                   )}
 
-                  {/* תגיות קטגוריה + חץ */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  {!isExpanded && itemsSummary && <div className="so-oitems">{itemsSummary}</div>}
+
+                  <div className="so-ocats">
                     {PRODUCT_CATEGORIES.filter(c => cats.has(c)).map(c => (
-                      <span key={c} className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${CAT_STYLES[c]?.badge || 'bg-purple-100 text-purple-800 border-purple-200'}`}>
-                        {CAT_EMOJI[c]} {c}
-                      </span>
+                      <span key={c} className="so-ocat"><LineIcon name={c} />{c}</span>
                     ))}
-                    {!dimmed && <span className="text-gray-300 text-xs mr-auto">{isExpanded ? '▲' : '▼'}</span>}
+                    {!dimmed && <span className="so-chev">{isExpanded ? 'סגור פירוט ▲' : 'פירוט ▼'}</span>}
                   </div>
                 </div>
 
                 {/* כפתורי פעולה — תמיד גלויים */}
                 {!dimmed && (
-                  <div className="px-3 pb-3 flex gap-1 flex-nowrap items-center" onClick={e => e.stopPropagation()}>
-                    <button onClick={(e) => { e.stopPropagation(); printAllBons(order); }}
-                      className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors shrink-0 leading-tight">
-                      🖨️
-                    </button>
-                    <button onClick={() => openEditModal(order)}
-                      className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight">
-                      ✏️
-                    </button>
-                    <button onClick={() => deleteOrder(order)}
-                      className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight">
-                      🗑️
-                    </button>
+                  <div className="so-oact" onClick={e => e.stopPropagation()}>
+                    <button className="so-iconbtn" title="הדפסת בונים" aria-label="הדפסת בונים" onClick={(e) => { e.stopPropagation(); printAllBons(order); }}><LineIcon name="print" /></button>
+                    <button className="so-iconbtn" title="עריכה" aria-label="עריכה" onClick={() => openEditModal(order)}><LineIcon name="edit" /></button>
+                    <button className="so-iconbtn danger" title="מחיקה" aria-label="מחיקה" onClick={() => deleteOrder(order)}><LineIcon name="trash" /></button>
                     {order.status === 'packing' && (
-                      <button onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o)); collapseOrder(order.id); }}
-                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 shrink-0 leading-tight">↩</button>
+                      <button className="so-iconbtn" title="החזרה לעבודה" aria-label="החזרה לעבודה" onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o)); collapseOrder(order.id); }}><LineIcon name="undo" /></button>
                     )}
                     {order.status === 'new' && order.assignedButcher && (
-                      <button onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o)); collapseOrder(order.id); }}
-                        className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 shrink-0 leading-tight">↩</button>
+                      <button className="so-iconbtn" title="ביטול שיוך קצב" aria-label="ביטול שיוך קצב" onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o)); collapseOrder(order.id); }}><LineIcon name="undo" /></button>
                     )}
                     {order.status === 'new' && !order.assignedButcher && (
-                      <button onClick={() => setButcherModal(order.id)}
-                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 transition-colors shrink-0 leading-tight">
-                        🔪 לעבודה
-                      </button>
+                      <button className="so-obtn" onClick={() => setButcherModal(order.id)}>לעבודה ←</button>
                     )}
                     {order.status === 'new' && order.assignedButcher && (
-                      <button onClick={() => moveToPacking(order.id)}
-                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-yellow-500 hover:bg-yellow-600 text-white border border-yellow-600 transition-colors shrink-0 leading-tight">
-                        📦 לאריזה
-                      </button>
+                      <button className="so-obtn" onClick={() => moveToPacking(order.id)}>לאריזה ←</button>
                     )}
                     {order.status === 'packing' && (
-                      <button onClick={() => requestComplete(order.id)}
-                        className="me-auto py-1 px-2 rounded-md text-[11px] font-bold bg-green-500 hover:bg-green-600 text-white border border-green-600 transition-colors shrink-0 leading-tight">
-                        ✅ מוכן
-                      </button>
+                      <button className="so-obtn ok" onClick={() => requestComplete(order.id)}><LineIcon name="check" />מוכן</button>
                     )}
                   </div>
                 )}
 
                 {/* פירוט — נפתח בלחיצה */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-gray-100 pt-3">
+                  <div className="so-odetail">
                     {(() => {
                       const seen = new Set(); const groups = [];
                       regularItems.forEach(item => {
@@ -3241,77 +3260,55 @@ setTimeout(function(){
 
                   </div>
                 )}
-              </div>
+                </div>
+              </article>
               );
             };
 
             const renderKashrutGroups = (arr, dimmed = false, draggable = false) => {
               if (arr.length === 0) return (
-                <div className="text-center text-gray-400 text-sm py-6 border-2 border-dashed border-gray-200 rounded-xl">אין הזמנות</div>
+                <div className="so-colempty">אין הזמנות</div>
               );
-              const groups = {};
-              sortByKashrut(arr).forEach(o => {
-                const k = kashrutGroupKey(o);
-                if (!groups[k]) groups[k] = [];
-                groups[k].push(o);
-              });
-              return Object.entries(groups).map(([kashrut, list]) => (
-                <div key={kashrut} className="mb-3">
-                  <div className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-purple-400 inline-block"></span> {kashrut} ({list.length})
-                  </div>
-                  <div className="space-y-2">
-                    {list.map(o => renderOrderCard(o, dimmed, draggable))}
-                  </div>
-                </div>
-              ));
+              return sortByKashrut(arr).map(o => renderOrderCard(o, dimmed, draggable));
             };
 
-            const colHeader = (title, count, color, icon) => (
-              <div className={`flex items-center gap-2 mb-3 p-3 rounded-xl ${color}`}>
-                <span className="text-lg">{icon}</span>
-                <div>
-                  <div className="font-extrabold text-sm">{title}</div>
-                  <div className="text-xs opacity-70">{count} הזמנות</div>
-                </div>
-              </div>
+            const colHeader = (title, count, color) => (
+              <div className="so-col-h"><i style={{ background: color }}></i><h2>{title}</h2><b>{count}</b></div>
             );
 
             return (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+              <div className="so-kanban">
                 {/* עמודה 1 — הזמנות חדשות */}
-                <div>
-                  {colHeader('הזמנות חדשות', newOrders.length, 'bg-red-50 text-red-800 border border-red-200', '🆕')}
+                <section className="so-col">
+                  {colHeader('חדשות', newOrders.length, '#B91C1C')}
                   {renderKashrutGroups(newOrders)}
-                </div>
+                </section>
 
                 {/* עמודה 2 — בעבודה */}
-                <div>
-                  {colHeader('בעבודה', assignedOrders.length, 'bg-orange-50 text-orange-800 border border-orange-200', '🔪')}
+                <section className="so-col">
+                  {colHeader('בעבודה', assignedOrders.length, '#C2410C')}
                   {renderKashrutGroups(assignedOrders, false, true)}
                   {assignedOrders.length > 0 && (
-                    <div className="mt-2 text-center text-xs text-orange-400 font-medium">לחץ "לאריזה 📦" כשהקצב סיים</div>
+                    <div className="so-colhint">כשהקצב סיים — "לאריזה", או גרירה לעמודת האריזה</div>
                   )}
-                </div>
+                </section>
 
                 {/* עמודה 3 — באריזה */}
-                <div
+                <section
                   onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
                   onDragLeave={() => setIsDragOver(false)}
                   onDrop={() => { if (draggingId) { moveToPacking(draggingId); setDraggingId(null); } setIsDragOver(false); }}
-                  className={`rounded-xl transition-all ${isDragOver ? 'ring-4 ring-yellow-400 ring-offset-2 bg-yellow-50/50' : ''}`}
+                  className={`so-col ${isDragOver ? 'dragover' : ''}`}
                 >
-                  {colHeader('באריזה', packingOrders.length, 'bg-yellow-50 text-yellow-800 border border-yellow-200', '📦')}
+                  {colHeader('באריזה', packingOrders.length, '#A16207')}
                   {isDragOver && (
-                    <div className="mb-3 border-2 border-dashed border-yellow-400 rounded-xl p-4 text-center text-yellow-700 font-bold text-sm bg-yellow-50 animate-pulse">
-                      שחרר כאן להעברה לאריזה 📦
-                    </div>
+                    <div className="so-dropzone">שחררי כאן להעברה לאריזה</div>
                   )}
                   {renderKashrutGroups(packingOrders, false, false)}
                   {packingOrders.length > 0 && (
-                    <div className="mt-2 text-center text-xs text-yellow-600 font-medium">לחץ "סיום ✓" לאחר האריזה</div>
+                    <div className="so-colhint">אחרי האריזה — "מוכן"</div>
                   )}
-                </div>
+                </section>
               </div>
             );
           })()}
