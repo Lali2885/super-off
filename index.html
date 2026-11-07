@@ -519,6 +519,14 @@
     .so-dcol-h h2 .so-ico { vertical-align: -0.2em; }
     @media (max-width: 1000px) { .so-repgrid { grid-template-columns: minmax(0, 1fr); } }
 
+    /* ===== ארכיון הזמנות ===== */
+    .so-addrnote { display: flex; align-items: center; gap: .4rem; font-weight: 700; background: #F7F5F2; border-radius: .6rem; padding: .5rem .7rem; margin-bottom: .6rem; }
+    .so-itemlist { list-style: none; margin: 0 0 .6rem; padding: 0; border: 1px solid var(--line); border-radius: .7rem; overflow: hidden; background: #fff; }
+    .so-itemlist li { display: flex; align-items: flex-start; gap: .6rem; padding: .5rem .7rem; border-bottom: 1px solid var(--line-soft); }
+    .so-itemlist li:last-child { border-bottom: 0; }
+    .so-itemlist .q { min-width: 2.2rem; text-align: center; font-weight: 900; background: #F1EFEB; border-radius: .45rem; padding: .1rem .35rem; }
+    .so-itemlist .nt { color: #991B1B; font-size: .85rem; font-weight: 600; }
+
     .so-baledit { width: 5rem; height: 2.6rem; text-align: center; font-weight: 900; font-size: 1.1rem; border: 2px solid var(--k, #0F766E); border-radius: .6rem; background: #fff; }
     @media (max-width: 860px) {
       .so-coldhead .so-seg { display: grid; grid-template-columns: repeat(3, 1fr); flex: 1 1 100%; }
@@ -7610,6 +7618,7 @@ setTimeout(function(){
       const [search, setSearch] = useState('');
       const [filterKashrut, setFilterKashrut] = useState('');
       const [expandedId, setExpandedId] = useState(null);
+      const [confirmClear, setConfirmClear] = useState(false);
 
       const doneOrders = orders
         .filter(o => o.status === 'delivered')
@@ -7621,127 +7630,88 @@ setTimeout(function(){
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'new', packaging: undefined } : o));
       };
 
+      const archivedCount = orders.filter(o => o.status === 'delivered').length;
+      const orderKs = (o) => { const ks = [...new Set((o.items || []).map(i => i.kashrut).filter(Boolean))]; return ks.length ? ks : (o.kashrut ? [o.kashrut] : []); };
+
       return (
-        <div className="animate-in fade-in duration-300">
-          <div className="mb-5 flex items-start justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">ארכיון הזמנות</h1>
-              <p className="text-gray-500 mt-1">כל ההזמנות שהושלמו — {doneOrders.length} רשומות</p>
+        <div className="flex flex-col gap-4">
+          <div className="so-coldtools">
+            <label className="so-search"><LineIcon name="search" />
+              <input type="search" placeholder="חיפוש לפי שם, מספר או טלפון" value={search} onChange={e => setSearch(e.target.value)} aria-label="חיפוש בארכיון" />
+            </label>
+            <div className="so-kfilter">
+              <button className="so-kf" aria-pressed={!filterKashrut} onClick={() => setFilterKashrut('')}>כל הכשרויות</button>
+              {kashrutList.map(k => (
+                <button key={k.id} className="so-kf" aria-pressed={filterKashrut === k.name} style={kVars(k.name)} onClick={() => setFilterKashrut(k.name)}>
+                  <span className="so-kletter">{kStyle(k.name).l}</span>{k.name}
+                </button>
+              ))}
             </div>
-            {orders.filter(o => o.status === 'delivered').length > 0 && (
-              <button
-                onClick={() => {
-                  if (window.confirm(`למחוק את כל ${orders.filter(o => o.status === 'delivered').length} ההזמנות בארכיון?`))
-                    setOrders(prev => prev.filter(o => o.status !== 'delivered'));
-                }}
-                className="mt-1 py-2 px-3 rounded-xl text-sm font-bold bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0">
-                🗑️ נקה ארכיון
-              </button>
+            <span className="so-tag">{doneOrders.length} רשומות</span>
+            {archivedCount > 0 && (
+              <button className="so-btn danger" style={{ marginInlineStart: 'auto' }} onClick={() => setConfirmClear(true)}><LineIcon name="trash" />ניקוי ארכיון</button>
             )}
           </div>
 
-          {/* סרגל סינון */}
-          <div className="flex flex-wrap gap-3 mb-5">
-            <input
-              type="text" placeholder="🔍 חיפוש לפי שם, מספר או טלפון..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              className="flex-1 min-w-[200px] p-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-            />
-            <select value={filterKashrut} onChange={e => setFilterKashrut(e.target.value)}
-              className="p-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-400 bg-white">
-              <option value="">כל הכשרויות</option>
-              {kashrutList.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-            </select>
-          </div>
-
           {doneOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-16 bg-white rounded-xl border border-dashed border-gray-300 text-gray-400">
-              <Icons.ClipboardList className="w-12 h-12 mb-3 opacity-20" />
-              <h2 className="text-xl font-bold text-gray-500">אין הזמנות בארכיון</h2>
-              <p className="text-sm mt-1">הזמנות שיסומנו כהושלמו יופיעו כאן</p>
-            </div>
+            <div className="so-subcard so-lempty big"><LineIcon name="archive" />אין הזמנות בארכיון<span className="so-hint">הזמנות שנמסרו או נאספו יופיעו כאן</span></div>
           ) : (
-            <div className="space-y-3">
-              {doneOrders.map(order => (
-                <div key={order.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  {/* שורה ראשית */}
-                  <div
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
-                  >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="text-xs font-black text-gray-400 w-12 shrink-0">#{order.id}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-extrabold text-gray-900 truncate">{order.customer}</div>
-                        <div className="text-xs text-gray-400 flex items-center gap-2 flex-wrap mt-0.5">
-                          {order.createdAt && <span>📅 {order.createdAt}</span>}
-                          <span>{order.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}</span>
-                          {order.neighborhood && <span>📍 {order.neighborhood}</span>}
+            <div className="flex flex-col gap-2">
+              {doneOrders.map(order => {
+                const open = expandedId === order.id;
+                const ks = orderKs(order);
+                return (
+                  <article key={order.id} className="so-ocard">
+                    <div className="so-ostripe" style={ks.length > 1
+                      ? { background: `repeating-linear-gradient(180deg, ${ks.map((k, i) => `${kStyle(k).c} ${i * 0.7}rem ${(i + 1) * 0.7}rem`).join(', ')})` }
+                      : { background: kStyle(ks[0]).c }}></div>
+                    <div className="so-obody">
+                      <div className="so-oclick clickable" onClick={() => setExpandedId(open ? null : order.id)} aria-expanded={open}>
+                        <div className="so-ohead">
+                          <div><b>{order.customer}</b><small>#{order.id}{order.phone ? ` · ${order.phone}` : ''}</small></div>
+                          {order.createdAt && <span className="so-when">{order.createdAt}</span>}
+                        </div>
+                        <div className="so-tags">
+                          {ks.map(k => <KChip key={k} k={k} />)}
+                          <span className="so-tag"><LineIcon name={order.type === 'delivery' ? 'truck' : 'box'} />{order.type === 'delivery' ? 'משלוח' : 'איסוף'}{order.neighborhood ? ` · ${order.neighborhood}` : ''}</span>
+                          {order.delivery?.collected && <span className="so-tag pay">{order.delivery.collected}</span>}
+                          {order.packaging && (order.packaging.cartons > 0 || order.packaging.bags > 0 || order.packaging.fishBags > 0) && (
+                            <span className="so-tag ok">{[order.packaging.cartons > 0 && `${order.packaging.cartons} קרטונים`, order.packaging.bags > 0 && `${order.packaging.bags} שקיות`, order.packaging.fishBags > 0 && `${order.packaging.fishBags} שק׳ דגים`].filter(Boolean).join(' · ')}</span>
+                          )}
+                          <span className="so-chev">{open ? 'סגירה ▲' : 'פירוט ▼'}</span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0 mr-2 flex-wrap justify-end">
-                      {/* כשרות */}
-                      {(() => {
-                        const k = kashrutList.find(k => k.name === order.kashrut);
-                        return (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
-                            style={{ color: k?.color || '#888', borderColor: (k?.color || '#888') + '60', backgroundColor: (k?.color || '#888') + '15' }}>
-                            {order.kashrut}
-                          </span>
-                        );
-                      })()}
-                      {/* אריזה */}
-                      {order.packaging && (
-                        <div className="flex gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 rounded-lg px-2 py-0.5">
-                          {order.packaging.cartons > 0 && <span>📦{order.packaging.cartons}</span>}
-                          {order.packaging.bags > 0 && <span>🛍️{order.packaging.bags}</span>}
-                          {order.packaging.fishBags > 0 && <span>🐟{order.packaging.fishBags}</span>}
+                      {open && (
+                        <div className="so-odetail">
+                          {order.type === 'delivery' && order.street && (
+                            <div className="so-addrnote"><LineIcon name="pin" />{order.street}{order.entrance ? ` כניסה ${order.entrance}` : ''}{order.floor ? ` קומה ${order.floor}` : ''}{order.apt ? ` דירה ${order.apt}` : ''}</div>
+                          )}
+                          <ul className="so-itemlist">
+                            {(order.items || []).map((item, idx) => (
+                              <li key={idx}>
+                                <span className="q">{item.qty}</span>
+                                <div><b>{item.name}</b>{item.notes && <div className="nt">{item.notes}</div>}</div>
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="so-actions" style={{ justifyContent: 'flex-end' }}>
+                            <button className="so-btn" onClick={() => reopenOrder(order.id)}><LineIcon name="undo" />החזר לתור</button>
+                          </div>
                         </div>
                       )}
-                      <Icons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${expandedId === order.id ? 'rotate-180' : ''}`} />
                     </div>
-                  </div>
-
-                  {/* פירוט מורחב */}
-                  {expandedId === order.id && (
-                    <div className="border-t border-gray-100 p-4 bg-gray-50/50 space-y-3">
-                      {/* כתובת */}
-                      {order.type === 'delivery' && order.street && (
-                        <p className="text-sm text-gray-600 bg-blue-50 rounded-lg p-2 border border-blue-100">
-                          <Icons.MapPin className="w-3.5 h-3.5 inline ml-1 text-blue-500" />
-                          {order.street}{order.entrance ? ` כניסה ${order.entrance}` : ''}{order.floor ? ` קומה ${order.floor}` : ''}{order.apt ? ` דירה ${order.apt}` : ''}
-                        </p>
-                      )}
-
-                      {/* פריטים */}
-                      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <ul className="divide-y divide-gray-100">
-                          {order.items.map((item, idx) => (
-                            <li key={idx} className="px-3 py-2 flex items-start gap-2 text-xs">
-                              <span className="font-black px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 min-w-[28px] text-center shrink-0">{item.qty}</span>
-                              <div>
-                                <span className="font-bold text-gray-800">{item.name}</span>
-                                {item.notes && <div className="text-red-500">✂️ {item.notes}</div>}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {/* כפתורים */}
-                      <div className="flex gap-2 justify-end pt-1">
-                        <Button variant="secondary" icon={Icons.Printer} className="text-xs" onClick={() => {}}>הדפס בון</Button>
-                        <Button variant="outline" icon={Icons.Edit} className="text-xs" onClick={() => reopenOrder(order.id)}>
-                          החזר לתור
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                  </article>
+                );
+              })}
             </div>
+          )}
+
+          {confirmClear && (
+            <ConfirmDelete title="ניקוי ארכיון"
+              text={`למחוק את כל ${archivedCount} ההזמנות שבארכיון? הן יימחקו מהמערכת לגמרי.`}
+              onCancel={() => setConfirmClear(false)}
+              onConfirm={() => { setOrders(prev => prev.filter(o => o.status !== 'delivered')); setConfirmClear(false); }} />
           )}
         </div>
       );
