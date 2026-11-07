@@ -120,6 +120,76 @@
     input[data-stock-col]::-webkit-outer-spin-button,
     input[data-stock-col]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[data-stock-col] { -moz-appearance: textfield; appearance: textfield; }
+
+    /* ===== עיצוב חדש (לפי דמו v3) — מעטפת ===== */
+    :root {
+      --fs: 18px;
+      --ground: #F3F1ED; --surface: #FFFFFF; --ink: #17171A; --muted: #4A4642; --line: #E2DED8; --line-soft: #EEEBE6;
+      --side: #1B1A1E; --side-2: #2A282E; --side-ink: #E9E6E2; --side-muted: #B3ADA6;
+      --brand: #B91C1C;
+      --in: #166534; --in-bg: #DCFCE7; --out: #9F1239; --out-bg: #FFE4E6; --low: #9F1239; --low-bg: #FFF1F2;
+    }
+    html { font-size: var(--fs); }
+    body { font-family: 'Heebo', 'Assistant', Arial, sans-serif; background: var(--ground); color: var(--ink); font-variant-numeric: tabular-nums; }
+    :focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }
+    .so-ico { width: 1.25em; height: 1.25em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .so-app { display: flex; height: 100vh; background: var(--ground); color: var(--ink); overflow: hidden; }
+    .so-side { width: 15.5rem; flex-shrink: 0; background: var(--side); color: var(--side-ink); padding: 1.2rem .8rem; display: flex; flex-direction: column; gap: 1.2rem; height: 100vh; overflow-y: auto; }
+    .so-logo { display: flex; align-items: center; gap: .7rem; padding: 0 .4rem; }
+    .so-logo-mark { width: 2.5rem; height: 2.5rem; border-radius: .7rem; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 1.35rem; }
+    .so-logo b { display: block; font-size: 1.2rem; font-weight: 900; color: #fff; }
+    .so-logo span { font-size: .8rem; color: var(--side-muted); }
+    .so-nav-group { display: flex; flex-direction: column; gap: .15rem; }
+    .so-nav-title { font-size: .75rem; font-weight: 700; color: var(--side-muted); padding: 0 .7rem .3rem; letter-spacing: .03em; }
+    .so-nav-btn { display: flex; align-items: center; gap: .7rem; width: 100%; min-height: 2.75rem; padding: .5rem .7rem; border: 0; border-radius: .6rem; background: transparent; color: var(--side-ink); font-size: .95rem; font-weight: 600; text-align: right; }
+    .so-nav-btn:hover { background: #24222A; }
+    .so-nav-btn[aria-current="page"] { background: var(--side-2); color: #fff; font-weight: 800; }
+    .so-nav-btn .so-ico { color: var(--side-muted); }
+    .so-nav-btn[aria-current="page"] .so-ico { color: #FCA5A5; }
+    .so-badge { margin-inline-start: auto; min-width: 1.6rem; height: 1.4rem; padding: 0 .45rem; border-radius: .7rem; background: var(--brand); color: #fff; font-size: .75rem; font-weight: 800; display: grid; place-items: center; }
+    .so-badge.dim { background: #3A373F; }
+    .so-side-user { margin-top: auto; display: flex; align-items: center; gap: .6rem; padding: .7rem; border-radius: .8rem; background: #232127; font-size: .85rem; }
+    .so-avatar { width: 2.2rem; height: 2.2rem; border-radius: 50%; background: #44403C; color: #fff; display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
+    .so-signout { margin-inline-start: auto; border: 1px solid #44403C; border-radius: .55rem; background: transparent; color: var(--side-ink); padding: .35rem .55rem; display: grid; place-items: center; }
+    .so-signout:hover { background: #3A1A1A; color: #FCA5A5; }
+    .so-main { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .so-scroll { flex: 1; overflow-y: auto; padding: 1.4rem 1.8rem 3rem; }
+    .so-inner { max-width: 72rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.1rem; }
+    .so-topbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .8rem; }
+    .so-topbar h1 { margin: 0; font-size: 2rem; font-weight: 900; letter-spacing: -.01em; white-space: nowrap; line-height: 1.2; }
+    .so-topbar .sub { font-size: .9rem; color: var(--muted); font-weight: 600; }
+    .so-grow { flex: 1 1 16rem; min-width: 0; }
+    .so-fontbox { display: flex; align-items: center; gap: .25rem; background: var(--surface); border: 1px solid var(--line); border-radius: .8rem; padding: .25rem; }
+    .so-fontbox span { font-size: .8rem; color: var(--muted); padding: 0 .4rem; font-weight: 700; }
+    .so-fontbox button { min-width: 2.6rem; height: 2.4rem; border: 0; border-radius: .55rem; background: transparent; font-weight: 800; }
+    .so-fontbox button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+    .so-sync { display: flex; align-items: center; gap: .45rem; padding: .45rem .8rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: .8rem; font-weight: 700; color: var(--muted); }
+    .so-sync i { width: .55rem; height: .55rem; border-radius: 50%; background: #15803D; }
+    .so-sync.bad { color: #991B1B; border-color: #FECACA; background: #FEF2F2; }
+    .so-sync.bad i { background: #DC2626; }
+    .so-bottomnav { display: none; }
+    .so-sheet-bg { position: fixed; inset: 0; background: rgba(20,18,16,.45); z-index: 60; display: flex; align-items: flex-end; }
+    .so-sheet { background: var(--ground); width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 1.2rem 1.2rem 0 0; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: .7rem; }
+    .so-sheet-card { background: #fff; border: 1px solid var(--line); border-radius: 1rem; padding: .6rem; }
+    .so-sheet-title { font-weight: 800; color: var(--muted); font-size: .85rem; padding: .3rem .5rem; }
+    .so-morebtn { display: flex; align-items: center; gap: .8rem; width: 100%; min-height: 3.4rem; padding: 0 .8rem; border: 0; border-radius: .7rem; background: transparent; font-size: 1.1rem; font-weight: 700; text-align: right; color: var(--ink); }
+    .so-morebtn:hover, .so-morebtn[aria-current="page"] { background: #F4F2EE; }
+    .so-morebtn[aria-current="page"] { color: var(--brand); }
+    /* כשרות: צבע + אות */
+    .so-kletter { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 900; font-size: 1.05rem; background: var(--k); color: #fff; flex-shrink: 0; }
+    .so-kchip { display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .65rem .15rem .25rem; border-radius: 999px; background: var(--k); color: #fff; font-weight: 800; font-size: .85rem; white-space: nowrap; }
+    .so-kchip .so-kletter { width: 1.45rem; height: 1.45rem; font-size: .75rem; background: #fff; color: var(--k); }
+    @media (max-width: 860px) {
+      .so-side { display: none; }
+      .so-scroll { padding: 1rem 1rem 6.5rem; }
+      .so-topbar h1 { font-size: 1.6rem; }
+      .so-fontbox span { display: none; }
+      .so-bottomnav { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; bottom: 0; right: 0; left: 0; background: #fff; border-top: 1px solid var(--line); z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+      .so-bottomnav button { position: relative; border: 0; background: transparent; min-height: 4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; font-size: .75rem; font-weight: 700; color: var(--muted); }
+      .so-bottomnav button[aria-current="page"] { color: var(--brand); }
+      .so-bottomnav .so-badge { position: absolute; top: .35rem; left: calc(50% - 1.9rem); margin: 0; }
+    }
+    @media print { .so-side, .so-bottomnav, .so-topbar { display: none !important; } }
   </style>
 </head>
 <body class="bg-gray-50/50 text-gray-800 antialiased overflow-hidden">
@@ -190,6 +260,41 @@
       Save: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
       Edit: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     };
+
+    // ===[NEW DESIGN]===
+    // אייקוני קו (מהדמו v3) — במקום אימוג'י
+    const LINE_ICONS = {
+      dash: <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></>,
+      cart: <><path d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.8h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9.5" cy="20.5" r="1"/><circle cx="17.5" cy="20.5" r="1"/></>,
+      truck: <><path d="M1 5h13v11H1zM14 9h4l3 3.5V16h-7"/><circle cx="5" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/></>,
+      archive: <><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4"/></>,
+      box: <path d="M21 8 12 3 3 8l9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/>,
+      snow: <path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17M9 4l3 2 3-2M9 20l3-2 3 2"/>,
+      users: <><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a5 5 0 0 0-3.5-4.8"/></>,
+      list: <><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></>,
+      chart: <><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></>,
+      gear: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></>,
+      shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+      more: <path d="M4 6h16M4 12h16M4 18h16"/>,
+      logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></>,
+    };
+    const LineIcon = ({ name, className = 'so-ico' }) => <svg className={className} viewBox="0 0 24 24" aria-hidden="true">{LINE_ICONS[name] || LINE_ICONS.box}</svg>;
+
+    // כשרויות: צבע חזק + אות מזהה (לא רק צבע) — לשימוש במסכים
+    const KASHRUT_STYLE = {
+      'קהילות': { c: '#C2410C', ink: '#9A3412', tint: '#FFF4EC', l: 'ק' },
+      'לנדא':   { c: '#6D28D9', ink: '#5B21B6', tint: '#F5F0FF', l: 'ל' },
+      'כללי':   { c: '#0E7490', ink: '#155E75', tint: '#EBF8FB', l: 'כ', label: 'דגים (כללי)' },
+    };
+    const kStyle = (k) => KASHRUT_STYLE[k] || { c: '#57534E', ink: '#44403C', tint: '#F5F5F4', l: (k || '?').charAt(0) };
+    const kVars = (k) => ({ '--k': kStyle(k).c, '--k-ink': kStyle(k).ink, '--k-tint': kStyle(k).tint });
+    const KChip = ({ k }) => <span className="so-kchip" style={kVars(k)}><span className="so-kletter">{kStyle(k).l}</span>{k || '—'}</span>;
+
+    // גודל טקסט לכל מכשיר (א / א+ / א++) — רק העדפת תצוגה, נשמר בדפדפן
+    const FONT_SIZES = [['18', 'א', '.9rem'], ['21', 'א+', '1.05rem'], ['24', 'א++', '1.2rem']];
+    const readFontSize = () => { try { return localStorage.getItem('so-fs') || '18'; } catch { return '18'; } };
+    const applyFontSize = (v) => { document.documentElement.style.setProperty('--fs', v + 'px'); try { localStorage.setItem('so-fs', v); } catch {} };
+    applyFontSize(readFontSize());
 
     // --- Shared Button Component ---
     const variantStyles = {
@@ -8238,6 +8343,13 @@ setTimeout(function(){
       });
       const navigateTo = useCallback((tabId) => { setActiveTab(tabId); localStorage.setItem('activeTab', tabId); }, []);
       const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+      const [fontSize, setFontSize] = useState(readFontSize);
+      const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+      useEffect(() => {
+        const on = () => setIsOnline(true), off = () => setIsOnline(false);
+        window.addEventListener('online', on); window.addEventListener('offline', off);
+        return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+      }, []);
       const [appUser, setAppUser] = useState(() => { try { return JSON.parse(localStorage.getItem('appUser')); } catch { return null; } });
 
       useEffect(() => {
@@ -8573,22 +8685,30 @@ setTimeout(function(){
         setDataReady(false);
       };
 
+      const countStatus = (st) => { const n = orders.filter(o => o.status === st).length; return n > 0 ? n.toString() : null; };
       const menuItems = [
-        { id: 'inventory', label: 'מלאי סחורה - כללי', icon: Icons.Package },
-        { id: 'beit-shemesh', label: 'קירור לירוי', icon: Icons.Package },
-        { id: 'gavash', label: 'קירור גב"ש', icon: Icons.Package },
-        { id: 'orders', label: 'ניהול הזמנות', icon: Icons.ShoppingCart, badge: orders.filter(o => o.status === 'new').length.toString(), badgeColor: 'bg-red-500' },
-        { id: 'deliveries', label: (!appUser?.is_admin && appUser?.permissions?.courierId) ? 'המסלול שלי' : 'מערך משלוחים', icon: Icons.Truck, badge: orders.filter(o => o.status === 'completed').length > 0 ? orders.filter(o => o.status === 'completed').length.toString() : null, badgeColor: 'bg-blue-500' },
-        { id: 'contacts', label: 'אנשי קשר', icon: Icons.User },
-        { id: 'lists', label: 'ניהול רשימות', icon: Icons.List },
-        { id: 'archive', label: 'ארכיון הזמנות', icon: Icons.List, badge: orders.filter(o => o.status === 'delivered').length > 0 ? orders.filter(o => o.status === 'delivered').length.toString() : null, badgeColor: 'bg-gray-400' },
-        { id: 'stats', label: 'דוחות ובקרה', icon: Icons.ClipboardList },
-        { id: 'settings', label: 'הגדרות', icon: Icons.Settings },
-        ...(appUser?.is_admin ? [{ id: 'users', label: 'ניהול משתמשים', icon: Icons.User }] : []),
+        { id: 'orders', group: 'תפעול', label: 'ניהול הזמנות', short: 'הזמנות', ico: 'cart', badge: orders.filter(o => o.status === 'new').length.toString() },
+        { id: 'deliveries', group: 'תפעול', label: (!appUser?.is_admin && appUser?.permissions?.courierId) ? 'המסלול שלי' : 'מערך משלוחים', short: 'משלוחים', ico: 'truck', badge: countStatus('completed'), dim: true },
+        { id: 'archive', group: 'תפעול', label: 'ארכיון הזמנות', short: 'ארכיון', ico: 'archive', badge: countStatus('delivered'), dim: true },
+        { id: 'inventory', group: 'מלאי וקירור', label: 'מלאי סחורה - כללי', short: 'מלאי', ico: 'box' },
+        { id: 'beit-shemesh', group: 'מלאי וקירור', label: 'קירור לירוי', short: 'לירוי', ico: 'snow' },
+        { id: 'gavash', group: 'מלאי וקירור', label: 'קירור גב"ש', short: 'גב"ש', ico: 'snow' },
+        { id: 'contacts', group: 'ניהול', label: 'אנשי קשר', short: 'אנשי קשר', ico: 'users' },
+        { id: 'lists', group: 'ניהול', label: 'ניהול רשימות', short: 'רשימות', ico: 'list' },
+        { id: 'stats', group: 'ניהול', label: 'דוחות ובקרה', short: 'דוחות', ico: 'chart' },
+        { id: 'settings', group: 'ניהול', label: 'הגדרות', short: 'הגדרות', ico: 'gear' },
+        ...(appUser?.is_admin ? [{ id: 'users', group: 'ניהול', label: 'ניהול משתמשים', short: 'משתמשים', ico: 'shield' }] : []),
       ];
       const visibleMenuItems = appUser?.is_admin
         ? menuItems
         : menuItems.filter(item => (appUser?.permissions?.pages || []).includes(item.id));
+      const menuGroups = ['תפעול', 'מלאי וקירור', 'ניהול']
+        .map(g => [g, visibleMenuItems.filter(i => i.group === g)])
+        .filter(([, items]) => items.length);
+      const currentItem = menuItems.find(i => i.id === activeTab);
+      // ניווט תחתון בנייד: 3 המסכים הראשונים שמותרים למשתמש + "עוד"
+      const bottomItems = ['orders', 'inventory', 'deliveries', 'beit-shemesh', 'gavash', 'archive']
+        .map(id => visibleMenuItems.find(i => i.id === id)).filter(Boolean).slice(0, 3);
 
       const renderContent = () => {
         switch (activeTab) {
@@ -8645,7 +8765,7 @@ setTimeout(function(){
       );
 
       return (
-        <div className="flex h-screen bg-gray-100 font-sans text-gray-800 overflow-hidden">
+        <div className="so-app">
           {saveErrors.length > 0 && (
             <div role="alert" className="fixed top-0 inset-x-0 z-[100] bg-red-600 text-white px-4 py-3 shadow-lg flex flex-wrap items-center gap-3">
               <span className="font-extrabold">⚠ תקלה מול השרת — ייתכן שפעולה לא נשמרה:</span>
@@ -8654,75 +8774,90 @@ setTimeout(function(){
               <button onClick={() => setSaveErrors([])} className="px-4 py-2 rounded-lg border border-white/60 font-bold">סגור</button>
             </div>
           )}
-          {/* Mobile Header */}
-          <div className="md:hidden fixed top-0 right-0 w-full bg-white border-b border-gray-200 p-4 z-50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-red-600 p-1.5 rounded-lg text-white">
-                <Icons.Truck className="w-5 h-5" />
-              </div>
-              <span className="font-extrabold text-xl">סופר עוף</span>
-            </div>
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-gray-100 rounded-lg text-gray-700">
-              {isMobileMenuOpen ? <Icons.X className="w-6 h-6" /> : <Icons.Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Sidebar */}
-          <aside className={`fixed md:relative top-0 right-0 z-40 h-full w-64 bg-white border-l border-gray-200 flex flex-col transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-            <div className="p-6 hidden md:flex items-center gap-3 border-b border-gray-100">
-              <div className="bg-red-600 p-2 rounded-xl text-white shadow-md">
-                <Icons.Truck className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="font-extrabold text-2xl text-gray-900">סופר עוף</h1>
-                <p className="text-xs text-gray-500 font-medium">ניהול קצביה חכמה</p>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-1 mt-16 md:mt-0 custom-scrollbar">
-              {visibleMenuItems.map(item => {
-                const isActive = activeTab === item.id;
-                return (
-                  <button 
-                    key={item.id}
-                    onClick={() => { navigateTo(item.id); setIsMobileMenuOpen(false); }} 
-                    className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                      <span className={`font-medium ${isActive ? 'font-bold' : ''}`}>{item.label}</span>
-                    </div>
-                    {item.badge && (
-                      <span className={`flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[10px] font-bold text-white rounded-full ${item.badgeColor}`}>
-                        {item.badge}
-                      </span>
-                    )}
+          {/* סיידבר כהה (מחשב) */}
+          <nav className="so-side" aria-label="ניווט ראשי">
+            <div className="so-logo"><div className="so-logo-mark">ס</div><div><b>סופר עוף</b><span>ניהול קצביה</span></div></div>
+            {menuGroups.map(([g, items]) => (
+              <div key={g} className="so-nav-group">
+                <div className="so-nav-title">{g}</div>
+                {items.map(item => (
+                  <button key={item.id} className="so-nav-btn" aria-current={activeTab === item.id ? 'page' : undefined}
+                    onClick={() => navigateTo(item.id)}>
+                    <LineIcon name={item.ico} /><span>{item.label}</span>
+                    {item.badge && <span className={`so-badge ${item.dim ? 'dim' : ''}`}>{item.badge}</span>}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+            ))}
+            <div className="so-side-user">
+              <div className="so-avatar">{(appUser?.username || '?').charAt(0)}</div>
+              <div className="min-w-0">
+                <div className="truncate" style={{ fontWeight: 800, color: '#fff' }}>{appUser?.username}</div>
+                <div style={{ color: 'var(--side-muted)' }}>{appUser?.is_admin ? 'מנהל' : 'משתמש'} · מחובר</div>
+              </div>
+              <button className="so-signout" onClick={handleSignOut} title="יציאה" aria-label="יציאה"><LineIcon name="logout" /></button>
             </div>
-            
-            <div className="p-4 border-t border-gray-100 bg-gray-50/50 space-y-2">
-              <div className="text-xs text-gray-500 text-center font-bold truncate">{appUser?.username}</div>
-              {appUser?.is_admin && <div className="text-xs text-purple-400 text-center">מנהל</div>}
-              <button onClick={handleSignOut}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors border border-gray-200">
-                <Icons.LogOut className="w-4 h-4" /> יציאה
-              </button>
-            </div>
-          </aside>
+          </nav>
 
-          {/* Main Content Area */}
-          <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50/30 w-full pt-16 md:pt-0">
-            <div ref={mainScrollRef} className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-              <div className="max-w-5xl mx-auto">
-                {renderContent()}
+          {/* תוכן */}
+          <main className="so-main">
+            <div ref={mainScrollRef} className="so-scroll custom-scrollbar">
+              <div className="so-inner">
+                <header className="so-topbar">
+                  <div className="so-grow">
+                    <div className="sub">{currentItem?.group || ''}</div>
+                    <h1>{currentItem?.label || ''}</h1>
+                  </div>
+                  <div className="so-fontbox" role="group" aria-label="גודל טקסט"><span>גודל טקסט</span>
+                    {FONT_SIZES.map(([v, l, size]) => (
+                      <button key={v} aria-pressed={fontSize === v} style={{ fontSize: size }} onClick={() => { setFontSize(v); applyFontSize(v); }}>{l}</button>
+                    ))}
+                  </div>
+                  <div className={`so-sync ${(!isOnline || saveErrors.length) ? 'bad' : ''}`}>
+                    <i></i>{!isOnline ? 'אין חיבור' : saveErrors.length ? 'תקלת שמירה' : 'מסונכרן'}
+                  </div>
+                </header>
+                <div>{renderContent()}</div>
               </div>
             </div>
           </main>
 
+          {/* ניווט תחתון (נייד) */}
+          <nav className="so-bottomnav" aria-label="ניווט תחתון">
+            {bottomItems.map(item => (
+              <button key={item.id} aria-current={activeTab === item.id && !isMobileMenuOpen ? 'page' : undefined}
+                onClick={() => { navigateTo(item.id); setIsMobileMenuOpen(false); }}>
+                <LineIcon name={item.ico} />{item.short}
+                {item.badge && <span className={`so-badge ${item.dim ? 'dim' : ''}`}>{item.badge}</span>}
+              </button>
+            ))}
+            <button aria-current={isMobileMenuOpen || !bottomItems.some(i => i.id === activeTab) ? 'page' : undefined}
+              onClick={() => setIsMobileMenuOpen(o => !o)}>
+              <LineIcon name="more" />עוד
+            </button>
+          </nav>
+
           {isMobileMenuOpen && (
-            <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>
+            <div className="so-sheet-bg" onClick={() => setIsMobileMenuOpen(false)}>
+              <div className="so-sheet" onClick={e => e.stopPropagation()}>
+                {menuGroups.map(([g, items]) => (
+                  <div key={g} className="so-sheet-card">
+                    <div className="so-sheet-title">{g}</div>
+                    {items.map(item => (
+                      <button key={item.id} className="so-morebtn" aria-current={activeTab === item.id ? 'page' : undefined}
+                        onClick={() => { navigateTo(item.id); setIsMobileMenuOpen(false); }}>
+                        <LineIcon name={item.ico} />{item.label}
+                        {item.badge && <span className={`so-badge ${item.dim ? 'dim' : ''}`}>{item.badge}</span>}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+                <div className="so-sheet-card">
+                  <div className="so-sheet-title">{appUser?.username}{appUser?.is_admin ? ' · מנהל' : ''}</div>
+                  <button className="so-morebtn" style={{ color: '#991B1B' }} onClick={handleSignOut}><LineIcon name="logout" />יציאה</button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       );
