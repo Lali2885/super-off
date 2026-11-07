@@ -527,6 +527,36 @@
     .so-itemlist .q { min-width: 2.2rem; text-align: center; font-weight: 900; background: #F1EFEB; border-radius: .45rem; padding: .1rem .35rem; }
     .so-itemlist .nt { color: #991B1B; font-size: .85rem; font-weight: 600; }
 
+    /* ===== תעודות יציאה/משיכה בקירורים — שכבת עיצוב על המבנה הקיים ===== */
+    .so-legacy { display: flex; flex-direction: column; gap: 1rem; }
+    .so-legacy > .flex.justify-end { margin-bottom: 0 !important; }
+    .so-legacy .bg-white.rounded-2xl { background: var(--surface); border: 1px solid var(--line) !important; border-radius: 1rem; box-shadow: none !important; padding: 1.1rem 1.2rem; margin-bottom: 0; }
+    .so-legacy .shadow, .so-legacy .shadow-md, .so-legacy .shadow-lg { box-shadow: none !important; }
+    .so-legacy h2 { color: var(--ink) !important; font-weight: 900 !important; }
+    .so-legacy .bg-gray-50.rounded-xl { background: #FAF9F7; border: 1px solid var(--line) !important; border-radius: .9rem; }
+    .so-legacy .bg-blue-50.rounded-lg, .so-legacy .bg-purple-50.rounded-lg { background: #F7F5F2 !important; border-color: var(--line) !important; border-radius: .8rem; }
+    .so-legacy .text-blue-700, .so-legacy .text-blue-800, .so-legacy .text-purple-700, .so-legacy .text-purple-800, .so-legacy .text-purple-900, .so-legacy .text-indigo-700 { color: var(--ink) !important; }
+    .so-legacy .text-blue-600, .so-legacy .text-purple-600, .so-legacy .text-indigo-600, .so-legacy .text-green-600, .so-legacy .text-orange-600 { color: var(--muted) !important; }
+    /* כפתורים ראשיים בטפסים */
+    .so-legacy button.bg-blue-600, .so-legacy button.bg-purple-600 { background: var(--ink) !important; color: #fff !important; border-radius: .7rem; }
+    .so-legacy button.bg-green-600 { background: var(--in) !important; color: #fff !important; border-radius: .7rem; }
+    .so-legacy button.bg-gray-200 { background: #fff !important; border: 1px solid #CFCAC3; color: var(--ink) !important; border-radius: .7rem; }
+    .so-legacy button.bg-purple-100 { background: #fff !important; border: 1px dashed #A8A29E; color: var(--ink) !important; }
+    /* כפתורים קטנים (Excel / PDF / עריכה / מחיקה) */
+    .so-legacy button.rounded-md.text-\[11px\] { display: inline-flex; align-items: center; justify-content: center; gap: .3rem; min-height: 2.3rem; padding: 0 .7rem !important; border-radius: .6rem !important; background: #fff !important; border: 1px solid var(--line) !important; color: var(--ink) !important; font-size: .82rem !important; font-weight: 800; }
+    .so-legacy button.rounded-md.text-\[11px\]:hover { background: #F7F5F2 !important; }
+    .so-legacy button.rounded-md.text-\[11px\][aria-label="מחיקה"] { color: #991B1B !important; }
+    /* מתגים קטנים (הכל / לפי תאריך) */
+    .so-legacy .flex.rounded-lg.overflow-hidden.border { border-radius: .7rem !important; padding: .2rem; gap: .2rem; background: #fff; }
+    .so-legacy .flex.rounded-lg.overflow-hidden.border button { border-radius: .5rem; min-height: 2.2rem; padding: 0 .8rem; }
+    .so-legacy .flex.rounded-lg.overflow-hidden.border button.bg-gray-100 { background: transparent !important; color: var(--muted) !important; }
+    /* כרטיסי סיכום */
+    .so-legacy .rounded-xl.p-3.text-center { background: #fff !important; border: 1px solid var(--line); border-radius: 1rem; }
+    .so-legacy .rounded-xl.p-3.text-center .text-2xl { color: var(--ink) !important; font-weight: 900; font-size: 1.9rem; }
+    .so-legacy tfoot tr { background: #FAF9F7 !important; }
+    .so-legacy thead th { color: var(--muted); font-weight: 800; }
+    .so-legacy input:not([type="checkbox"]), .so-legacy select { border-radius: .55rem !important; border-color: #CFCAC3 !important; }
+
     .so-baledit { width: 5rem; height: 2.6rem; text-align: center; font-weight: 900; font-size: 1.1rem; border: 2px solid var(--k, #0F766E); border-radius: .6rem; background: #fff; }
     @media (max-width: 860px) {
       .so-coldhead .so-seg { display: grid; grid-template-columns: repeat(3, 1fr); flex: 1 1 100%; }
@@ -3961,8 +3991,8 @@ setTimeout(function(){
                                             <button type="button" onClick={saveItem} className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">✓</button>
                                             <button type="button" onClick={() => { setEditingItemId(null); setEditItemState({}); }} className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 transition-colors leading-tight">✕</button>
                                           </>) : (<>
-                                            <button type="button" onClick={() => { setEditingItemId(item.id); setEditItemState({ qty: item.qty, notes: item.notes || '', rows: item.rows ? [...item.rows] : [], checks: item.checks ? [...item.checks] : [], totalQty: item.totalQty || '' }); }} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight">✏️</button>
-                                            <button type="button" onClick={() => setOrderAddedItems(prev => prev.filter(i => i.id !== item.id))} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight">🗑️</button>
+                                            <button type="button" onClick={() => { setEditingItemId(item.id); setEditItemState({ qty: item.qty, notes: item.notes || '', rows: item.rows ? [...item.rows] : [], checks: item.checks ? [...item.checks] : [], totalQty: item.totalQty || '' }); }} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight" title="עריכה" aria-label="עריכה"><LineIcon name="edit" /></button>
+                                            <button type="button" onClick={() => setOrderAddedItems(prev => prev.filter(i => i.id !== item.id))} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight" title="מחיקה" aria-label="מחיקה"><LineIcon name="trash" /></button>
                                           </>)}
                                         </div>
                                       </div>
@@ -6347,9 +6377,9 @@ setTimeout(function(){
 
           {/* ══ TAB: דוחות יציאה ══ */}
           {bsTab === 'exits' && (
-            <div>
+            <div className="so-legacy">
               <div className="flex justify-end mb-4">
-                <button onClick={() => setShowExitForm(!showExitForm)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-700">+ יציאה חדשה</button>
+                <button onClick={() => setShowExitForm(!showExitForm)} className="so-btn primary"><LineIcon name="plus" />יציאה חדשה</button>
               </div>
               {showExitForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
@@ -6491,8 +6521,8 @@ setTimeout(function(){
                               <button onClick={() => exportShipmentExcel(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">Excel</button>
                               <button onClick={() => exportShipmentPDF(shipment, pallet)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">PDF תעודה</button>
                               <button onClick={() => exportPalletLabel(shipment, pallet)} className="py-1 px-1.5 rounded-md text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-200 transition-colors leading-tight">PDF משטח</button>
-                              <button onClick={() => startEditShipment(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight">✏️</button>
-                              <button onClick={() => deleteExit(shipment.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">🗑️</button>
+                              <button onClick={() => startEditShipment(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight" title="עריכה" aria-label="עריכה"><LineIcon name="edit" /></button>
+                              <button onClick={() => deleteExit(shipment.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight" title="מחיקה" aria-label="מחיקה"><LineIcon name="trash" /></button>
                             </div>
                           </div>
                           <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
@@ -6533,9 +6563,9 @@ setTimeout(function(){
 
           {/* ══ TAB: דוחות משיכה ══ */}
           {bsTab === 'withdrawals' && (
-            <div>
+            <div className="so-legacy">
               <div className="flex justify-end mb-4">
-                <button onClick={() => setShowWdForm(!showWdForm)} className="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-purple-700">+ משיכה חדשה</button>
+                <button onClick={() => setShowWdForm(!showWdForm)} className="so-btn primary"><LineIcon name="plus" />משיכה חדשה</button>
               </div>
               {showWdForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-purple-100">
@@ -6668,8 +6698,8 @@ setTimeout(function(){
                                   <button onClick={() => exportWithdrawalExcel(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">Excel</button>
                                   <button onClick={() => exportWithdrawalPDF(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight">PDF תעודה</button>
                                   <button onClick={() => exportWithdrawalLabel(w, wp)} className="py-1 px-1.5 rounded-md text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-200 transition-colors leading-tight">PDF משטח</button>
-                                  <button onClick={() => startEditWithdrawal(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-200 transition-colors leading-tight">✏️</button>
-                                  <button onClick={() => deleteWithdrawal(w.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">🗑️</button>
+                                  <button onClick={() => startEditWithdrawal(w)} className="py-1 px-1.5 rounded-md text-[11px] bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-200 transition-colors leading-tight" title="עריכה" aria-label="עריכה"><LineIcon name="edit" /></button>
+                                  <button onClick={() => deleteWithdrawal(w.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight" title="מחיקה" aria-label="מחיקה"><LineIcon name="trash" /></button>
                                 </div>
                               )}
                             </div>
@@ -7267,9 +7297,9 @@ setTimeout(function(){
 
           {/* ══ TAB: דוחות יציאה ══ */}
           {bsTab === 'exits' && (
-            <div>
+            <div className="so-legacy">
               <div className="flex justify-end mb-4">
-                <button onClick={() => setShowExitForm(!showExitForm)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-700">+ יציאה חדשה</button>
+                <button onClick={() => setShowExitForm(!showExitForm)} className="so-btn primary"><LineIcon name="plus" />יציאה חדשה</button>
               </div>
               {showExitForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-blue-100">
@@ -7409,8 +7439,8 @@ setTimeout(function(){
                               <button onClick={() => exportShipmentExcel(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">Excel</button>
                               <button onClick={() => exportShipmentPDF(shipment, pallet)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">PDF תעודה</button>
                               <button onClick={() => exportPalletLabel(shipment, pallet)} className="py-1 px-1.5 rounded-md text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-200 transition-colors leading-tight">PDF משטח</button>
-                              <button onClick={() => startEditShipment(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight">✏️</button>
-                              <button onClick={() => deleteExit(shipment.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight">🗑️</button>
+                              <button onClick={() => startEditShipment(shipment)} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors leading-tight" title="עריכה" aria-label="עריכה"><LineIcon name="edit" /></button>
+                              <button onClick={() => deleteExit(shipment.id)} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors leading-tight" title="מחיקה" aria-label="מחיקה"><LineIcon name="trash" /></button>
                             </div>
                           </div>
                           <div className="overflow-x-auto"><table className="w-full text-sm min-w-max">
@@ -7452,9 +7482,9 @@ setTimeout(function(){
 
           {/* ══ TAB: דוחות משיכה ══ */}
           {bsTab === 'withdrawals' && (
-            <div>
+            <div className="so-legacy">
               <div className="flex justify-end mb-4">
-                <button onClick={() => setShowWdForm(!showWdForm)} className="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-purple-700">+ משיכה חדשה</button>
+                <button onClick={() => setShowWdForm(!showWdForm)} className="so-btn primary"><LineIcon name="plus" />משיכה חדשה</button>
               </div>
               {showWdForm && (
                 <div className="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-purple-100">
