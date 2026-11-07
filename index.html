@@ -342,6 +342,94 @@
     .so-bal { font-size: 1.55rem; font-weight: 900; }
     .so-bal.zero { color: #A8A29E; }
     .so-bal.neg { color: var(--low); }
+    /* ===== משלוחים + שליח ===== */
+    .so-tag.city { background: #FCE7F3; color: #9D174D; }
+    .so-tag.bad { background: #FEE2E2; color: #991B1B; }
+    .so-pk { display: flex; flex-wrap: wrap; gap: .6rem; font-size: .85rem; font-weight: 700; color: var(--muted); }
+    .so-dlayout { display: grid; grid-template-columns: minmax(18rem, 1fr) minmax(22rem, 1.35fr); gap: 1rem; align-items: start; }
+    .so-dlayout > section { min-width: 0; display: flex; flex-direction: column; gap: .5rem; }
+    .so-dcol-h { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .2rem; }
+    .so-dcol-h h2 { margin: 0; font-size: 1.2rem; font-weight: 900; flex: 1; }
+    .so-origin { height: 2.6rem; border: 1px solid #CFCAC3; border-radius: .6rem; padding: 0 .7rem; font-size: .9rem; background: #fff; min-width: 0; flex: 0 1 16rem; }
+    .so-hood-h { font-size: .85rem; font-weight: 800; color: var(--muted); padding: .5rem .3rem .1rem; display: flex; align-items: center; gap: .4rem; }
+    .so-dcard { display: flex; gap: .7rem; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: .9rem; padding: .7rem .8rem; cursor: pointer; }
+    .so-dcard.sel { border: 2px solid var(--ink); background: #FAF9F7; }
+    .so-dcard input { width: 1.4rem; height: 1.4rem; margin-top: .2rem; accent-color: #17171A; flex-shrink: 0; min-height: 0 !important; }
+    .so-dcard .body, .so-stop .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .3rem; }
+    .so-dcard .nm { font-weight: 800; font-size: 1.05rem; }
+    .so-dcard .nm small, .so-stop .body b small { color: var(--muted); font-weight: 600; font-size: .8rem; }
+    .so-dcard .addr, .so-stop .addr { font-size: .95rem; font-weight: 600; }
+    .so-dcard .addr small { color: var(--muted); }
+    .so-assignbar { position: sticky; top: .5rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .7rem .9rem; border-radius: .9rem; background: var(--ink); color: #fff; }
+    .so-assignbar b { flex: 1; }
+    .so-assignbar .so-btn { min-height: 2.5rem; font-size: .88rem; }
+    .so-route { background: #fff; border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; margin-bottom: .4rem; }
+    .so-route-h { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .7rem 1rem; background: #F7F5F2; border-bottom: 1px solid var(--line); }
+    .so-route-h input, .so-route-h select { height: 2.6rem; border-radius: .6rem; border: 1px solid #CFCAC3; padding: 0 .6rem; font-weight: 700; background: #fff; }
+    .so-route-h select.missing { border-color: #F87171; color: #991B1B; }
+    .so-route-name { width: 8rem; font-size: 1.1rem; font-weight: 900 !important; }
+    .so-route-h .prog { margin-inline-start: auto; font-weight: 800; font-size: .9rem; color: var(--muted); }
+    .so-stops { list-style: none; margin: 0; padding: 0; }
+    .so-stop { display: flex; align-items: flex-start; gap: .6rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line-soft); }
+    .so-stop:last-child { border-bottom: 0; }
+    .so-stop .n { width: 2rem; height: 2rem; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 900; flex-shrink: 0; }
+    .so-stop.done .n { background: var(--in); }
+    .so-stop.fail .n { background: #991B1B; }
+    .so-stop .body b { font-size: 1.02rem; font-weight: 800; }
+    .so-stop-act { display: flex; align-items: center; gap: .35rem; }
+    .so-stop-act .arrows { display: flex; flex-direction: column; gap: .15rem; }
+    .so-stop-act .arrows button { width: 2.3rem; height: 1.6rem; min-height: 0 !important; border: 1px solid var(--line); border-radius: .4rem; background: #fff; display: grid; place-items: center; padding: 0; }
+    .so-stop-act .arrows button:disabled { opacity: .3; }
+    .so-route-f { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; padding: .7rem 1rem; border-top: 1px solid var(--line-soft); }
+    .so-route-f .so-btn { min-height: 2.6rem; font-size: .88rem; }
+    .so-hint { font-size: .8rem; color: var(--muted); font-weight: 600; }
+    .so-pcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: .8rem; }
+    .so-pcard { background: #fff; border: 1px solid var(--line); border-radius: 1rem; padding: .9rem 1rem; display: flex; flex-direction: column; gap: .6rem; }
+    .so-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .5rem; }
+    .so-choice.col { grid-template-columns: 1fr; }
+    .so-bigbtn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 3.2rem; padding: 0 1rem; border-radius: .75rem; border: 1px solid #CFCAC3; background: #fff; color: var(--ink); font-weight: 800; font-size: 1rem; }
+    .so-bigbtn:disabled { opacity: .4; cursor: not-allowed; }
+    .so-bigbtn.ok { background: var(--in); border-color: var(--in); color: #fff; }
+    .so-bigbtn.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .so-bigbtn.wa { background: #15803D; border-color: #15803D; color: #fff; }
+    .so-bigbtn.wa.strong { box-shadow: 0 0 0 3px #BBF7D0; }
+    .so-bigbtn.bad { color: #991B1B; border-color: #FECACA; }
+    .so-linkbtn { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; border: 0; background: transparent; color: var(--muted); font-weight: 700; font-size: .85rem; padding: .3rem; }
+    .so-linkbtn:hover { color: #9A3412; }
+    .so-modal-bg { position: fixed; inset: 0; background: rgba(20,18,16,.45); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .so-modal { background: #fff; border-radius: 1.1rem; width: min(30rem, 100%); box-shadow: 0 1.5rem 3rem rgba(0,0,0,.3); }
+    .so-modal-h { padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); }
+    .so-modal-h h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
+    .so-modal-b { padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: .9rem; }
+    .so-modal-b .lead { font-size: 1.1rem; font-weight: 700; }
+    .so-modal-f { display: flex; padding: .8rem 1.2rem 1rem; border-top: 1px solid var(--line); }
+    .so-modal-f .so-btn { flex: 1; }
+    .so-cview { max-width: 28rem; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: .9rem; }
+    .so-cbanner { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .6rem .8rem; border-radius: .8rem; background: #EEF2FF; color: #3730A3; font-weight: 700; font-size: .9rem; }
+    .so-cbanner select { flex: 1; height: 2.4rem; border-radius: .5rem; border: 1px solid #C7D2FE; background: #fff; padding: 0 .5rem; font-weight: 700; }
+    .so-chead h2 { margin: 0 0 .3rem; font-size: 1.7rem; font-weight: 900; }
+    .so-chead .sub { font-weight: 700; color: var(--muted); }
+    .so-pbar { height: .75rem; border-radius: .4rem; background: var(--line-soft); overflow: hidden; margin-top: .5rem; }
+    .so-pbar i { display: block; height: 100%; background: var(--in); }
+    .so-next { background: #fff; border: 3px solid var(--ink); border-radius: 1.2rem; overflow: hidden; }
+    .so-next-h { background: var(--ink); color: #fff; padding: .55rem 1rem; font-weight: 800; font-size: .9rem; display: flex; justify-content: space-between; gap: .5rem; }
+    .so-next-b { padding: 1rem; display: flex; flex-direction: column; gap: .7rem; }
+    .so-next-b .nm { font-size: 1.15rem; font-weight: 800; }
+    .so-next-b .nm small { color: var(--muted); font-size: .85rem; }
+    .so-next-b .big { font-size: 1.45rem; font-weight: 900; line-height: 1.25; }
+    .so-next-b .big .hood { font-size: 1.05rem; color: var(--muted); font-weight: 700; }
+    .so-next-b .note { background: #F7F5F2; border-radius: .7rem; padding: .55rem .8rem; font-weight: 700; }
+    .so-cbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    .so-cbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; min-height: 4.4rem; border-radius: .75rem; border: 1px solid #CFCAC3; background: #fff; color: var(--ink); font-weight: 800; font-size: .85rem; text-decoration: none; padding: .3rem; }
+    .so-cbtn .so-ico { width: 1.6em; height: 1.6em; }
+    .so-cbtn.waze { background: #33CCFF; border-color: #33CCFF; color: #0B2540; }
+    .so-cbtn.wa { background: #15803D; border-color: #15803D; color: #fff; }
+    .so-cdone { display: grid; grid-template-columns: 3fr 2fr; gap: .5rem; }
+    .so-cdone .so-bigbtn { min-height: 3.6rem; font-size: 1.1rem; }
+    .so-listh { padding: .7rem 1rem; font-weight: 800; border-bottom: 1px solid var(--line); }
+    @media (max-width: 1000px) { .so-dlayout { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 860px) { .so-coldhead .so-seg { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); } }
+
     .so-baledit { width: 5rem; height: 2.6rem; text-align: center; font-weight: 900; font-size: 1.1rem; border: 2px solid var(--k, #0F766E); border-radius: .6rem; background: #fff; }
     @media (max-width: 860px) {
       .so-coldhead .so-seg { display: grid; grid-template-columns: repeat(3, 1fr); flex: 1 1 100%; }
@@ -470,6 +558,13 @@
       edit: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>,
       undo: <path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>,
       refresh: <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/>,
+      pin: <><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></>,
+      phone: <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>,
+      wa: <path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5z"/>,
+      nav: <path d="M3 11 22 2l-9 19-2-8-8-2z"/>,
+      up: <path d="m6 15 6-6 6 6"/>,
+      down: <path d="m6 9 6 6 6-6"/>,
+      x: <path d="M18 6 6 18M6 6l12 12"/>,
       // קטגוריות מוצרים
       'עוף': <><path d="M13.6 3.2c4-.6 7.5 2.4 7.2 6.4-.3 3.7-4 6.6-7.8 5.9a5 5 0 0 1-1.3-.4l-3.4 3.4a2.1 2.1 0 1 1-2.6 2.4 2.1 2.1 0 1 1 1.1-3.8l3.4-3.4a5.5 5.5 0 0 1-.6-2.2c-.2-4.1 1.6-7.7 4-8.3z"/><path d="M15 7c1.2.2 2.2 1.2 2.3 2.5"/></>,
       'הודו': <path d="M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.3-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.8V21"/>,
@@ -4137,36 +4232,35 @@ setTimeout(function(){
         setReturnModal(null);
       };
 
-      // --- רכיבי תצוגה ---
+      // --- רכיבי תצוגה (עיצוב דמו v3) ---
       const KChips = ({ o }) => (
-        <>{kashrutsOf(o).map(k => (
-          <span key={k} className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: kColor(k) }}>{k}</span>
-        ))}</>
+        <>{kashrutsOf(o).map(k => <KChip key={k} k={k} />)}</>
       );
       const Tags = ({ o }) => (
-        <div className="flex flex-wrap gap-1.5 items-center">
+        <div className="so-tags">
           <KChips o={o} />
-          {o.city && o.city !== 'ירושלים' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-100 text-pink-800 border border-pink-200">📍 {o.city} — סבב מיוחד</span>}
-          {o.flags?.mustCoordinate && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">לתאם</span>}
-          {o.collect?.type && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900">לגבות: {o.collect.type}{o.collect.amount ? ` ${o.collect.amount} ₪` : ''}</span>}
-          {o.timeString && o.timeString.slice(0, 10) !== today && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">📅 {fmtDay(o.timeString.slice(0, 10))}</span>}
-          {o.delivery?.status === 'done' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">✓ נמסר{o.delivery.collected ? ` · ${o.delivery.collected}` : ''}</span>}
-          {o.delivery?.status === 'failed' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800">לא נמסר: {o.delivery.reason}</span>}
-          {o.delivery?.onwayAt && o.status === 'completed' && o.delivery?.status !== 'failed' && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">הודעת "בדרך" {o.delivery.onwayAt}</span>}
+          {o.city && o.city !== 'ירושלים' && <span className="so-tag city"><LineIcon name="pin" />{o.city} — סבב מיוחד</span>}
+          {o.flags?.mustCoordinate && <span className="so-tag warn">לתאם</span>}
+          {o.collect?.type && <span className="so-tag pay">לגבות: {o.collect.type}{o.collect.amount ? ` ${o.collect.amount} ₪` : ''}</span>}
+          {o.timeString && o.timeString.slice(0, 10) !== today && <span className="so-tag">{fmtDay(o.timeString.slice(0, 10))}</span>}
+          {o.delivery?.status === 'done' && <span className="so-tag ok"><LineIcon name="check" />נמסר{o.delivery.collected ? ` · ${o.delivery.collected}` : ''}</span>}
+          {o.delivery?.status === 'failed' && <span className="so-tag bad">לא נמסר: {o.delivery.reason}</span>}
+          {o.delivery?.onwayAt && o.status === 'completed' && o.delivery?.status !== 'failed' && <span className="so-tag warn">הודעת "בדרך" {o.delivery.onwayAt}</span>}
         </div>
       );
       const Pack = ({ o }) => {
         const p = o.packaging || {};
         const parts = [p.cartons > 0 && `${p.cartons} קרטונים`, p.bags > 0 && `${p.bags} שקיות`, p.fishBags > 0 && `${p.fishBags} שקיות דגים`].filter(Boolean);
-        return <div className="text-sm text-gray-600 font-bold">{parts.length ? parts.join(' · ') : 'לא הוזנו פרטי אריזה'}</div>;
+        return <div className="so-pk">{parts.length ? parts.map(x => <span key={x}>{x}</span>) : 'לא הוזנו פרטי אריזה'}</div>;
       };
       const addrLine = (o) => [o.street, o.neighborhood, o.city && o.city !== 'ירושלים' ? o.city : ''].filter(Boolean).join(', ');
       const addrExtra = (o) => [o.entrance && `כניסה ${o.entrance}`, o.floor && `קומה ${o.floor}`, o.apt && `דירה ${o.apt}`].filter(Boolean).join(' · ');
+      const stopClass = (o) => (o.delivery?.status === 'done' || o.status === 'delivered') ? 'done' : o.delivery?.status === 'failed' ? 'fail' : '';
 
       const tabs = courierOnly ? [] : [
-        { id: 'delivery', label: '🚚 משלוחים וסבבים', count: readyDeliveries.length },
-        { id: 'mine', label: '📱 תצוגת שליח', count: null },
-        { id: 'pickup', label: '🏪 איסוף בחנות', count: pickupOrders.length },
+        { id: 'delivery', label: 'משלוחים וסבבים', ico: 'truck', count: readyDeliveries.length },
+        { id: 'pickup', label: 'איסוף בחנות', ico: 'box', count: pickupOrders.length },
+        { id: 'mine', label: 'תצוגת שליח', ico: 'phone', count: null },
       ];
 
       // ===== מסך שליח =====
@@ -4177,53 +4271,55 @@ setTimeout(function(){
         const next = pending[0];
         const doneN = stops.length - pending.length;
         return (
-          <div className="max-w-md mx-auto space-y-4">
+          <div className="so-cview">
             {!courierOnly && (
-              <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-indigo-900 font-bold text-sm">
-                כך השליח רואה בטלפון:
-                <select value={viewCourier} onChange={e => setViewCourier(e.target.value)} className="flex-1 p-2 rounded-lg border border-indigo-200 bg-white">
+              <div className="so-cbanner">
+                <LineIcon name="phone" />כך השליח רואה בטלפון:
+                <select value={viewCourier} onChange={e => setViewCourier(e.target.value)} aria-label="שליח">
                   {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
             )}
-            <div>
-              <h2 className="text-2xl font-black text-gray-900">המסלול שלי</h2>
-              <div className="text-gray-600 font-bold mt-1">{myRoutes.map(r => `${r.name}${r.time ? ' · ' + r.time : ''}`).join(' / ') || 'אין סבבים כרגע'} · {doneN} מתוך {stops.length} הושלמו</div>
-              <div className="h-3 rounded-full bg-gray-200 overflow-hidden mt-2"><div className="h-full bg-green-600" style={{ width: `${stops.length ? doneN / stops.length * 100 : 0}%` }} /></div>
+            <div className="so-chead">
+              {!courierOnly && <h2>המסלול שלי</h2>}
+              <div className="sub">{myRoutes.map(r => `${r.name}${r.time ? ' · ' + r.time : ''}`).join(' / ') || 'אין סבבים כרגע'} · {doneN} מתוך {stops.length} הושלמו</div>
+              <div className="so-pbar"><i style={{ width: `${stops.length ? doneN / stops.length * 100 : 0}%` }} /></div>
             </div>
             {next ? (
-              <div className="bg-white rounded-2xl border-4 border-gray-900 overflow-hidden">
-                <div className="bg-gray-900 text-white px-4 py-2 font-bold text-sm flex justify-between"><span>העצירה הבאה · {stops.indexOf(next) + 1} מתוך {stops.length}</span><span>{next.r.name}</span></div>
-                <div className="p-4 space-y-3">
-                  <div className="text-lg font-extrabold">{next.o.customer} <span className="text-sm text-gray-500 font-bold">#{next.o.id}</span></div>
-                  <div className="text-2xl font-black leading-tight">{next.o.street || next.o.neighborhood}<div className="text-base text-gray-600 font-bold">{next.o.neighborhood}, {next.o.city || 'ירושלים'}</div></div>
-                  {addrExtra(next.o) && <div className="bg-gray-100 rounded-lg px-3 py-2 font-bold">{addrExtra(next.o)}</div>}
+              <section className="so-next">
+                <div className="so-next-h"><span>העצירה הבאה · {stops.indexOf(next) + 1} מתוך {stops.length}</span><span>{next.r.name}</span></div>
+                <div className="so-next-b">
+                  <div className="nm">{next.o.customer} <small>#{next.o.id}</small></div>
+                  <div className="big">{next.o.street || next.o.neighborhood}<div className="hood">{next.o.neighborhood}, {next.o.city || 'ירושלים'}</div></div>
+                  {addrExtra(next.o) && <div className="note">{addrExtra(next.o)}</div>}
                   <Tags o={next.o} />
                   <Pack o={next.o} />
-                  <div className="grid grid-cols-3 gap-2">
-                    <a href={wazeLink(next.o)} target="_blank" rel="noopener" className="flex flex-col items-center justify-center gap-1 min-h-[72px] rounded-xl font-bold text-sm bg-sky-400 text-sky-950"><Icons.Navigation className="w-6 h-6" />נווט בוויז</a>
-                    <a href={`tel:${next.o.mobile || next.o.phone}`} className="flex flex-col items-center justify-center gap-1 min-h-[72px] rounded-xl font-bold text-sm border-2 border-gray-200 bg-white text-gray-800"><Icons.Phone className="w-6 h-6" />התקשר</a>
-                    <button onClick={() => sendOnWay(next.o)} className="flex flex-col items-center justify-center gap-1 min-h-[72px] rounded-xl font-bold text-sm bg-green-700 text-white"><Icons.Send className="w-6 h-6" />"אני בדרך"</button>
+                  <div className="so-cbtns">
+                    <a href={wazeLink(next.o)} target="_blank" rel="noopener" className="so-cbtn waze"><LineIcon name="nav" />נווט בוויז</a>
+                    <a href={`tel:${next.o.mobile || next.o.phone}`} className="so-cbtn"><LineIcon name="phone" />התקשר</a>
+                    <button onClick={() => sendOnWay(next.o)} className="so-cbtn wa"><LineIcon name="wa" />"אני בדרך"</button>
                   </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    <button onClick={() => next.o.collect?.type ? setModal({ type: 'collect', order: next.o }) : markDelivered(next.o)} className="col-span-3 min-h-[60px] rounded-xl bg-green-700 hover:bg-green-800 text-white font-black text-lg">✓ נמסר</button>
-                    <button onClick={() => setModal({ type: 'fail', order: next.o })} className="col-span-2 min-h-[60px] rounded-xl border-2 border-gray-300 bg-white font-bold">לא נמסר</button>
+                  <div className="so-cdone">
+                    <button onClick={() => next.o.collect?.type ? setModal({ type: 'collect', order: next.o }) : markDelivered(next.o)} className="so-bigbtn ok"><LineIcon name="check" />נמסר</button>
+                    <button onClick={() => setModal({ type: 'fail', order: next.o })} className="so-bigbtn">לא נמסר</button>
                   </div>
                 </div>
-              </div>
+              </section>
             ) : (
-              <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500 font-bold">{stops.length ? 'כל העצירות הושלמו 👏' : 'אין לך סבבים כרגע'}</div>
+              <div className="so-subcard so-empty">{stops.length ? 'כל העצירות הושלמו. כל הכבוד!' : 'אין לך סבבים כרגע'}</div>
             )}
             {stops.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="px-4 py-2 font-extrabold border-b border-gray-100">כל העצירות</div>
-                {stops.map((s, i) => (
-                  <div key={s.o.id} className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
-                    <span className={`w-8 h-8 rounded-full text-white font-black flex items-center justify-center shrink-0 ${s.o.delivery?.status === 'done' || s.o.status === 'delivered' ? 'bg-green-600' : s.o.delivery?.status === 'failed' ? 'bg-red-700' : 'bg-gray-900'}`}>{i + 1}</span>
-                    <div className="flex-1 min-w-0"><div className="font-bold">{s.o.customer}</div><div className="text-sm text-gray-600">{addrLine(s.o)}</div><Tags o={s.o} /></div>
-                  </div>
-                ))}
-              </div>
+              <section className="so-subcard">
+                <div className="so-listh">כל העצירות</div>
+                <ol className="so-stops">
+                  {stops.map((s, i) => (
+                    <li key={s.o.id} className={`so-stop ${stopClass(s.o)}`}>
+                      <span className="n">{i + 1}</span>
+                      <div className="body"><b>{s.o.customer}</b><span className="addr">{addrLine(s.o)}</span><Tags o={s.o} /></div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
             )}
           </div>
         );
@@ -4231,28 +4327,28 @@ setTimeout(function(){
 
       // ===== ניהול סבבים =====
       const renderOffice = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
-          <div className="lg:col-span-2 space-y-3">
-            <div className="flex items-center justify-between"><h2 className="text-xl font-extrabold">ממתינים לשיבוץ</h2><span className="text-sm font-bold text-gray-500">{unassigned.length} משלוחים</span></div>
+        <div className="so-dlayout">
+          <section>
+            <div className="so-dcol-h"><h2>ממתינים לשיבוץ</h2><span className="so-tag">{unassigned.length} משלוחים</span></div>
             {selected.length > 0 && (
-              <div className="sticky top-0 z-10 bg-gray-900 text-white rounded-xl p-3 flex flex-wrap items-center gap-2">
-                <span className="font-bold flex-1">נבחרו {selected.length}</span>
-                {routes.map(r => <button key={r.id} onClick={() => addToRoute(r)} className="px-3 py-2 rounded-lg bg-white text-gray-900 font-bold text-sm">ל{r.name}</button>)}
-                <button onClick={() => addToRoute(null)} className="px-3 py-2 rounded-lg bg-red-600 text-white font-bold text-sm">+ סבב חדש</button>
+              <div className="so-assignbar">
+                <b>נבחרו {selected.length}</b>
+                {routes.map(r => <button key={r.id} onClick={() => addToRoute(r)} className="so-btn">ל{r.name}</button>)}
+                <button onClick={() => addToRoute(null)} className="so-btn primary"><LineIcon name="plus" />סבב חדש</button>
               </div>
             )}
-            {unassigned.length === 0 && <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500 font-bold">אין משלוחים ממתינים לשיבוץ</div>}
+            {unassigned.length === 0 && <div className="so-subcard so-empty">אין משלוחים ממתינים לשיבוץ</div>}
             {unassigned.map((o, i) => {
               const sel = selected.includes(o.id);
               const showHood = i === 0 || unassigned[i - 1].neighborhood !== o.neighborhood;
               return (
                 <React.Fragment key={o.id}>
-                  {showHood && <div className="text-sm font-extrabold text-gray-500 pt-2">📍 {o.neighborhood || 'ללא שכונה'}</div>}
-                  <label className={`flex gap-3 items-start p-3 rounded-xl bg-white cursor-pointer border-2 ${sel ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
-                    <input type="checkbox" checked={sel} onChange={() => setSelected(p => sel ? p.filter(x => x !== o.id) : [...p, o.id])} className="w-5 h-5 mt-1 accent-gray-900" />
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="font-extrabold text-base">{o.customer} <span className="text-sm text-gray-400 font-bold">#{o.id}</span></div>
-                      <div className="text-sm font-bold text-gray-700">{addrLine(o)}{addrExtra(o) && <span className="text-gray-500 font-medium"> · {addrExtra(o)}</span>}</div>
+                  {showHood && <div className="so-hood-h"><LineIcon name="pin" />{o.neighborhood || 'ללא שכונה'}</div>}
+                  <label className={`so-dcard ${sel ? 'sel' : ''}`}>
+                    <input type="checkbox" checked={sel} onChange={() => setSelected(p => sel ? p.filter(x => x !== o.id) : [...p, o.id])} />
+                    <div className="body">
+                      <span className="nm">{o.customer} <small>#{o.id}</small></span>
+                      <span className="addr">{addrLine(o)}{addrExtra(o) && <small> · {addrExtra(o)}</small>}</span>
                       <Tags o={o} />
                       <Pack o={o} />
                     </div>
@@ -4260,108 +4356,108 @@ setTimeout(function(){
                 </React.Fragment>
               );
             })}
-          </div>
+          </section>
 
-          <div className="lg:col-span-3 space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-extrabold flex-1">סבבים היום</h2>
-              <input value={origin} onChange={e => { setOrigin(e.target.value); try { localStorage.setItem('so-route-origin', e.target.value); } catch {} }} placeholder="נקודת יציאה (כתובת החנות)" className="p-2 border border-gray-300 rounded-lg text-sm w-64" />
+          <section>
+            <div className="so-dcol-h">
+              <h2>סבבים היום</h2>
+              <input value={origin} onChange={e => { setOrigin(e.target.value); try { localStorage.setItem('so-route-origin', e.target.value); } catch {} }} placeholder="נקודת יציאה (כתובת החנות)" className="so-origin" aria-label="נקודת יציאה" />
             </div>
-            {routes.length === 0 && <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500 font-bold">עוד אין סבבים — סמני משלוחים ולחצי "סבב חדש"</div>}
+            {routes.length === 0 && <div className="so-subcard so-empty">עוד אין סבבים — סמני משלוחים ולחצי "סבב חדש"</div>}
             {routes.map(r => {
               const finished = r.stops.filter(s => !isPending(s)).length;
               return (
-                <div key={r.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 border-b border-gray-200">
-                    <input value={r.name} onChange={e => updateRoute(r.id, { name: e.target.value })} className="font-black text-lg bg-transparent w-28 outline-none border-b border-transparent focus:border-gray-400" aria-label="שם הסבב" />
-                    <input type="time" value={r.time || ''} onChange={e => updateRoute(r.id, { time: e.target.value })} className="p-2 border border-gray-300 rounded-lg text-sm font-bold" aria-label="שעת יציאה" />
-                    <select value={r.courier || ''} onChange={e => updateRoute(r.id, { courier: e.target.value })} className={`p-2 border rounded-lg text-sm font-bold bg-white ${r.courier ? 'border-gray-300' : 'border-red-400 text-red-700'}`} aria-label="שליח">
+                <article key={r.id} className="so-route">
+                  <div className="so-route-h">
+                    <input value={r.name} onChange={e => updateRoute(r.id, { name: e.target.value })} className="so-route-name" aria-label="שם הסבב" />
+                    <input type="time" value={r.time || ''} onChange={e => updateRoute(r.id, { time: e.target.value })} aria-label="שעת יציאה" />
+                    <select value={r.courier || ''} onChange={e => updateRoute(r.id, { courier: e.target.value })} className={r.courier ? '' : 'missing'} aria-label="שליח">
                       <option value="">— בחרי שליח —</option>
                       {couriersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
-                    <span className="mr-auto text-sm font-bold text-gray-500">{finished}/{r.stops.length} הושלמו</span>
+                    <span className="prog">{finished}/{r.stops.length} הושלמו</span>
                   </div>
-                  {r.stops.map((o, idx) => {
-                    const done = o.status === 'delivered', failed = o.delivery?.status === 'failed';
-                    return (
-                      <div key={o.id} className="flex items-start gap-3 px-3 py-3 border-b border-gray-100">
-                        <span className={`w-8 h-8 rounded-full text-white font-black flex items-center justify-center shrink-0 ${done ? 'bg-green-600' : failed ? 'bg-red-700' : 'bg-gray-900'}`}>{idx + 1}</span>
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="font-extrabold">{o.customer} <span className="text-xs text-gray-400">#{o.id}</span></div>
-                          <div className="text-sm font-bold text-gray-700">{addrLine(o)}</div>
-                          <Tags o={o} />
-                        </div>
-                        {!done && (
-                          <div className="flex items-center gap-1">
-                            <div className="flex flex-col gap-1">
-                              <button onClick={() => moveStop(r, idx, -1)} disabled={idx === 0} className="w-9 h-7 rounded border border-gray-200 bg-white disabled:opacity-30" aria-label="הזז למעלה">▲</button>
-                              <button onClick={() => moveStop(r, idx, 1)} disabled={idx === r.stops.length - 1} className="w-9 h-7 rounded border border-gray-200 bg-white disabled:opacity-30" aria-label="הזז למטה">▼</button>
-                            </div>
-                            <button onClick={() => removeFromRoute(o)} className="w-9 h-9 rounded border border-gray-200 bg-white text-gray-500 hover:text-red-600 flex items-center justify-center" aria-label="הוצא מהסבב" title="הוצא מהסבב"><Icons.X className="w-4 h-4" /></button>
-                            <button onClick={() => openReturnModal(o)} className="w-9 h-9 rounded border border-orange-200 bg-orange-50 text-orange-800 font-bold" aria-label="החזר הזמנה" title="החזר הזמנה">↩</button>
+                  <ol className="so-stops">
+                    {r.stops.map((o, idx) => {
+                      const done = o.status === 'delivered';
+                      return (
+                        <li key={o.id} className={`so-stop ${stopClass(o)}`}>
+                          <span className="n">{idx + 1}</span>
+                          <div className="body">
+                            <b>{o.customer} <small>#{o.id}</small></b>
+                            <span className="addr">{addrLine(o)}</span>
+                            <Tags o={o} />
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  <div className="flex flex-wrap gap-2 p-3">
-                    <button onClick={() => sortByHood(r)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white font-bold text-sm">סדר לפי שכונות</button>
-                    <button onClick={() => openGoogleMaps(r)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white font-bold text-sm flex items-center gap-1"><Icons.MapPin className="w-4 h-4" />מסלול בגוגל מפות</button>
-                    <button onClick={() => printRoute(r)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white font-bold text-sm flex items-center gap-1"><Icons.Printer className="w-4 h-4" />דף מסלול לשליח</button>
-                    {r.stops.filter(isPending).length > 10 && <span className="text-xs text-amber-700 font-bold self-center">גוגל מפות מציג עד 10 עצירות — יוצגו 10 הראשונות</span>}
+                          {!done && (
+                            <div className="so-stop-act">
+                              <div className="arrows">
+                                <button onClick={() => moveStop(r, idx, -1)} disabled={idx === 0} aria-label="הזז למעלה"><LineIcon name="up" /></button>
+                                <button onClick={() => moveStop(r, idx, 1)} disabled={idx === r.stops.length - 1} aria-label="הזז למטה"><LineIcon name="down" /></button>
+                              </div>
+                              <button onClick={() => removeFromRoute(o)} className="so-iconbtn" aria-label="הוצא מהסבב" title="הוצא מהסבב"><LineIcon name="x" /></button>
+                              <button onClick={() => openReturnModal(o)} className="so-iconbtn" aria-label="החזר הזמנה" title="החזר הזמנה"><LineIcon name="undo" /></button>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  <div className="so-route-f">
+                    <button onClick={() => sortByHood(r)} className="so-btn"><LineIcon name="list" />סדר לפי שכונות</button>
+                    <button onClick={() => openGoogleMaps(r)} className="so-btn"><LineIcon name="pin" />מסלול בגוגל מפות</button>
+                    <button onClick={() => printRoute(r)} className="so-btn"><LineIcon name="print" />דף מסלול לשליח</button>
+                    {r.stops.filter(isPending).length > 10 && <span className="so-hint">גוגל מפות מציג עד 10 עצירות — יוצגו 10 הראשונות</span>}
                   </div>
-                </div>
+                </article>
               );
             })}
-          </div>
+          </section>
         </div>
       );
 
       // ===== איסוף בחנות =====
       const renderPickup = () => (
         pickupOrders.length === 0 ? (
-          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500 font-bold">אין הזמנות ממתינות לאיסוף</div>
+          <div className="so-subcard so-empty">אין הזמנות ממתינות לאיסוף</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="so-pcards">
             {pickupOrders.map(o => (
-              <div key={o.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-3">
-                <div className="flex justify-between gap-2"><div><div className="font-extrabold text-lg">{o.customer}</div><div className="text-sm text-gray-500">#{o.id} · {o.mobile || o.phone}</div></div>
-                  {o.timeString && <span className="text-sm font-bold bg-gray-100 rounded-full px-3 py-1 h-fit">{fmtDay(o.timeString.slice(0, 10))}{o.timeString.includes('T') && o.timeString.split('T')[1] !== '00:00' ? ' ' + o.timeString.split('T')[1] : ''}</span>}
+              <article key={o.id} className="so-pcard">
+                <div className="so-ohead">
+                  <div><b>{o.customer}</b><small>#{o.id} · {o.mobile || o.phone}</small></div>
+                  {o.timeString && <span className="so-when">{fmtDay(o.timeString.slice(0, 10))}{o.timeString.includes('T') && o.timeString.split('T')[1] !== '00:00' ? ' ' + o.timeString.split('T')[1] : ''}</span>}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="so-tags">
                   <KChips o={o} />
-                  {o.flags?.notifyReady && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">להודיע שמוכן</span>}
-                  {o.notifiedAt && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">✓ נשלחה הודעה · {o.notifiedAt}</span>}
+                  {o.flags?.notifyReady && <span className="so-tag warn">להודיע שמוכן</span>}
+                  {o.notifiedAt && <span className="so-tag ok"><LineIcon name="check" />נשלחה הודעה · {o.notifiedAt}</span>}
                 </div>
                 <Pack o={o} />
-                <div className="grid grid-cols-2 gap-2">
+                <div className="so-choice">
                   <button onClick={() => sendReady(o)} disabled={!normPhone(o.mobile || o.phone)}
-                    className={`py-3 rounded-xl font-bold text-white bg-green-700 hover:bg-green-800 disabled:opacity-40 ${o.flags?.notifyReady && !o.notifiedAt ? 'ring-4 ring-green-200' : ''}`}>
-                    {o.notifiedAt ? 'שלח שוב' : 'וואטסאפ: מוכן'}
+                    className={`so-bigbtn wa ${o.flags?.notifyReady && !o.notifiedAt ? 'strong' : ''}`}>
+                    <LineIcon name="wa" />{o.notifiedAt ? 'שלח שוב' : 'וואטסאפ: מוכן'}
                   </button>
-                  <button onClick={() => markPicked(o)} className="py-3 rounded-xl font-bold text-white bg-gray-900 hover:bg-black">✓ נאסף</button>
+                  <button onClick={() => markPicked(o)} className="so-bigbtn dark"><LineIcon name="check" />נאסף</button>
                 </div>
-                <button onClick={() => openReturnModal(o)} className="w-full py-2 rounded-xl text-xs font-bold bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200">↩ החזר הזמנה</button>
-              </div>
+                <button onClick={() => openReturnModal(o)} className="so-linkbtn"><LineIcon name="undo" />החזר הזמנה</button>
+              </article>
             ))}
           </div>
         )
       );
 
       return (
-        <div className="animate-in fade-in duration-300">
-          <div className="mb-5">
-            <h1 className="text-3xl font-extrabold text-gray-900">{courierOnly ? 'המסלול שלי' : 'מערך משלוחים והפצה'}</h1>
-            {!courierOnly && <p className="text-gray-500 mt-1">שיבוץ לסבבים, מסלול לשליח ואיסוף מהחנות</p>}
-          </div>
+        <div>
           {tabs.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {tabs.map(t => (
-                <button key={t.id} onClick={() => setActiveTab(t.id)}
-                  className={`flex-1 min-w-[150px] py-3 rounded-xl font-bold text-base border-2 flex items-center justify-center gap-2 ${activeTab === t.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
-                  {t.label}{t.count ? <span className={`text-xs px-2 py-0.5 rounded-full font-black ${activeTab === t.id ? 'bg-white/25' : 'bg-gray-100'}`}>{t.count}</span> : null}
-                </button>
-              ))}
+            <div className="so-coldhead">
+              <div className="so-seg" role="tablist">
+                {tabs.map(t => (
+                  <button key={t.id} role="tab" aria-selected={activeTab === t.id} onClick={() => setActiveTab(t.id)}>
+                    <LineIcon name={t.ico} />{t.label}{t.count ? <span className="cnt">{t.count}</span> : null}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -4371,27 +4467,31 @@ setTimeout(function(){
 
           {/* חלונות שליח */}
           {modal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}>
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4">
+            <div className="so-modal-bg" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}>
+              <div className="so-modal" role="dialog" aria-modal="true">
                 {modal.type === 'collect' && (<>
-                  <h3 className="font-extrabold text-lg">{modal.order.customer} — מה נגבה?</h3>
-                  <p className="font-bold">לגבות: {modal.order.collect.type}{modal.order.collect.amount ? ` על סך ${modal.order.collect.amount} ₪` : ''}</p>
-                  <div className="grid gap-2">
-                    <button onClick={() => markDelivered(modal.order, `נגבה ${modal.order.collect.type}`)} className="py-3 rounded-xl bg-green-700 text-white font-bold">נגבה {modal.order.collect.type}</button>
-                    <button onClick={() => markDelivered(modal.order, 'נגבה בתשלום אחר')} className="py-3 rounded-xl border-2 border-gray-200 font-bold">נגבה בתשלום אחר</button>
-                    <button onClick={() => markDelivered(modal.order, 'לא נגבה')} className="py-3 rounded-xl border-2 border-red-200 text-red-700 font-bold">נמסר — לא נגבה</button>
+                  <div className="so-modal-h"><h2>{modal.order.customer} — מה נגבה?</h2></div>
+                  <div className="so-modal-b">
+                    <div className="lead">לגבות: {modal.order.collect.type}{modal.order.collect.amount ? ` על סך ${modal.order.collect.amount} ₪` : ''}</div>
+                    <div className="so-choice col">
+                      <button onClick={() => markDelivered(modal.order, `נגבה ${modal.order.collect.type}`)} className="so-bigbtn ok">נגבה {modal.order.collect.type}</button>
+                      <button onClick={() => markDelivered(modal.order, 'נגבה בתשלום אחר')} className="so-bigbtn">נגבה בתשלום אחר</button>
+                      <button onClick={() => markDelivered(modal.order, 'לא נגבה')} className="so-bigbtn bad">נמסר — לא נגבה</button>
+                    </div>
                   </div>
                 </>)}
                 {modal.type === 'fail' && (<>
-                  <h3 className="font-extrabold text-lg">{modal.order.customer} — למה לא נמסר?</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['לא היה בבית', 'לא עונה לטלפון', 'כתובת שגויה', 'ביקש לדחות', 'אחר'].map(r => (
-                      <button key={r} onClick={() => markFailed(modal.order, r)} className="py-3 rounded-xl border-2 border-gray-200 font-bold">{r}</button>
-                    ))}
+                  <div className="so-modal-h"><h2>{modal.order.customer} — למה לא נמסר?</h2></div>
+                  <div className="so-modal-b">
+                    <div className="so-choice">
+                      {['לא היה בבית', 'לא עונה לטלפון', 'כתובת שגויה', 'ביקש לדחות', 'אחר'].map(r => (
+                        <button key={r} onClick={() => markFailed(modal.order, r)} className="so-bigbtn">{r}</button>
+                      ))}
+                    </div>
+                    <div className="so-hint">ההזמנה נשארת בסבב מסומנת באדום, והמשרד יכול לשבץ אותה מחדש.</div>
                   </div>
-                  <p className="text-sm text-gray-500">ההזמנה נשארת בסבב מסומנת באדום, והמשרד יכול לשבץ אותה מחדש.</p>
                 </>)}
-                <button onClick={() => setModal(null)} className="w-full py-2 rounded-xl border border-gray-200 text-gray-600 font-bold">ביטול</button>
+                <div className="so-modal-f"><button onClick={() => setModal(null)} className="so-btn">ביטול</button></div>
               </div>
             </div>
           )}
