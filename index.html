@@ -430,6 +430,60 @@
     @media (max-width: 1000px) { .so-dlayout { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 860px) { .so-coldhead .so-seg { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); } }
 
+    /* ===== ניהול רשימות ===== */
+    .so-listtabs { align-self: flex-start; }
+    .so-lhead { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); background: #F7F5F2; }
+    .so-lhead h3 { margin: 0; font-size: 1.2rem; font-weight: 900; }
+    .so-addrow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line-soft); }
+    .so-addrow.flat { padding: 0 0 .7rem; border: 0; }
+    .so-input { flex: 1 1 12rem; min-width: 0; height: 2.75rem; border: 1px solid #CFCAC3; border-radius: .65rem; padding: 0 .75rem; font-size: 1rem; background: #fff; color: var(--ink); }
+    .so-input:focus, .so-select:focus { outline: 3px solid #BFDBFE; border-color: #2563EB; }
+    .so-input.sm { height: 2.4rem; font-size: .95rem; flex: none; width: 100%; }
+    .so-input.mono { font-family: ui-monospace, Consolas, monospace; }
+    .so-input.dup { border-color: #F87171; background: #FEF2F2; }
+    .so-select { height: 2.4rem; border: 1px solid #CFCAC3; border-radius: .6rem; padding: 0 .5rem; font-size: .95rem; font-weight: 600; background: #fff; color: var(--ink); }
+    .so-select.kash { border: 2px solid var(--k); color: var(--k-ink); font-weight: 800; }
+    .so-color { width: 2.75rem; height: 2.75rem; border: 1px solid #CFCAC3; border-radius: .6rem; padding: .15rem; background: #fff; cursor: pointer; }
+    .so-color.sm { width: 2.3rem; height: 2.3rem; min-height: 0 !important; }
+    .so-litems { list-style: none; margin: 0; padding: .4rem 0; max-height: 60vh; overflow-y: auto; }
+    .so-litems li { display: flex; align-items: center; gap: .7rem; padding: .5rem 1.1rem; border-bottom: 1px solid var(--line-soft); }
+    .so-litems li:last-child { border-bottom: 0; }
+    .so-litems li b { flex: 1; font-size: 1.05rem; font-weight: 700; }
+    .so-lempty { padding: 1.5rem 1rem; text-align: center; color: var(--muted); font-weight: 600; }
+    .so-lempty.big { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 3rem 1rem; }
+    .so-lempty.big .so-ico { width: 2rem; height: 2rem; opacity: .35; }
+    .so-iconbtn.sm { width: 2.2rem; height: 2.2rem; min-height: 0 !important; }
+    .so-hoodgrid { display: grid; grid-template-columns: 1fr 1fr; }
+    .so-hoodcol { padding: 1rem 1.1rem; min-width: 0; }
+    .so-hoodcol + .so-hoodcol { border-inline-start: 1px solid var(--line); }
+    .so-hoodlist { display: flex; flex-direction: column; gap: .2rem; max-height: 55vh; overflow-y: auto; }
+    .so-hooditem { display: flex; align-items: center; gap: .55rem; padding: .45rem .6rem; border-radius: .7rem; border: 1px solid transparent; cursor: pointer; }
+    .so-hooditem:hover { background: #F7F5F2; }
+    .so-hooditem.sel { background: #F1EFEB; border-color: var(--ink); }
+    .so-hooditem .nm { flex: 1; font-weight: 700; }
+    .so-hooditem .nm small { color: var(--muted); font-weight: 600; }
+    .so-hooditem .so-ico { color: var(--muted); }
+    .so-hoodtitle { display: flex; align-items: center; gap: .4rem; font-weight: 900; font-size: 1.05rem; margin-bottom: .7rem; }
+    .so-tools.plain { background: #fff; }
+    .so-warnbar { display: flex; align-items: flex-start; gap: .5rem; padding: .75rem 1.1rem; background: #FEF2F2; border-bottom: 1px solid #FECACA; color: #991B1B; }
+    .so-ptbl { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    .so-ptbl thead th { background: #FAF9F7; border-bottom: 2px solid var(--line); }
+    .so-ptbl td { padding: .45rem 1rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+    .so-ptbl .so-catrow td { padding: .6rem 1rem; }
+    .so-catrow.clickable { cursor: pointer; user-select: none; }
+    .so-catrow.clickable:hover td { background: #F3F1ED; }
+    .so-catn { font-weight: 600; font-size: .8rem; color: #A8A29E; }
+    .so-pname-edit { display: block; width: 100%; padding: .3rem .4rem; border-radius: .45rem; font-weight: 700; cursor: text; }
+    .so-pname-edit:hover { background: #EFF6FF; }
+    .so-stchip { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; min-height: 2.2rem !important; padding: 0 .7rem; border-radius: 999px; border: 1px solid #CFCAC3; background: #fff; color: #A8A29E; font-weight: 800; font-size: .8rem; }
+    .so-stchip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+    @media (max-width: 860px) {
+      .so-listtabs { display: grid; grid-template-columns: repeat(2, 1fr); align-self: stretch; }
+      .so-listtabs button { justify-content: center; }
+      .so-hoodgrid { grid-template-columns: 1fr; }
+      .so-hoodcol + .so-hoodcol { border-inline-start: 0; border-top: 1px solid var(--line); }
+    }
+
     .so-baledit { width: 5rem; height: 2.6rem; text-align: center; font-weight: 900; font-size: 1.1rem; border: 2px solid var(--k, #0F766E); border-radius: .6rem; background: #fff; }
     @media (max-width: 860px) {
       .so-coldhead .so-seg { display: grid; grid-template-columns: repeat(3, 1fr); flex: 1 1 100%; }
@@ -4575,60 +4629,28 @@ setTimeout(function(){
       };
 
       return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="font-bold text-lg text-gray-800">{title}</h3>
-          </div>
-
-          <div className="p-5 border-b border-gray-100 bg-white">
-            <form onSubmit={handleAdd} className="flex gap-3 max-w-md items-center">
-              {showColor && (
-                <input type="color" value={newItemColor} onChange={e => setNewItemColor(e.target.value)}
-                  className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5" title="בחר צבע" />
-              )}
-              <input type="text" value={newItemName} onChange={e => setNewItemName(e.target.value)}
-                placeholder={placeholder}
-                className="flex-1 p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              <Button type="submit" variant="primary" icon={Icons.Plus}>הוסף</Button>
-            </form>
-          </div>
-
-          <div className="overflow-x-auto max-h-60 custom-scrollbar">
-            <table className="w-full text-right relative">
-              <thead className="bg-gray-50/50 text-gray-500 text-sm border-b border-gray-100 sticky top-0 backdrop-blur-md">
-                <tr>
-                  {showColor && <th className="p-4 font-medium w-20 text-center">צבע</th>}
-                  <th className="p-4 font-medium">שם</th>
-                  <th className="p-4 font-medium w-16">מחק</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {items.map(item => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    {showColor && (
-                      <td className="p-3 text-center">
-                        <input type="color" value={item.color || '#6366f1'}
-                          onChange={e => handleColorChange(item.id, e.target.value)}
-                          className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                      </td>
-                    )}
-                    <td className="p-4 font-medium text-gray-900 flex items-center gap-2">
-                      {showColor && item.color && (
-                        <span className="inline-block w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                      )}
-                      {item.name}
-                    </td>
-                    <td className="p-4">
-                      <button onClick={() => handleRemove(item.id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                        <Icons.Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <section className="so-subcard">
+          <div className="so-lhead"><h3>{title}</h3><span className="so-tag">{items.length}</span></div>
+          <form onSubmit={handleAdd} className="so-addrow">
+            {showColor && (
+              <input type="color" value={newItemColor} onChange={e => setNewItemColor(e.target.value)} className="so-color" title="בחר צבע" aria-label="צבע" />
+            )}
+            <input type="text" value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder={placeholder} className="so-input" />
+            <button type="submit" className="so-btn primary"><LineIcon name="plus" />הוסף</button>
+          </form>
+          <ul className="so-litems">
+            {items.map(item => (
+              <li key={item.id}>
+                {showColor && (
+                  <input type="color" value={item.color || '#6366f1'} onChange={e => handleColorChange(item.id, e.target.value)} className="so-color sm" aria-label={`צבע — ${item.name}`} />
+                )}
+                <b>{item.name}</b>
+                <button onClick={() => handleRemove(item.id)} className="so-iconbtn danger" title="מחיקה" aria-label={`מחיקה — ${item.name}`}><LineIcon name="trash" /></button>
+              </li>
+            ))}
+            {items.length === 0 && <li className="so-lempty">הרשימה ריקה</li>}
+          </ul>
+        </section>
       );
     };
 
@@ -4948,72 +4970,51 @@ setTimeout(function(){
       };
 
       return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="font-bold text-lg text-gray-800">שכונות ורחובות (ירושלים)</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+        <section className="so-subcard">
+          <div className="so-lhead"><h3>שכונות ורחובות (ירושלים)</h3><span className="so-tag">{neighborhoodData.length} שכונות</span></div>
+          <div className="so-hoodgrid">
             {/* עמודת שכונות */}
-            <div className="p-4">
-              <form onSubmit={addNeighborhood} className="flex gap-2 mb-3">
-                <input type="text" value={newNeighborhood} onChange={e => setNewNeighborhood(e.target.value)}
-                  placeholder="הוסף שכונה חדשה..."
-                  className="flex-1 p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-                <Button type="submit" variant="primary" icon={Icons.Plus}>הוסף</Button>
+            <div className="so-hoodcol">
+              <form onSubmit={addNeighborhood} className="so-addrow flat">
+                <input type="text" value={newNeighborhood} onChange={e => setNewNeighborhood(e.target.value)} placeholder="הוסף שכונה חדשה..." className="so-input" />
+                <button type="submit" className="so-btn primary"><LineIcon name="plus" />הוסף</button>
               </form>
-              <div className="space-y-1 max-h-64 overflow-y-auto custom-scrollbar">
+              <div className="so-hoodlist">
                 {neighborhoodData.map(n => (
-                  <div key={n.id}
-                    onClick={() => setSelectedId(n.id)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${selectedId === n.id ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}`}>
-                    <span className="font-medium text-sm text-gray-900">{n.name}
-                      <span className="text-xs text-gray-400 mr-1.5">({n.streets.length} רחובות)</span>
-                    </span>
-                    <button onClick={e => { e.stopPropagation(); removeNeighborhood(n.id); }}
-                      className="text-gray-300 hover:text-red-500 transition-colors shrink-0">
-                      <Icons.Trash2 className="w-4 h-4" />
-                    </button>
+                  <div key={n.id} onClick={() => setSelectedId(n.id)} className={`so-hooditem ${selectedId === n.id ? 'sel' : ''}`}>
+                    <LineIcon name="pin" />
+                    <span className="nm">{n.name} <small>({n.streets.length} רחובות)</small></span>
+                    <button onClick={e => { e.stopPropagation(); removeNeighborhood(n.id); }} className="so-iconbtn danger sm" title="מחיקת שכונה" aria-label={`מחיקת שכונה — ${n.name}`}><LineIcon name="trash" /></button>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* עמודת רחובות */}
-            <div className="p-4">
+            <div className="so-hoodcol">
               {!selectedN ? (
-                <div className="text-center py-10 text-gray-400 text-sm">
-                  <Icons.MapPin className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                  לחץ על שכונה לניהול רחובותיה
-                </div>
+                <div className="so-lempty big"><LineIcon name="pin" />לחצי על שכונה כדי לנהל את הרחובות שלה</div>
               ) : (
                 <>
-                  <div className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <Icons.MapPin className="w-4 h-4 text-blue-500" /> רחובות — {selectedN.name}
-                  </div>
-                  <form onSubmit={addStreet} className="flex gap-2 mb-3">
-                    <input type="text" value={newStreet} onChange={e => setNewStreet(e.target.value)}
-                      placeholder="הוסף רחוב..."
-                      className="flex-1 p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-                    <Button type="submit" variant="primary" icon={Icons.Plus}>הוסף</Button>
+                  <div className="so-hoodtitle"><LineIcon name="pin" />רחובות — {selectedN.name}</div>
+                  <form onSubmit={addStreet} className="so-addrow flat">
+                    <input type="text" value={newStreet} onChange={e => setNewStreet(e.target.value)} placeholder="הוסף רחוב..." className="so-input" />
+                    <button type="submit" className="so-btn primary"><LineIcon name="plus" />הוסף</button>
                   </form>
-                  <div className="space-y-1 max-h-52 overflow-y-auto custom-scrollbar">
+                  <div className="so-hoodlist">
                     {selectedN.streets.map(street => (
-                      <div key={street} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 border border-transparent">
-                        <span className="text-sm text-gray-800">{street}</span>
-                        <button onClick={() => removeStreet(street)} className="text-gray-300 hover:text-red-500 transition-colors">
-                          <Icons.Trash2 className="w-4 h-4" />
-                        </button>
+                      <div key={street} className="so-hooditem">
+                        <span className="nm">{street}</span>
+                        <button onClick={() => removeStreet(street)} className="so-iconbtn danger sm" title="מחיקת רחוב" aria-label={`מחיקת רחוב — ${street}`}><LineIcon name="trash" /></button>
                       </div>
                     ))}
-                    {selectedN.streets.length === 0 && (
-                      <div className="text-xs text-gray-400 text-center py-4">אין רחובות — הוסף למעלה</div>
-                    )}
+                    {selectedN.streets.length === 0 && <div className="so-lempty">אין רחובות — הוסיפי למעלה</div>}
                   </div>
                 </>
               )}
             </div>
           </div>
-        </div>
+        </section>
       );
     };
 
@@ -5183,20 +5184,30 @@ setTimeout(function(){
       };
 
       return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" ref={tableRef}>
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="font-bold text-gray-800 text-lg">מוצרי מלאי</h3>
-              <p className="text-xs text-gray-400 mt-0.5">לחץ על כותרת עמודה לסינון ומיון</p>
+        <section className="so-subcard" ref={tableRef}>
+          <div className="so-lhead">
+            <h3>מוצרי מלאי</h3><span className="so-tag">{items.length} מוצרים</span>
+            <button onClick={openAddModal} className="so-btn primary" style={{ marginInlineStart: 'auto' }}><LineIcon name="plus" />הוסף מוצר</button>
+          </div>
+          <div className="so-tools plain">
+            <label className="so-search"><LineIcon name="search" />
+              <input type="search" placeholder="חיפוש מוצר..." value={searchName} onChange={e => setSearchName(e.target.value)} aria-label="חיפוש מוצר" />
+            </label>
+            <div className="so-kfilter">
+              {orderedKashrutList.map(k => (
+                <button key={k.id || k.name} className="so-kf" aria-pressed={activeKashrut.has(k.name)} style={kVars(k.name)} onClick={() => toggleSet(setActiveKashrut, k.name)}>
+                  <span className="so-kletter">{kStyle(k.name).l}</span>{k.name}
+                </button>
+              ))}
+              <button className="so-kf" aria-pressed={activeKashrut.has('כללי')} style={kVars('כללי')} onClick={() => toggleSet(setActiveKashrut, 'כללי')}>
+                <span className="so-kletter">{kStyle('כללי').l}</span>כללי (דגים)
+              </button>
             </div>
-            <button onClick={openAddModal} className="flex items-center gap-1.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg border border-purple-700 transition-colors shrink-0">
-              <Icons.Plus className="w-4 h-4" /> הוסף מוצר
-            </button>
+            <div className="so-hint" style={{ flexBasis: '100%' }}>אפשר גם ללחוץ על כותרת עמודה לסינון ומיון. לחיצה על שם מוצר — עריכת השם.</div>
           </div>
 
           {duplicateSkus.size > 0 && (
-            <div className="px-5 py-3 bg-red-50 border-b border-red-200 flex items-start gap-2">
-              <span className="text-lg leading-none mt-0.5">⚠️</span>
+            <div className="so-warnbar">
               <div>
                 <p className="text-sm font-bold text-red-700">נמצאו מק"טים כפולים — יש לתקן לפני השמירה</p>
                 <p className="text-xs text-red-500 mt-0.5">מק"טים: {[...duplicateSkus].join(', ')}</p>
@@ -5204,9 +5215,9 @@ setTimeout(function(){
             </div>
           )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+          <div className="so-tbl-wrap">
+            <table className="so-ptbl">
+              <thead>
                 <tr>
                   {colHeader('name',     'שם מוצר')}
                   {colHeader('category', 'קטגוריה')}
@@ -5234,48 +5245,45 @@ setTimeout(function(){
                   const isCollapsed = collapsedCats[cat];
                   return (
                     <React.Fragment key={cat}>
-                      <tr className={`border-y cursor-pointer select-none ${s.header}`}
-                        onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}>
-                        <td colSpan={6} className={`px-4 py-2 font-bold text-sm ${s.text}`}>
+                      <tr className="so-catrow clickable" onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}>
+                        <td colSpan={6}>
                           <div className="flex items-center gap-2">
-                            <span className={`w-2.5 h-2.5 rounded-full ${s.dot} shrink-0`}></span>
-                            {CAT_EMOJI[cat]} {cat}
-                            <span className="font-normal text-xs opacity-50">({catItems.length} פריטים)</span>
-                            <Icons.ChevronDown className={`w-4 h-4 mr-auto transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
+                            <LineIcon name={cat} />{cat}
+                            <span className="so-catn">{catItems.length} פריטים</span>
+                            <span className="so-chev" style={{ marginInlineStart: 'auto' }}>{isCollapsed ? 'פתיחה ▼' : 'סגירה ▲'}</span>
                           </div>
                         </td>
                       </tr>
                       {!isCollapsed && catItems.map(p => (
-                        <tr key={p.id} className="hover:bg-gray-50/60 border-b border-gray-50">
+                        <tr key={p.id} className="so-prow">
                           <td className="px-4 py-2">
                             {editingName.id === p.id
                               ? <input autoFocus type="text" value={editingName.value}
                                   onChange={e => setEditingName(s => ({ ...s, value: e.target.value }))}
                                   onBlur={() => commitRename(p.name)}
                                   onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setEditingName({ id: null, value: '' }); }}
-                                  className="w-full p-1 border border-blue-400 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-300" />
+                                  className="so-input sm" />
                               : <span onClick={() => setEditingName({ id: p.id, value: p.name })}
-                                  className="text-sm text-gray-800 font-medium cursor-text hover:bg-blue-50 px-1 py-0.5 rounded transition-colors block w-full">
+                                  className="so-pname-edit" title="לחיצה לעריכת השם">
                                   {p.name || <span className="text-gray-300 italic">ללא שם</span>}
                                 </span>
                             }
                           </td>
                           <td className="px-4 py-2">
-                            <select value={p._cat} onChange={e => updateByName(p.name, 'category', e.target.value)}
-                              className="p-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
-                              {allCategories.map(c => <option key={c} value={c}>{CAT_EMOJI[c] || '📦'} {c}</option>)}
+                            <select value={p._cat} onChange={e => updateByName(p.name, 'category', e.target.value)} className="so-select">
+                              {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-1">
                               <input value={p.sku || ''} onChange={e => updateProduct(p.id, 'sku', e.target.value)}
-                                className={`w-28 p-1.5 border rounded-lg text-sm focus:ring-2 outline-none font-mono ${p.sku && duplicateSkus.has(p.sku) ? 'border-red-400 bg-red-50 focus:ring-red-300' : 'border-gray-200 focus:ring-purple-400'}`} placeholder='מק"ט...' />
+                                className={`so-input sm mono ${p.sku && duplicateSkus.has(p.sku) ? 'dup' : ''}`} style={{ width: '7.5rem' }} placeholder='מק"ט...' />
                               {p.sku && duplicateSkus.has(p.sku) && <span title="מק&quot;ט כפול" className="text-red-500 text-base leading-none">⚠️</span>}
                             </div>
                           </td>
                           <td className="px-4 py-2">
                             <select value={p.kashrut || ''} onChange={e => updateProduct(p.id, 'kashrut', e.target.value)}
-                              className="p-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
+                              className="so-select kash" style={kVars(p.kashrut)}>
                               <option value="כללי">כללי</option>
                               {kashrutList.map(k => <option key={k.id || k.name} value={k.name}>{k.name}</option>)}
                             </select>
@@ -5286,7 +5294,7 @@ setTimeout(function(){
                                 const active = (p.storageTypes || []).includes(st.key);
                                 return (
                                   <button key={st.key} type="button" onClick={() => toggleStorage(p.id, st.key)}
-                                    className={`text-xs px-2 py-1 rounded-lg border font-bold transition-all ${active ? st.activeClass : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}>
+                                    className={`so-stchip ${active ? 'on' : ''}`} aria-pressed={active}>
                                     {st.label}
                                   </button>
                                 );
@@ -5294,8 +5302,8 @@ setTimeout(function(){
                             </div>
                           </td>
                           <td className="px-4 py-2">
-                            <button onClick={() => removeGroup(p.name)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-lg transition-colors">
-                              <Icons.X className="w-4 h-4" />
+                            <button onClick={() => removeGroup(p.name)} className="so-iconbtn danger sm" title="מחיקת מוצר" aria-label={`מחיקת מוצר — ${p.name}`}>
+                              <LineIcon name="trash" />
                             </button>
                           </td>
                         </tr>
@@ -5309,8 +5317,8 @@ setTimeout(function(){
 
           {/* מודל הוספת מוצר */}
           {showAddModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="so-modal-bg" onClick={() => setShowAddModal(false)}>
+              <div className="so-modal" style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-extrabold text-gray-900">הוספת מוצר חדש</h3>
                   <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
@@ -5415,7 +5423,7 @@ setTimeout(function(){
 
                 <div className="flex gap-3 pt-1">
                   <button onClick={confirmAddProduct} disabled={!newProduct.name.trim() || !newProduct.kashrut || !newProduct.storageTypes.length}
-                    className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors">
+                    className="so-bigbtn dark" style={{ flex: 1 }}>
                     הוסף לרשימה
                   </button>
                   <button onClick={() => setShowAddModal(false)}
@@ -5426,7 +5434,7 @@ setTimeout(function(){
               </div>
             </div>
           )}
-        </div>
+        </section>
       );
     };
 
@@ -7493,20 +7501,27 @@ setTimeout(function(){
     };
 
     const ListsManagementView = ({ productsList, setProductsList, couriersList, setCouriersList, kashrutList, setKashrutList, butchersList, setButchersList, frozenProductsList, setFrozenProductsList, neighborhoodData, setNeighborhoodData, orderFormSkuMap, setOrderFormSkuMap }) => {
+      const [listTab, setListTab] = useState(() => { try { return localStorage.getItem('so-lists-tab') || 'products'; } catch { return 'products'; } });
+      const pick = (id) => { setListTab(id); try { localStorage.setItem('so-lists-tab', id); } catch {} };
+      const tabs = [
+        ['products', 'מוצרי מלאי', 'box', frozenProductsList.length],
+        ['hoods', 'שכונות ורחובות', 'pin', neighborhoodData.length],
+        ['butchers', 'קצבים', 'users', butchersList.length],
+        ['kashrut', 'סוגי כשרות', 'shield', kashrutList.length],
+        ['couriers', 'שליחים', 'truck', couriersList.length],
+      ];
       return (
-        <div className="animate-in fade-in duration-300 space-y-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-extrabold text-gray-900">ניהול רשימות מערכת</h1>
-            <p className="text-gray-500 mt-1">עדכון שליחים, סוגי כשרות ופריטים הזמינים לקצביה</p>
+        <div className="flex flex-col gap-4">
+          <div className="so-seg so-listtabs" role="tablist">
+            {tabs.map(([id, label, ic, n]) => (
+              <button key={id} role="tab" aria-selected={listTab === id} onClick={() => pick(id)}><LineIcon name={ic} />{label}<span className="cnt">{n}</span></button>
+            ))}
           </div>
-
-          <div className="flex flex-col gap-6">
-            <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} kashrutList={kashrutList} />
-            <NeighborhoodEditor neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />
-            <ListEditor title="קצבים" items={butchersList} setItems={setButchersList} placeholder="הזן שם קצב חדש..." />
-            <ListEditor title="סוגי כשרות פעילים" items={kashrutList} setItems={setKashrutList} placeholder="הזן סוג כשרות חדש..." showColor={true} />
-            <ListEditor title="צי רכב ושליחים" items={couriersList} setItems={setCouriersList} placeholder="הזן שם שליח חדש..." />
-          </div>
+          {listTab === 'products' && <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} kashrutList={kashrutList} />}
+          {listTab === 'hoods' && <NeighborhoodEditor neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />}
+          {listTab === 'butchers' && <ListEditor title="קצבים" items={butchersList} setItems={setButchersList} placeholder="הזיני שם קצב חדש..." />}
+          {listTab === 'kashrut' && <ListEditor title="סוגי כשרות פעילים" items={kashrutList} setItems={setKashrutList} placeholder="הזיני סוג כשרות חדש..." showColor={true} />}
+          {listTab === 'couriers' && <ListEditor title="צי רכב ושליחים" items={couriersList} setItems={setCouriersList} placeholder="הזיני שם שליח חדש..." />}
         </div>
       );
     };
