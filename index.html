@@ -488,6 +488,37 @@
       .so-hoodcol + .so-hoodcol { border-inline-start: 0; border-top: 1px solid var(--line); }
     }
 
+    /* ===== דוחות ובקרה ===== */
+    .so-field { display: flex; flex-direction: column; gap: .3rem; }
+    .so-field > span { font-size: .8rem; font-weight: 800; color: var(--muted); }
+    .so-field .so-input { flex: none; width: 100%; }
+    .so-reprow { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; margin-bottom: .9rem; }
+    .so-legend { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; font-weight: 700; color: var(--muted); }
+    .so-legend i { width: .8rem; height: .8rem; border-radius: .25rem; display: inline-block; margin-inline-start: .4rem; }
+    .so-legend i.in, .so-bar i.in { background: #16A34A; }
+    .so-legend i.out, .so-bar i.out { background: #E11D48; }
+    .so-repgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .so-repcol { border: 1px solid var(--line); border-radius: .9rem; padding: .8rem .9rem; display: flex; flex-direction: column; gap: .7rem; min-width: 0; }
+    .so-repcol h4 { margin: 0; display: flex; align-items: center; gap: .4rem; font-size: 1rem; font-weight: 900; padding-bottom: .5rem; border-bottom: 1px solid var(--line-soft); }
+    .so-month .mname { font-size: .85rem; font-weight: 800; margin-bottom: .3rem; }
+    .so-barline { display: flex; align-items: center; gap: .5rem; margin-bottom: .25rem; }
+    .so-barline .lbl { width: 5.2rem; flex-shrink: 0; font-size: .78rem; font-weight: 700; color: var(--muted); }
+    .so-barline .lbl b { color: var(--ink); font-size: .9rem; }
+    .so-bar { flex: 1; height: .6rem; border-radius: .3rem; background: var(--line-soft); overflow: hidden; }
+    .so-bar i { display: block; height: 100%; border-radius: .3rem; background: var(--k, var(--ink)); }
+    .so-bar.big { height: .8rem; }
+    .so-toprow { display: grid; grid-template-columns: 1.3rem minmax(0, 7rem) 1fr auto; align-items: center; gap: .45rem; }
+    .so-toprow .rk { font-weight: 900; color: #A8A29E; text-align: center; }
+    .so-toprow .nm b { display: block; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .so-toprow .nm small { display: block; font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .so-toprow .val { font-size: .8rem; font-weight: 800; white-space: nowrap; }
+    .so-doc-h { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .85rem 1rem; }
+    .so-doc-h .date { font-size: 1.15rem; font-weight: 900; min-width: 6rem; }
+    .so-doc-h .meta { color: var(--muted); font-weight: 600; font-size: .9rem; }
+    .so-doc-body { border-top: 1px solid var(--line); padding: 1rem; display: flex; flex-direction: column; gap: 1rem; background: #FCFBFA; }
+    .so-dcol-h h2 .so-ico { vertical-align: -0.2em; }
+    @media (max-width: 1000px) { .so-repgrid { grid-template-columns: minmax(0, 1fr); } }
+
     .so-baledit { width: 5rem; height: 2.6rem; text-align: center; font-weight: 900; font-size: 1.1rem; border: 2px solid var(--k, #0F766E); border-radius: .6rem; background: #fff; }
     @media (max-width: 860px) {
       .so-coldhead .so-seg { display: grid; grid-template-columns: repeat(3, 1fr); flex: 1 1 100%; }
@@ -7731,6 +7762,7 @@ setTimeout(function(){
       const [storageReportTab, setStorageReportTab] = useState('monthly');
       const [storeLog, setStoreLog] = useState([]);
       const [showAllMonths, setShowAllMonths] = useState(false);
+      const [pendingArchiveDel, setPendingArchiveDel] = useState(null);
 
       useEffect(() => {
         Promise.all([
@@ -7854,197 +7886,146 @@ setTimeout(function(){
         setCheckNote('');
       };
 
+      const fmtD = (d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(2, 4) : (d || '');
+      const deleteArchiveEntry = (entry) => {
+        if (viewArchive?.id === entry.id) setViewArchive(null);
+        setInventoryLog(prev => prev.filter(e => e.id !== entry.id));
+        db.from('inventory_log').delete().eq('id', entry.id).then(checkSave('מחיקת בדיקת מלאי'));
+      };
+
       return (
-        <div className="animate-in fade-in duration-300 space-y-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">דוחות ובקרה</h1>
-          </div>
+        <div className="flex flex-col gap-5">
 
           {/* בדיקת מלאי */}
-          <div className="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
-            <div className="p-4 bg-blue-50 border-b border-blue-100 flex items-center gap-3">
-              <span className="text-xl">📋</span>
-              <div>
-                <h2 className="font-extrabold text-blue-900">עדכון בדיקת מלאי</h2>
-                <p className="text-xs text-blue-600">שמירת סנאפשוט של מלאי סחורה עם תאריך — יישמר בארכיון</p>
-              </div>
+          <section className="so-subcard">
+            <div className="so-lhead">
+              <LineIcon name="list" /><h3>עדכון בדיקת מלאי</h3>
+              <span className="so-hint">שמירת תמונת מצב של המלאי עם תאריך — נשמרת בארכיון למטה</span>
             </div>
-            <div className="p-5 flex flex-wrap gap-4 items-end">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">תאריך בדיקה</label>
-                <input type="date" value={checkDate} onChange={e => setCheckDate(e.target.value)}
-                  className="p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-bold text-gray-500 mb-1">הערה (אופציונלי)</label>
-                <input type="text" value={checkNote} onChange={e => setCheckNote(e.target.value)}
-                  placeholder="למשל: בדיקה לפני שישי..."
-                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <Button variant="primary" icon={Icons.Save} onClick={saveInventoryCheck}>
-                שמור בדיקת מלאי לארכיון
-              </Button>
+            <div className="so-addrow" style={{ alignItems: 'flex-end' }}>
+              <label className="so-field">
+                <span>תאריך בדיקה</span>
+                <input type="date" value={checkDate} onChange={e => setCheckDate(e.target.value)} className="so-input" style={{ flex: 'none' }} />
+              </label>
+              <label className="so-field" style={{ flex: '1 1 14rem' }}>
+                <span>הערה (אופציונלי)</span>
+                <input type="text" value={checkNote} onChange={e => setCheckNote(e.target.value)} placeholder="למשל: בדיקה לפני שישי..." className="so-input" />
+              </label>
+              <button className="so-btn primary" onClick={saveInventoryCheck}><LineIcon name="check" />שמירת בדיקת מלאי לארכיון</button>
             </div>
             {inventoryLog.length > 0 && (
-              <div className="px-5 pb-2 text-xs text-gray-400">
-                בדיקה אחרונה: <strong className="text-gray-600">{inventoryLog[0].date}</strong> — נשמרה ב-{inventoryLog[0].savedAt}
-                {inventoryLog[0].note && <span> | {inventoryLog[0].note}</span>}
+              <div className="so-hint" style={{ padding: '.6rem 1.1rem .9rem' }}>
+                בדיקה אחרונה: <b>{fmtD(inventoryLog[0].date)}</b> — נשמרה ב-{inventoryLog[0].savedAt}
+                {inventoryLog[0].note && <span> · {inventoryLog[0].note}</span>}
               </div>
             )}
-          </div>
-
+          </section>
 
           {/* ניתוח קירורים */}
           {(bsShipments.length > 0 || gvShipments.length > 0) && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🏭</span>
-                  <div>
-                    <h2 className="font-extrabold text-gray-800">ניתוח קירורים — לירוי וגב"ש</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">נתונים מתוך תעודות הכניסה והמשיכה</p>
-                  </div>
+            <section className="so-subcard">
+              <div className="so-lhead">
+                <LineIcon name="chart" /><h3>ניתוח קירורים — לירוי וגב״ש</h3>
+                <span className="so-hint">מתוך תעודות הכניסה והמשיכה</span>
+                <button className="so-btn" style={{ marginInlineStart: 'auto' }} onClick={exportStorageReport}><LineIcon name="download" />ייצוא לאקסל</button>
+              </div>
+              <div style={{ padding: '.9rem 1.1rem 0' }}>
+                <div className="so-seg small" role="tablist" style={{ display: 'inline-flex' }}>
+                  {[{ id: 'monthly', label: 'נפח חודשי' }, { id: 'top', label: 'טופ מוצרים' }].map(t => (
+                    <button key={t.id} role="tab" aria-selected={storageReportTab === t.id} onClick={() => setStorageReportTab(t.id)}>{t.label}</button>
+                  ))}
                 </div>
-                <button onClick={exportStorageReport}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
-                  📥 ייצוא לאקסל
-                </button>
               </div>
 
-              <div className="flex border-b border-gray-100">
-                {[{id:'monthly',label:'📅 נפח חודשי'},{id:'top',label:'🏆 טופ מוצרים'}].map(t=>(
-                  <button key={t.id} onClick={()=>setStorageReportTab(t.id)}
-                    className={`px-5 py-3 text-sm font-bold transition-colors border-b-2 ${storageReportTab===t.id?'border-blue-500 text-blue-700 bg-blue-50/50':'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-5">
-                {storageReportTab==='monthly' && (() => {
-                    const slice = (arr) => showAllMonths ? arr : arr.slice(-3);
-                    const storeM=slice(storeMonthlyAll), bsM=slice(bsMonthlyAll), gvM=slice(gvMonthlyAll);
-                    const maxSt=Math.max(1,...storeMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
-                    const maxBs=Math.max(1,...bsMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
-                    const maxGv=Math.max(1,...gvMonthlyAll.flatMap(([,v])=>[v.In,v.Out]));
-                    const totalMonths = Math.max(storeMonthlyAll.length, bsMonthlyAll.length, gvMonthlyAll.length);
-                    return (<>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-400">{showAllMonths ? `כל ההיסטוריה (${totalMonths} חודשים)` : '3 חודשים אחרונים'}</p>
-                    {totalMonths > 3 && <button onClick={()=>setShowAllMonths(p=>!p)} className="text-xs text-blue-600 hover:underline font-bold">{showAllMonths ? '← חזור ל-3 חודשים' : 'הצג כל ההיסטוריה →'}</button>}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[{label:'🏪 מלאי חנות',data:storeM,max:maxSt},{label:'❄️ קירור לירוי',data:bsM,max:maxBs},{label:'❄️ קירור גב"ש',data:gvM,max:maxGv}].map(({label,data,max})=>(
-                      <div key={label}>
-                        <h3 className="font-bold text-gray-700 mb-3 text-sm border-b border-gray-100 pb-2">{label}</h3>
-                        {data.length===0
-                          ? <div className="text-gray-400 text-sm text-center py-4">אין נתונים</div>
-                          : <div className="space-y-3">
-                              {data.map(([month,v])=>{
-                                const [y,m]=month.split('-');
-                                return (
-                                  <div key={month}>
-                                    <div className="text-xs font-bold text-gray-500 mb-1">{_HEB_M[Number(m)]} {y}</div>
-                                    <div className="space-y-1">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-green-600 w-20 shrink-0">↓ כניסה {v.In} קרט׳</span>
-                                        <div className="flex-1 bg-gray-100 rounded-full h-3"><div className="bg-green-400 h-3 rounded-full" style={{width:`${(v.In/max)*100}%`}}/></div>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-orange-500 w-20 shrink-0">↑ יציאה {v.Out} קרט׳</span>
-                                        <div className="flex-1 bg-gray-100 rounded-full h-3"><div className="bg-orange-400 h-3 rounded-full" style={{width:`${(v.Out/max)*100}%`}}/></div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                        }
-                      </div>
-                    ))}
-                    <div className="md:col-span-3 flex gap-5 pt-1 text-xs text-gray-400 border-t border-gray-100">
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-400 inline-block"/>כניסה לקירור</span>
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-400 inline-block"/>יציאה מקירור</span>
+              <div style={{ padding: '1rem 1.1rem 1.2rem' }}>
+                {storageReportTab === 'monthly' && (() => {
+                  const slice = (arr) => showAllMonths ? arr : arr.slice(-3);
+                  const storeM = slice(storeMonthlyAll), bsM = slice(bsMonthlyAll), gvM = slice(gvMonthlyAll);
+                  const maxSt = Math.max(1, ...storeMonthlyAll.flatMap(([, v]) => [v.In, v.Out]));
+                  const maxBs = Math.max(1, ...bsMonthlyAll.flatMap(([, v]) => [v.In, v.Out]));
+                  const maxGv = Math.max(1, ...gvMonthlyAll.flatMap(([, v]) => [v.In, v.Out]));
+                  const totalMonths = Math.max(storeMonthlyAll.length, bsMonthlyAll.length, gvMonthlyAll.length);
+                  return (<>
+                    <div className="so-reprow">
+                      <span className="so-hint">{showAllMonths ? `כל ההיסטוריה (${totalMonths} חודשים)` : '3 חודשים אחרונים'}</span>
+                      <span className="so-legend"><i className="in" />כניסה<i className="out" />יציאה</span>
+                      {totalMonths > 3 && <button onClick={() => setShowAllMonths(p => !p)} className="so-linkbtn">{showAllMonths ? 'חזרה ל-3 חודשים' : 'הצג את כל ההיסטוריה'}</button>}
                     </div>
-                  </div>
-                  </>); })()}
-
-                {storageReportTab==='top' && (() => {
-                  const storeTop = storeTopAll.slice(0,10);
-                  const maxStore = Math.max(1, storeTop[0]?.total||1);
-                  const cols = [
-                    {label:'🏪 מלאי חנות', data:storeTop.map(p=>({...p, label:`${p.total} מגשים (${Math.floor(p.total/TRAYS_PER_CARTON)} קרט׳)`})), max:maxStore, color:'bg-green-500', unit:''},
-                    {label:'❄️ קירור לירוי', data:bsTop.map(([k,t])=>{ const [n,ks,sk]=k.split('|'); return {key:k,name:n,kashrut:ks,sku:sk||'',total:t}; }), max:maxBsTop, color:'bg-blue-500', unit:'קרט׳'},
-                    {label:'❄️ קירור גב"ש',  data:gvTop.map(([k,t])=>{ const [n,ks,sk]=k.split('|'); return {key:k,name:n,kashrut:ks,sku:sk||'',total:t}; }), max:maxGvTop, color:'bg-blue-500', unit:'קרט׳'},
-                  ];
-                  return (
-                    <div>
-                      <p className="text-xs text-gray-400 mb-4">10 המוצרים המובילים — חנות לפי מגשים, קירורים לפי קרטונים מצטברים</p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        {cols.map(({label,data,max,color,unit})=>(
-                          <div key={label}>
-                            <h3 className="font-bold text-gray-700 mb-3 text-sm border-b border-gray-100 pb-2">{label}</h3>
-                            {!data.length ? <div className="text-gray-400 text-sm text-center py-4">אין נתונים</div>
-                              : <div className="space-y-2">
-                                  {data.map((p,i)=>(
-                                    <div key={p.key} className="flex items-center gap-1.5">
-                                      <span className="text-xs font-extrabold text-gray-300 w-4 shrink-0 text-center">{i+1}</span>
-                                      <div className="w-20 shrink-0">
-                                        <div className="text-xs font-medium text-gray-800 truncate" title={p.name}>{p.name}</div>
-                                        <div className="text-[10px] text-gray-400 truncate">{p.kashrut}{p.sku?` · ${p.sku}`:''}</div>
-                                      </div>
-                                      <div className="flex-1 bg-gray-100 rounded-full h-5">
-                                        <div className={`${color} h-5 rounded-full flex items-center justify-end px-1.5 min-w-[2rem]`} style={{width:`${(p.total/max)*100}%`}}>
-                                          <span className="text-[9px] text-white font-bold whitespace-nowrap">{p.label||`${p.total} ${unit}`}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
+                    <div className="so-repgrid">
+                      {[{ label: 'מלאי חנות', ic: 'box', data: storeM, max: maxSt }, { label: 'קירור לירוי', ic: 'snow', data: bsM, max: maxBs }, { label: 'קירור גב״ש', ic: 'snow', data: gvM, max: maxGv }].map(({ label, ic, data, max }) => (
+                        <div key={label} className="so-repcol">
+                          <h4><LineIcon name={ic} />{label}</h4>
+                          {data.length === 0
+                            ? <div className="so-lempty">אין נתונים</div>
+                            : data.map(([month, v]) => {
+                              const [y, m] = month.split('-');
+                              return (
+                                <div key={month} className="so-month">
+                                  <div className="mname">{_HEB_M[Number(m)]} {y}</div>
+                                  <div className="so-barline"><span className="lbl in">כניסה <b>{v.In}</b></span><div className="so-bar"><i className="in" style={{ width: `${(v.In / max) * 100}%` }} /></div></div>
+                                  <div className="so-barline"><span className="lbl out">יציאה <b>{v.Out}</b></span><div className="so-bar"><i className="out" style={{ width: `${(v.Out / max) * 100}%` }} /></div></div>
                                 </div>
-                            }
-                          </div>
-                        ))}
-                      </div>
+                              );
+                            })}
+                        </div>
+                      ))}
                     </div>
-                  );
+                    <div className="so-hint" style={{ marginTop: '.6rem' }}>כל המספרים בקרטונים</div>
+                  </>);
+                })()}
+
+                {storageReportTab === 'top' && (() => {
+                  const storeTop = storeTopAll.slice(0, 10);
+                  const maxStore = Math.max(1, storeTop[0]?.total || 1);
+                  const cols = [
+                    { label: 'מלאי חנות', ic: 'box', data: storeTop.map(p => ({ ...p, label: `${Math.floor(p.total / TRAYS_PER_CARTON)} קרט׳` })), max: maxStore },
+                    { label: 'קירור לירוי', ic: 'snow', data: bsTop.map(([k, t]) => { const [n, ks, sk] = k.split('|'); return { key: k, name: n, kashrut: ks, sku: sk || '', total: t }; }), max: maxBsTop },
+                    { label: 'קירור גב״ש', ic: 'snow', data: gvTop.map(([k, t]) => { const [n, ks, sk] = k.split('|'); return { key: k, name: n, kashrut: ks, sku: sk || '', total: t }; }), max: maxGvTop },
+                  ];
+                  return (<>
+                    <div className="so-hint" style={{ marginBottom: '.8rem' }}>10 המוצרים המובילים לפי קרטונים מצטברים</div>
+                    <div className="so-repgrid">
+                      {cols.map(({ label, ic, data, max }) => (
+                        <div key={label} className="so-repcol">
+                          <h4><LineIcon name={ic} />{label}</h4>
+                          {!data.length ? <div className="so-lempty">אין נתונים</div>
+                            : data.map((p, i) => (
+                              <div key={p.key || (p.name + '|' + p.kashrut + '|' + i)} className="so-toprow" style={kVars(p.kashrut)}>
+                                <span className="rk">{i + 1}</span>
+                                <div className="nm"><b title={p.name}>{p.name}</b><small>{p.kashrut}{p.sku ? ` · ${p.sku}` : ''}</small></div>
+                                <div className="so-bar big"><i style={{ width: `${(p.total / max) * 100}%` }} /></div>
+                                <span className="val">{p.label || `${p.total} קרט׳`}</span>
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                  </>);
                 })()}
               </div>
-            </div>
+            </section>
           )}
 
           {/* ארכיון בדיקות מלאי */}
           {inventoryLog.length > 0 && (
-            <div>
-              <h2 className="text-lg font-extrabold text-gray-700 mb-3 flex items-center gap-2">🗄️ ארכיון בדיקות מלאי ({inventoryLog.length})</h2>
-              <div className="space-y-3">
-                {inventoryLog.map(entry => (
-                  <div key={entry.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="p-4 flex items-center justify-between">
-                      <div>
-                        <div className="font-extrabold text-gray-900">📅 בדיקת מלאי — {entry.date}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">נשמר ב-{entry.savedAt} | {entry.ordersCount} הזמנות במערכת</div>
-                        {entry.note && <div className="text-xs text-blue-600 mt-0.5 font-medium">📝 {entry.note}</div>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setViewArchive(viewArchive?.id === entry.id ? null : entry)}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-                          {viewArchive?.id === entry.id ? 'סגור' : 'הצג פירוט'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (viewArchive?.id === entry.id) setViewArchive(null);
-                            setInventoryLog(prev => prev.filter(e => e.id !== entry.id));
-                            db.from('inventory_log').delete().eq('id', entry.id).then(checkSave('מחיקת בדיקת מלאי'));
-                          }}
-                          className="text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
-                          מחק
-                        </button>
+            <section className="flex flex-col gap-3">
+              <div className="so-dcol-h"><h2><LineIcon name="archive" /> ארכיון בדיקות מלאי</h2><span className="so-tag">{inventoryLog.length}</span></div>
+              {inventoryLog.map(entry => {
+                const open = viewArchive?.id === entry.id;
+                return (
+                  <article key={entry.id} className="so-subcard">
+                    <div className="so-doc-h">
+                      <span className="date">{fmtD(entry.date)}</span>
+                      <span className="meta">נשמרה ב-{entry.savedAt}{entry.ordersCount != null ? ` · ${entry.ordersCount} הזמנות במערכת` : ''}</span>
+                      {entry.note && <span className="so-tag">{entry.note}</span>}
+                      <div className="so-actions" style={{ marginInlineStart: 'auto' }}>
+                        <button className="so-btn" aria-expanded={open} onClick={() => setViewArchive(open ? null : entry)}>{open ? 'סגירה ▲' : 'פירוט ▼'}</button>
+                        <button className="so-iconbtn danger" title="מחיקת בדיקה" aria-label={`מחיקת בדיקת מלאי ${entry.date}`} onClick={() => setPendingArchiveDel(entry)}><LineIcon name="trash" /></button>
                       </div>
                     </div>
 
-                    {viewArchive?.id === entry.id && (
-                      <div className="border-t border-gray-100 p-4 bg-gray-50/50 space-y-4">
+                    {open && (
+                      <div className="so-doc-body">
                         {/* סיכום לפי קטגוריה */}
                         {(() => {
                           const snap = entry.frozenStock || {};
@@ -8058,113 +8039,87 @@ setTimeout(function(){
                             catTotals[cat] += trays;
                           });
                           const cats = [...PRODUCT_CATEGORIES, ...Object.keys(catTotals).filter(c => !PRODUCT_CATEGORIES.includes(c))].filter(c => catTotals[c]);
-                          if (!cats.length) return <div className="text-sm text-gray-400">אין מלאי בסנאפשוט זה</div>;
+                          if (!cats.length) return <div className="so-lempty">אין מלאי בתמונת המצב הזו</div>;
                           return (
-                            <div className="flex flex-wrap gap-3">
-                              {cats.map(cat => {
-                                const cs = CAT_STYLES[cat] || {};
-                                const trays = catTotals[cat];
-                                const cartons = Math.floor(trays / TRAYS_PER_CARTON);
-                                const remainder = trays % TRAYS_PER_CARTON;
-                                return (
-                                  <div key={cat} className={`bg-white rounded-xl border-2 px-4 py-3 text-center min-w-[110px] ${cs.border || 'border-gray-200'}`}>
-                                    <div className={`text-sm font-extrabold mb-1 ${cs.text || 'text-gray-700'}`}>{CAT_EMOJI[cat]} {cat}</div>
-                                    <div className="font-black text-gray-900 text-lg">{cartons}{remainder > 0 ? <span className="text-sm font-bold text-gray-400">+{remainder}</span> : ''} קרטונים</div>
-                                    <div className="text-xs text-gray-400 mt-0.5">{trays} מגשים</div>
-                                  </div>
-                                );
-                              })}
+                            <div className="so-stats">
+                              {cats.map(cat => (
+                                <div key={cat} className="so-stat">
+                                  <span><LineIcon name={cat} />{cat}</span>
+                                  <b>{Math.floor(catTotals[cat] / TRAYS_PER_CARTON)}</b><small>קרטונים</small>
+                                </div>
+                              ))}
                             </div>
                           );
                         })()}
-                        {/* פירוט מוצרים לפי כשרות וקטגוריה — ישירות ממפתחות הסנאפשוט */}
+                        {/* פירוט מוצרים לפי כשרות וקטגוריה */}
                         {(() => {
                           const snap = entry.frozenStock || {};
                           const snapBs = entry.bsBalance || {};
                           const snapGv = entry.gvBalance || {};
-                          // איחוד מפתחות מ-frozenStock, bsBalance ו-gvBalance
                           const allKeys = new Set([
                             ...Object.keys(snap).filter(k => (snap[k] || 0) > 0),
                             ...Object.keys(snapBs).filter(k => (snapBs[k] || 0) > 0),
                             ...Object.keys(snapGv).filter(k => (snapGv[k] || 0) > 0)
                           ]);
                           const items = Array.from(allKeys).map(key => {
-                              const [name, kashrut] = key.split('|');
-                              const trays = snap[key] || 0;
-                              const prod = (frozenProductsList || []).find(p => p.name === name && (p.kashrut || '') === kashrut);
-                              return { name, kashrut, sku: prod?.sku || '', category: prod?.category || getProductCategory(name), trays };
-                            });
-                          if (!items.length) return null;
-                          // קבץ לפי כשרות
-                          const byKashrut = {};
-                          items.forEach(item => {
-                            if (!byKashrut[item.kashrut]) byKashrut[item.kashrut] = [];
-                            byKashrut[item.kashrut].push(item);
+                            const [name, kashrut] = key.split('|');
+                            const trays = snap[key] || 0;
+                            const prod = (frozenProductsList || []).find(p => p.name === name && (p.kashrut || '') === kashrut);
+                            return { name, kashrut, sku: prod?.sku || '', category: prod?.category || getProductCategory(name), trays };
                           });
+                          if (!items.length) return null;
+                          const byKashrut = {};
+                          items.forEach(item => { (byKashrut[item.kashrut] = byKashrut[item.kashrut] || []).push(item); });
                           const kashrutOrder = [...kashrutList.map(k => k.name), 'כללי'];
                           return kashrutOrder.filter(kName => byKashrut[kName]).map(kName => {
-                            const kObj = kashrutList.find(k => k.name === kName) || { name: 'כללי', color: '#3b82f6' };
                             const grouped = {};
-                            byKashrut[kName].forEach(item => {
-                              if (!grouped[item.category]) grouped[item.category] = [];
-                              grouped[item.category].push(item);
-                            });
-                            const cats = getCats(grouped);
+                            byKashrut[kName].forEach(item => { (grouped[item.category] = grouped[item.category] || []).push(item); });
                             return (
-                              <div key={kName} className="rounded-xl overflow-hidden border-2" style={{ borderColor: (kObj.color || '#888') + '60' }}>
-                                <div className="px-4 py-2 text-white text-sm font-bold" style={{ backgroundColor: kObj.color || '#888' }}>{kName}</div>
-                                {cats.map(cat => {
-                                  const cs = CAT_STYLES[cat] || {};
-                                  return (
-                                    <div key={cat}>
-                                      <div className={`px-3 py-1.5 text-xs font-extrabold flex items-center gap-1 border-b border-gray-100 ${cs.header || 'bg-gray-50'} ${cs.text || 'text-gray-600'}`}>
-                                        <span>{CAT_EMOJI[cat]}</span><span>{cat}</span>
-                                      </div>
-                                      <table className="w-full text-right text-xs">
-                                        <thead>
-                                          <tr className="bg-gray-100 text-gray-500">
-                                            <th className="p-2 text-right font-bold">מוצר</th>
-                                            <th className="p-2 text-center font-bold">🧊 קירור סופר עוף</th>
-                                            <th className="p-2 text-center font-bold">🏭 קירור לירוי</th>
-                                            <th className="p-2 text-center font-bold">🏭 קירור גב"ש</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100 bg-white">
-                                          {grouped[cat].map((item, idx) => {
+                              <section key={kName} className="so-kgroup" style={kVars(kName)}>
+                                <div className="so-kgroup-h"><span className="so-kletter">{kStyle(kName).l}</span><h3>{kStyle(kName).label || kName}</h3></div>
+                                <div className="so-tbl-wrap">
+                                  <table className="so-tbl so-tbl-cold">
+                                    <thead><tr><th>מוצר</th><th>קירור סופר עוף</th><th>קירור לירוי</th><th>קירור גב״ש</th></tr></thead>
+                                    <tbody>
+                                      {getCats(grouped).map(cat => (
+                                        <React.Fragment key={cat}>
+                                          <tr className="so-catrow"><td colSpan={4}><span className="inline-flex items-center gap-1.5"><LineIcon name={cat} />{cat}</span></td></tr>
+                                          {grouped[cat].map(item => {
                                             const cartons = Math.floor(item.trays / TRAYS_PER_CARTON);
-                                            const remainder = item.trays % TRAYS_PER_CARTON;
                                             const key = `${item.name}|${item.kashrut}`;
-                                            const bsCar = snapBs[key] || 0;
-                                            const totalCar = cartons + bsCar;
-                                            const gvCar = snapGv[key] || 0;
-                                            const totalCarGv = cartons + gvCar;
+                                            const totalCar = cartons + (snapBs[key] || 0);
+                                            const totalCarGv = cartons + (snapGv[key] || 0);
                                             return (
-                                              <tr key={item.name} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                                                <td className="p-2 font-bold text-gray-900">
-                                                  {item.name}
-                                                  {item.sku && <span className="block text-gray-400 font-normal">{item.sku}</span>}
-                                                </td>
-                                                <td className="p-2 text-center text-blue-700 font-black">{cartons}{remainder > 0 ? <span className="text-gray-400 font-normal">+{remainder}</span> : ''} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
-                                                <td className="p-2 text-center font-black text-emerald-700">{totalCar} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
-                                                <td className="p-2 text-center font-black text-teal-700">{totalCarGv} <span className="text-gray-400 font-normal text-[10px]">קרט'</span></td>
+                                              <tr key={item.name}>
+                                                <td className="c-name"><b className="so-cname">{item.name}</b>{item.sku && <small className="so-csku">מק״ט {item.sku}</small>}</td>
+                                                <td className="c-cold" data-label="סופר עוף"><span className="so-num">{cartons}</span></td>
+                                                <td className="c-cold" data-label="לירוי"><span className="so-num">{totalCar}</span></td>
+                                                <td className="c-cold" data-label="גב״ש"><span className="so-num">{totalCarGv}</span></td>
                                               </tr>
                                             );
                                           })}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                        </React.Fragment>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </section>
                             );
                           });
                         })()}
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+
+          {pendingArchiveDel && (
+            <ConfirmDelete title="מחיקת בדיקת מלאי"
+              text={`למחוק את בדיקת המלאי מתאריך ${fmtD(pendingArchiveDel.date)}${pendingArchiveDel.note ? ` (${pendingArchiveDel.note})` : ''} מהארכיון?`}
+              onCancel={() => setPendingArchiveDel(null)}
+              onConfirm={() => { deleteArchiveEntry(pendingArchiveDel); setPendingArchiveDel(null); }} />
           )}
         </div>
       );
