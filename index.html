@@ -125,7 +125,7 @@
     :root {
       --fs: 18px;
       --ground: #F3F1ED; --surface: #FFFFFF; --ink: #17171A; --muted: #4A4642; --line: #E2DED8; --line-soft: #EEEBE6;
-      --side: #1B1A1E; --side-2: #2A282E; --side-ink: #E9E6E2; --side-muted: #B3ADA6;
+      --side: #FFFFFF; --side-2: #FDECEC; --side-ink: #2B2826; --side-muted: #857E77;
       --brand: #B91C1C;
       --in: #166534; --in-bg: #DCFCE7; --out: #9F1239; --out-bg: #FFE4E6; --low: #9F1239; --low-bg: #FFF1F2;
     }
@@ -134,24 +134,24 @@
     :focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }
     .so-ico { width: 1.25em; height: 1.25em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .so-app { display: flex; height: 100vh; background: var(--ground); color: var(--ink); overflow: hidden; }
-    .so-side { width: 15.5rem; flex-shrink: 0; background: var(--side); color: var(--side-ink); padding: 1.2rem .8rem; display: flex; flex-direction: column; gap: 1.2rem; height: 100vh; overflow-y: auto; }
+    .so-side { width: 15.5rem; flex-shrink: 0; border-inline-start: 1px solid var(--line); background: var(--side); color: var(--side-ink); padding: 1.2rem .8rem; display: flex; flex-direction: column; gap: 1.2rem; height: 100vh; overflow-y: auto; }
     .so-logo { display: flex; align-items: center; gap: .7rem; padding: 0 .4rem; }
     .so-logo-mark { width: 2.5rem; height: 2.5rem; border-radius: .7rem; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 1.35rem; }
-    .so-logo b { display: block; font-size: 1.2rem; font-weight: 900; color: #fff; }
+    .so-logo b { display: block; font-size: 1.2rem; font-weight: 900; color: var(--ink); }
     .so-logo span { font-size: .8rem; color: var(--side-muted); }
     .so-nav-group { display: flex; flex-direction: column; gap: .15rem; }
     .so-nav-title { font-size: .75rem; font-weight: 700; color: var(--side-muted); padding: 0 .7rem .3rem; letter-spacing: .03em; }
     .so-nav-btn { display: flex; align-items: center; gap: .7rem; width: 100%; min-height: 2.75rem; padding: .5rem .7rem; border: 0; border-radius: .6rem; background: transparent; color: var(--side-ink); font-size: .95rem; font-weight: 600; text-align: right; }
-    .so-nav-btn:hover { background: #24222A; }
-    .so-nav-btn[aria-current="page"] { background: var(--side-2); color: #fff; font-weight: 800; }
+    .so-nav-btn:hover { background: #F5F2EE; }
+    .so-nav-btn[aria-current="page"] { background: var(--side-2); color: #991B1B; font-weight: 800; box-shadow: inset -3px 0 0 var(--brand); }
     .so-nav-btn .so-ico { color: var(--side-muted); }
-    .so-nav-btn[aria-current="page"] .so-ico { color: #FCA5A5; }
+    .so-nav-btn[aria-current="page"] .so-ico { color: var(--brand); }
     .so-badge { margin-inline-start: auto; min-width: 1.6rem; height: 1.4rem; padding: 0 .45rem; border-radius: .7rem; background: var(--brand); color: #fff; font-size: .75rem; font-weight: 800; display: grid; place-items: center; }
-    .so-badge.dim { background: #3A373F; }
-    .so-side-user { margin-top: auto; display: flex; align-items: center; gap: .6rem; padding: .7rem; border-radius: .8rem; background: #232127; font-size: .85rem; }
-    .so-avatar { width: 2.2rem; height: 2.2rem; border-radius: 50%; background: #44403C; color: #fff; display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
-    .so-signout { margin-inline-start: auto; border: 1px solid #44403C; border-radius: .55rem; background: transparent; color: var(--side-ink); padding: .35rem .55rem; display: grid; place-items: center; }
-    .so-signout:hover { background: #3A1A1A; color: #FCA5A5; }
+    .so-badge.dim { background: #78716C; }
+    .so-side-user { margin-top: auto; display: flex; align-items: center; gap: .6rem; padding: .7rem; border-radius: .8rem; background: #F7F5F2; border: 1px solid var(--line); font-size: .85rem; }
+    .so-avatar { width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
+    .so-signout { margin-inline-start: auto; border: 1px solid var(--line); border-radius: .55rem; background: transparent; color: var(--side-ink); padding: .35rem .55rem; display: grid; place-items: center; }
+    .so-signout:hover { background: #FEF2F2; color: #B91C1C; }
     .so-main { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     .so-scroll { flex: 1; overflow-y: auto; padding: 1.4rem 1.8rem 3rem; }
     .so-inner { max-width: 72rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.1rem; }
@@ -692,6 +692,7 @@
       up: <path d="m6 15 6-6 6 6"/>,
       down: <path d="m6 9 6 6 6-6"/>,
       x: <path d="M18 6 6 18M6 6l12 12"/>,
+      layers: <><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></>,
       // קטגוריות מוצרים
       'עוף': <><path d="M13.6 3.2c4-.6 7.5 2.4 7.2 6.4-.3 3.7-4 6.6-7.8 5.9a5 5 0 0 1-1.3-.4l-3.4 3.4a2.1 2.1 0 1 1-2.6 2.4 2.1 2.1 0 1 1 1.1-3.8l3.4-3.4a5.5 5.5 0 0 1-.6-2.2c-.2-4.1 1.6-7.7 4-8.3z"/><path d="M15 7c1.2.2 2.2 1.2 2.3 2.5"/></>,
       'הודו': <path d="M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.3-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.8V21"/>,
@@ -7642,6 +7643,257 @@ setTimeout(function(){
       );
     };
 
+    // ===[PACKAGING]===
+    // מלאי אריזה — נשמר בשורה אחת בטבלת settings (id: packagingStock). שאר המערכת מתעלמת משורה זו.
+    // כל שינוי נשמר כ"הפרש" על המצב העדכני בשרת (קריאה → עדכון → שמירה, בתור), כמו המלאי הקפוא — שני מכשירים לא דורסים זה את זה.
+    const PACKAGING_GROUPS = ['מגשים', 'קרטונים', 'ניילונים', 'שקיות'];
+    const PACKAGING_UNITS = ['קרטונים', 'חבילות', 'גלילים', 'יחידות'];
+    const PACKAGING_DEFAULTS = [
+      ['מגשים', 'מגש כרעיים שחור', 'קרטונים'], ['מגשים', 'מגש כרעיים לבן', 'קרטונים'], ['מגשים', 'מגש כרעיים זהב', 'קרטונים'],
+      ['מגשים', 'מגש דג שחור', 'קרטונים'], ['מגשים', 'מגש דג לבן', 'קרטונים'], ['מגשים', 'מגש דג שקוף', 'קרטונים'],
+      ['מגשים', 'קלקר שחור', 'קרטונים'], ['מגשים', 'קלקר לבן', 'קרטונים'], ['מגשים', 'קלקר כחול', 'קרטונים'],
+      ['מגשים', 'קלקר צלעות', 'קרטונים'], ['מגשים', 'קלקר שניצל עמוק', 'קרטונים'],
+      ['קרטונים', 'תחתית 16', 'יחידות'], ['קרטונים', 'תחתית 14', 'יחידות'], ['קרטונים', 'תחתית 12', 'יחידות'], ['קרטונים', 'מכסה', 'יחידות'],
+      ['ניילונים', 'שרינק 19 מיקרון', 'גלילים'], ['ניילונים', 'סטרץ׳ דגים', 'גלילים'], ['ניילונים', 'ניילון הפרדה לשניצל', 'גלילים'],
+      ['שקיות', 'שקיות 14', 'חבילות'], ['שקיות', 'שקיות 25', 'חבילות'],
+      ['שקיות', 'שקית לארגז — כחולה', 'חבילות'], ['שקיות', 'שקית לארגז — שקופה', 'חבילות'], ['שקיות', 'שקית לארגז — אדומה', 'חבילות'],
+    ].map(([group, name, unit], i) => ({ id: `pk${i + 1}`, group, name, unit, qty: 0, min: 0 }));
+    const PACKAGING_ROW = 'packagingStock';
+    const packagingBase = (data) => ({
+      items: Array.isArray(data?.items) ? data.items : PACKAGING_DEFAULTS.map(x => ({ ...x })),
+      log: Array.isArray(data?.log) ? data.log : [],
+    });
+
+    const PackagingView = ({ appUser }) => {
+      const [state, setState] = useState(null);   // { items, log }
+      const [loadErr, setLoadErr] = useState('');
+      const [qtyInput, setQtyInput] = useState({});
+      const [busy, setBusy] = useState(false);
+      const [q, setQ] = useState('');
+      const [groupF, setGroupF] = useState('הכל');
+      const [editMode, setEditMode] = useState(false);
+      const [showLog, setShowLog] = useState(false);
+      const [addOpen, setAddOpen] = useState(false);
+      const [newItem, setNewItem] = useState({ group: 'מגשים', name: '', unit: 'קרטונים' });
+      const [pendingDel, setPendingDel] = useState(null);
+      const [notice, setNotice] = useState('');
+      const chainRef = useRef(Promise.resolve());
+
+      const load = async () => {
+        const { data, error } = await db.from('settings').select('data').eq('id', PACKAGING_ROW).maybeSingle();
+        if (error) { setLoadErr('לא הצלחנו לטעון את מלאי האריזה — בדקו חיבור ונסו שוב.'); return; }
+        setLoadErr('');
+        setState(packagingBase(data?.data));
+      };
+      useEffect(() => {
+        load();
+        const ch = db.channel('packaging-sync')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${PACKAGING_ROW}` }, (payload) => {
+            if (payload.new?.data) setState(packagingBase(payload.new.data));
+          }).subscribe();
+        const onVis = () => { if (document.visibilityState === 'visible') load(); };
+        document.addEventListener('visibilitychange', onVis);
+        return () => { db.removeChannel(ch); document.removeEventListener('visibilitychange', onVis); };
+      }, []);
+
+      // שינוי בטוח: קוראים את המצב העדכני מהשרת, מחילים את השינוי, שומרים. רק אחרי הצלחה — המסך מתעדכן.
+      const mutate = (fn, label) => {
+        setBusy(true);
+        chainRef.current = chainRef.current.then(async () => {
+          const { data, error } = await db.from('settings').select('data').eq('id', PACKAGING_ROW).maybeSingle();
+          if (error) throw error;
+          const next = fn(packagingBase(data?.data));
+          if (!next) return false;
+          next.log = next.log.slice(0, 400);
+          const w = await db.from('settings').upsert({ id: PACKAGING_ROW, data: next });
+          if (w.error) throw w.error;
+          setState(next);
+          return true;
+        }).catch(err => { reportSaveError(label || 'מלאי אריזה', err); return false; })
+          .finally(() => setBusy(false));
+        return chainRef.current;
+      };
+
+      const who = appUser?.username || '—';
+      const move = async (item, dir) => {
+        const n = parseInt(qtyInput[item.id], 10);
+        if (!n || n <= 0) return;
+        let msg = '';
+        const ok = await mutate(cur => {
+          const it = cur.items.find(x => x.id === item.id);
+          if (!it) { msg = 'המוצר נמחק בינתיים ממכשיר אחר'; return null; }
+          const have = Number(it.qty) || 0;
+          if (dir < 0 && n > have) { msg = `אי אפשר למשוך ${n} — במלאי יש רק ${have} ${it.unit}`; return null; }
+          return {
+            items: cur.items.map(x => x.id === item.id ? { ...x, qty: have + dir * n } : x),
+            log: [{ at: new Date().toISOString(), user: who, id: it.id, name: it.name, unit: it.unit, action: dir > 0 ? 'כניסה' : 'משיכה', qty: n }, ...cur.log],
+          };
+        }, 'מלאי אריזה');
+        if (ok) setQtyInput(p => ({ ...p, [item.id]: '' }));
+        setNotice(msg);
+      };
+      const updateItem = (id, patch) => mutate(cur => ({ ...cur, items: cur.items.map(x => x.id === id ? { ...x, ...patch } : x) }), 'עדכון מוצר אריזה');
+      const addItem = async () => {
+        const name = newItem.name.trim();
+        if (!name) return;
+        const ok = await mutate(cur => {
+          if (cur.items.some(x => x.name === name && x.group === newItem.group)) return null;
+          return { ...cur, items: [...cur.items, { id: `pk_${Date.now()}`, group: newItem.group.trim() || 'אחר', name, unit: newItem.unit, qty: 0, min: 0 }] };
+        }, 'הוספת מוצר אריזה');
+        if (ok) { setAddOpen(false); setNewItem(p => ({ ...p, name: '' })); }
+      };
+      const removeItem = (id) => mutate(cur => ({ ...cur, items: cur.items.filter(x => x.id !== id) }), 'מחיקת מוצר אריזה');
+
+      if (loadErr) return (
+        <div className="so-subcard so-lempty big">{loadErr}<button className="so-btn" onClick={load}><LineIcon name="refresh" />נסה שוב</button></div>
+      );
+      if (!state) return <div className="so-lempty big">טוען מלאי אריזה...</div>;
+
+      const items = state.items;
+      const groups = [...PACKAGING_GROUPS.filter(g => items.some(i => i.group === g)), ...[...new Set(items.map(i => i.group))].filter(g => !PACKAGING_GROUPS.includes(g))];
+      const qq = q.trim();
+      const shown = items.filter(i => (groupF === 'הכל' || i.group === groupF) && (!qq || qq.split(/\s+/).every(t => i.name.includes(t))));
+      const lowItems = items.filter(i => (Number(i.min) || 0) > 0 && (Number(i.qty) || 0) <= Number(i.min));
+      const fmtAt = (iso) => { try { const d = new Date(iso); return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+
+      return (
+        <div className="flex flex-col gap-4">
+          <div className="so-actions">
+            <div className="so-hint" style={{ flex: '1 1 14rem', alignSelf: 'center' }}>מגשים, קרטונים, ניילונים ושקיות — כניסה ומשיכה כמו במלאי</div>
+            <button className="so-btn" aria-pressed={showLog} onClick={() => setShowLog(v => !v)}><LineIcon name="list" />{showLog ? 'חזרה למלאי' : 'יומן פעולות'}</button>
+            <button className="so-btn" aria-pressed={editMode} onClick={() => setEditMode(v => !v)}><LineIcon name="edit" />{editMode ? 'סיום עריכה' : 'עריכת מוצרים'}</button>
+            <button className="so-btn primary" onClick={() => setAddOpen(true)}><LineIcon name="plus" />מוצר אריזה חדש</button>
+          </div>
+
+          {notice && <div className="so-warnbar" style={{ borderRadius: '.8rem', border: '1px solid #FECACA' }}>{notice}<button className="so-linkbtn" style={{ marginInlineStart: 'auto' }} onClick={() => setNotice('')}>סגירה</button></div>}
+
+          <div className="so-stats">
+            {groups.map(g => {
+              const gi = items.filter(i => i.group === g);
+              return <div key={g} className="so-stat"><span><LineIcon name="box" />{g}</span><b>{gi.length}</b><small>מוצרים · {gi.filter(i => (Number(i.qty) || 0) === 0).length} אזלו</small></div>;
+            })}
+            <div className="so-stat" style={lowItems.length ? { borderColor: '#FDA4AF', background: '#FFF1F2' } : undefined}><span><LineIcon name="chart" />מתחת למינימום</span><b style={lowItems.length ? { color: 'var(--low)' } : undefined}>{lowItems.length}</b><small>{lowItems.length ? lowItems.slice(0, 3).map(i => i.name).join(' · ') : 'הכל תקין'}</small></div>
+          </div>
+
+          {showLog ? (
+            <section className="so-subcard">
+              <div className="so-lhead"><h3>יומן פעולות — מלאי אריזה</h3><span className="so-tag">{state.log.length}</span></div>
+              {state.log.length === 0 ? <div className="so-lempty">אין פעולות עדיין</div> : (
+                <div className="so-tbl-wrap"><table className="so-tbl so-tbl-cold">
+                  <thead><tr><th>מתי</th><th>פעולה</th><th>מוצר</th><th>כמות</th><th>משתמש</th></tr></thead>
+                  <tbody>{state.log.slice(0, 200).map((e, i) => (
+                    <tr key={i}>
+                      <td>{fmtAt(e.at)}</td>
+                      <td><span className={`so-tag ${e.action === 'כניסה' ? 'ok' : 'bad'}`}>{e.action}</span></td>
+                      <td><b>{e.name}</b></td>
+                      <td><b>{e.qty}</b> <small style={{ color: 'var(--muted)' }}>{e.unit}</small></td>
+                      <td>{e.user}</td>
+                    </tr>
+                  ))}</tbody>
+                </table></div>
+              )}
+            </section>
+          ) : (
+            <section className="so-kframe" style={{ '--k': '#44403C', '--k-ink': '#292524', '--k-tint': '#F5F5F4' }}>
+              <div className="so-kband"><LineIcon name="box" /><h2>מלאי אריזה</h2><span className="tot"><b>{items.length}</b> מוצרים</span></div>
+              <div className="so-tools">
+                <label className="so-search"><LineIcon name="search" />
+                  <input type="search" placeholder="חיפוש מוצר אריזה" value={q} onChange={e => setQ(e.target.value)} aria-label="חיפוש מוצר אריזה" />
+                </label>
+                <div className="so-cats">
+                  <button className="so-cat" aria-pressed={groupF === 'הכל'} onClick={() => setGroupF('הכל')}>הכל <span className="n">{items.length}</span></button>
+                  {groups.map(g => <button key={g} className="so-cat" aria-pressed={groupF === g} onClick={() => setGroupF(g)}>{g} <span className="n">{items.filter(i => i.group === g).length}</span></button>)}
+                </div>
+              </div>
+              <div className="so-tbl-wrap">
+                <table className="so-tbl">
+                  <thead><tr><th>מוצר</th><th>במלאי</th><th>{editMode ? 'יחידה / מינימום' : 'מינימום'}</th><th>{editMode ? '' : 'עדכון מהיר'}</th></tr></thead>
+                  <tbody>
+                    {groups.filter(g => shown.some(i => i.group === g)).map(g => (
+                      <React.Fragment key={g}>
+                        <tr className="so-catrow"><td colSpan={4}>{g} · {shown.filter(i => i.group === g).length} מוצרים</td></tr>
+                        {shown.filter(i => i.group === g).map(it => {
+                          const qty = Number(it.qty) || 0, min = Number(it.min) || 0;
+                          const low = min > 0 && qty <= min, out = qty === 0;
+                          return (
+                            <tr key={it.id} className={low ? 'low' : out ? 'out' : ''}>
+                              <td className="c-name"><div className="so-pname"><div><b>{it.name}</b><small>{it.unit}</small></div></div></td>
+                              <td className="c-total"><span className="so-total">{qty}</span>{low ? <span className="so-lowtag">להזמין</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
+                              <td className="c-cold">
+                                {editMode ? (
+                                  <div className="flex items-center gap-2">
+                                    <select className="so-select" value={it.unit} disabled={busy} onChange={e => updateItem(it.id, { unit: e.target.value })} aria-label={`יחידה — ${it.name}`}>
+                                      {[...new Set([...PACKAGING_UNITS, it.unit])].map(u => <option key={u} value={u}>{u}</option>)}
+                                    </select>
+                                    <input type="number" min="0" className="so-input sm" style={{ width: '5rem' }} defaultValue={min || ''} placeholder="מינ׳" disabled={busy}
+                                      onBlur={e => { const v = Math.max(0, parseInt(e.target.value, 10) || 0); if (v !== min) updateItem(it.id, { min: v }); }} aria-label={`מינימום — ${it.name}`} />
+                                  </div>
+                                ) : <span className={`so-num ${min ? '' : 'zero'}`}>{min || '—'}</span>}
+                              </td>
+                              <td className="c-quick">
+                                {editMode ? (
+                                  <button className="so-iconbtn danger sm" title="מחיקת מוצר" aria-label={`מחיקה — ${it.name}`} onClick={() => setPendingDel(it)}><LineIcon name="trash" /></button>
+                                ) : (
+                                  <div className="so-quick">
+                                    <div className="so-qpair">
+                                      <input type="number" min="1" step="1" inputMode="numeric" placeholder="כמות" value={qtyInput[it.id] || ''}
+                                        onChange={e => setQtyInput(p => ({ ...p, [it.id]: e.target.value }))}
+                                        onKeyDown={e => { if (e.key === 'Enter') move(it, 1); }}
+                                        aria-label={`כמות — ${it.name}`} />
+                                      <button className="so-qin" disabled={busy || !(parseInt(qtyInput[it.id], 10) > 0)} onClick={() => move(it, 1)}>+ כניסה</button>
+                                      <button className="so-qout" disabled={busy || !(parseInt(qtyInput[it.id], 10) > 0)} onClick={() => move(it, -1)}>− משיכה</button>
+                                    </div>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    ))}
+                    {shown.length === 0 && <tr><td colSpan={4} className="so-empty">לא נמצאו מוצרים</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {addOpen && (
+            <div className="so-modal-bg" onClick={e => { if (e.target === e.currentTarget) setAddOpen(false); }}>
+              <div className="so-modal" role="dialog" aria-modal="true" aria-label="מוצר אריזה חדש">
+                <div className="so-modal-h"><h2>מוצר אריזה חדש</h2></div>
+                <div className="so-modal-b">
+                  <label className="so-field"><span>קבוצה</span>
+                    <input className="so-input" list="pk-groups" value={newItem.group} onChange={e => setNewItem(p => ({ ...p, group: e.target.value }))} />
+                    <datalist id="pk-groups">{[...new Set([...PACKAGING_GROUPS, ...groups])].map(g => <option key={g} value={g} />)}</datalist>
+                  </label>
+                  <label className="so-field"><span>שם המוצר</span>
+                    <input className="so-input" autoFocus value={newItem.name} placeholder="למשל: מגש כרעיים אפור" onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addItem(); }} />
+                  </label>
+                  <label className="so-field"><span>יחידת ספירה</span>
+                    <select className="so-select" style={{ height: '2.75rem' }} value={newItem.unit} onChange={e => setNewItem(p => ({ ...p, unit: e.target.value }))}>
+                      {PACKAGING_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <div className="so-modal-f" style={{ gap: '.6rem' }}>
+                  <button className="so-btn" onClick={() => setAddOpen(false)}>ביטול</button>
+                  <button className="so-btn primary" disabled={busy || !newItem.name.trim()} onClick={addItem}><LineIcon name="plus" />הוספה</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {pendingDel && (
+            <ConfirmDelete title="מחיקת מוצר אריזה"
+              text={`למחוק את "${pendingDel.name}" ממלאי האריזה?${(Number(pendingDel.qty) || 0) > 0 ? ` יש ממנו כרגע ${pendingDel.qty} ${pendingDel.unit}.` : ''}`}
+              onCancel={() => setPendingDel(null)}
+              onConfirm={() => { removeItem(pendingDel.id); setPendingDel(null); }} />
+          )}
+        </div>
+      );
+    };
+
     // ===[ARCHIVE]===
     // --- Archive View ---
     const ArchiveView = ({ orders, setOrders, kashrutList }) => {
@@ -8138,6 +8390,7 @@ setTimeout(function(){
       { id: 'inventory',    label: 'מלאי סחורה כללי' },
       { id: 'beit-shemesh', label: 'קירור לירוי' },
       { id: 'gavash',       label: 'קירור גב"ש' },
+      { id: 'packaging',    label: 'מלאי אריזה' },
       { id: 'orders',       label: 'ניהול הזמנות' },
       { id: 'deliveries',   label: 'מערך משלוחים' },
       { id: 'contacts',     label: 'אנשי קשר' },
@@ -8843,6 +9096,7 @@ setTimeout(function(){
         { id: 'inventory', group: 'מלאי וקירור', label: 'מלאי סחורה - כללי', short: 'מלאי', ico: 'box' },
         { id: 'beit-shemesh', group: 'מלאי וקירור', label: 'קירור לירוי', short: 'לירוי', ico: 'snow' },
         { id: 'gavash', group: 'מלאי וקירור', label: 'קירור גב"ש', short: 'גב"ש', ico: 'snow' },
+        { id: 'packaging', group: 'מלאי וקירור', label: 'מלאי אריזה', short: 'אריזה', ico: 'layers' },
         { id: 'contacts', group: 'ניהול', label: 'אנשי קשר', short: 'אנשי קשר', ico: 'users' },
         { id: 'lists', group: 'ניהול', label: 'ניהול רשימות', short: 'רשימות', ico: 'list' },
         { id: 'stats', group: 'ניהול', label: 'דוחות ובקרה', short: 'דוחות', ico: 'chart' },
@@ -8882,6 +9136,8 @@ setTimeout(function(){
             return <BeitShemeshView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} />;
           case 'gavash':
             return <GavashView frozenProductsList={frozenProductsList} companyVat={companyVat} scrollToTop={scrollToTop} kashrutList={kashrutList} appUser={appUser} />;
+          case 'packaging':
+            return <PackagingView appUser={appUser} />;
           case 'settings':
             return <SettingsView logoImage={logoImage} setLogoImage={setLogoImage} companyVat={companyVat} setCompanyVat={setCompanyVat} waReadyTemplate={waReadyTemplate} setWaReadyTemplate={setWaReadyTemplate} />;
           case 'users':
@@ -8942,7 +9198,7 @@ setTimeout(function(){
             <div className="so-side-user">
               <div className="so-avatar">{(appUser?.username || '?').charAt(0)}</div>
               <div className="min-w-0">
-                <div className="truncate" style={{ fontWeight: 800, color: '#fff' }}>{appUser?.username}</div>
+                <div className="truncate" style={{ fontWeight: 800, color: 'var(--ink)' }}>{appUser?.username}</div>
                 <div style={{ color: 'var(--side-muted)' }}>{appUser?.is_admin ? 'מנהל' : 'משתמש'} · מחובר</div>
               </div>
               <button className="so-signout" onClick={handleSignOut} title="יציאה" aria-label="יציאה"><LineIcon name="logout" /></button>
