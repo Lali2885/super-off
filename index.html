@@ -132,7 +132,7 @@
     html { font-size: var(--fs); }
     body { font-family: 'Heebo', 'Assistant', Arial, sans-serif; background: var(--ground); color: var(--ink); font-variant-numeric: tabular-nums; }
     :focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }
-    .so-ico { width: 1.25em; height: 1.25em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .so-ico { display: inline-block; vertical-align: -0.22em; width: 1.25em; height: 1.25em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .so-app { display: flex; height: 100vh; background: var(--ground); color: var(--ink); overflow: hidden; }
     .so-side { width: 15.5rem; flex-shrink: 0; border-inline-start: 1px solid var(--line); background: var(--side); color: var(--side-ink); padding: 1.2rem .8rem; display: flex; flex-direction: column; gap: 1.2rem; height: 100vh; overflow-y: auto; }
     .so-logo { display: flex; align-items: center; gap: .7rem; padding: 0 .4rem; }
@@ -246,6 +246,19 @@
     .so-qin { background: var(--in-bg); color: var(--in); }
     .so-qout { background: var(--out-bg); color: var(--out); }
     .so-qin:disabled, .so-qout:disabled { opacity: .45; cursor: default; }
+    .so-qbox { display: flex; flex-direction: column; align-items: center; gap: .15rem; cursor: text; }
+    .so-quick:has(.so-qbox) { flex-wrap: nowrap; gap: .6rem; }
+    .so-tbl td.c-quick { width: 1%; white-space: nowrap; }
+    .so-qbox > span { font-size: .72rem; font-weight: 800; letter-spacing: .02em; }
+    .so-qbox.in > span { color: var(--in); }
+    .so-qbox.out > span { color: var(--out); }
+    .so-qbox input { width: 5rem; height: 2.7rem; border-radius: .6rem; text-align: center; font-size: 1.15rem; font-weight: 800; background: #fff; -moz-appearance: textfield; appearance: textfield; }
+    .so-qbox input::-webkit-outer-spin-button, .so-qbox input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .so-qbox.in input { border: 2px solid #BBF7D0; }
+    .so-qbox.out input { border: 2px solid #FECDD3; }
+    .so-qbox.in input:focus { border-color: var(--in); outline: 3px solid #DCFCE7; }
+    .so-qbox.out input:focus { border-color: var(--out); outline: 3px solid #FFE4E6; }
+    .so-qbox input:not(:placeholder-shown) { background: #FFFBEB; }
     .so-catrow td { background: #FAF9F7; font-weight: 800; color: var(--muted); font-size: .85rem; padding: .5rem .8rem; }
     .so-catrow .so-ico { vertical-align: -0.25em; margin-inline-end: .35rem; }
     .so-empty { padding: 3rem 1.5rem !important; text-align: center; color: var(--muted); }
@@ -586,6 +599,7 @@
       .so-tbl tr.so-catrow td { display: block; padding: .5rem .9rem; }
       .so-quick { display: grid; grid-template-columns: 1fr 1fr; }
       .so-qpair input { flex: 1; width: 0; min-width: 3rem; }
+      .so-qbox input { width: 100%; }
       .so-qin, .so-qout { flex: 1; }
     }
   </style>
@@ -1715,22 +1729,22 @@
                             {hasQuick && (
                               <td className="c-quick"><div className="so-quick">
                                 {showEntry && (
-                                  <div className="so-qpair">
-                                    <input type="number" min="0" step="1" inputMode="numeric" value={eC || ''} placeholder="כמות"
+                                  <label className="so-qbox in">
+                                    <span>כניסה</span>
+                                    <input type="number" min="0" step="1" enterKeyHint="done" value={eC || ''} placeholder="0"
                                       aria-label={`כניסה — ${p.name}`}
                                       onChange={e => setEFromCartons(b.key, e.target.value)}
                                       data-stock-col="entry" onKeyDown={e => stockCellKeyDown(e, 'entry', () => applyEntry(b.key))} />
-                                    <button className="so-qin" onClick={() => applyEntry(b.key)} disabled={!eC}>+ כניסה</button>
-                                  </div>
+                                  </label>
                                 )}
                                 {showWithdrawal && (
-                                  <div className="so-qpair">
-                                    <input type="number" min="0" step="1" inputMode="numeric" value={wC || ''} placeholder="כמות"
+                                  <label className="so-qbox out">
+                                    <span>משיכה</span>
+                                    <input type="number" min="0" step="1" enterKeyHint="done" value={wC || ''} placeholder="0"
                                       aria-label={`משיכה — ${p.name}`}
                                       onChange={e => setWFromCartons(b.key, e.target.value)}
                                       data-stock-col="withdraw" onKeyDown={e => stockCellKeyDown(e, 'withdraw', () => applyWithdraw(b.key))} />
-                                    <button className="so-qout" onClick={() => applyWithdraw(b.key)} disabled={!wC}>− משיכה</button>
-                                  </div>
+                                  </label>
                                 )}
                               </div></td>
                             )}
@@ -1744,7 +1758,7 @@
               </table>
             </div>
           </section>
-          {hasQuick && <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>הקלידי כמות ולחצי על הכפתור, או Enter / חץ למטה-למעלה — הפעולה מתבצעת ועוברים למוצר הבא או הקודם</p>}
+          {hasQuick && <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>מקלידים מספר קרטונים בריבוע "כניסה" או "משיכה" ולוחצים Enter — הפעולה נשמרת ועוברים למוצר הבא (חצים למעלה/למטה — מעבר בין מוצרים)</p>}
 
           {!isFishTab && stickerSection}
         </div>
@@ -7626,18 +7640,20 @@ setTimeout(function(){
         ['butchers', 'קצבים', 'users', butchersList.length],
         ['kashrut', 'סוגי כשרות', 'shield', kashrutList.length],
         ['couriers', 'שליחים', 'truck', couriersList.length],
+        ['packaging', 'מוצרי אריזה', 'layers', null],
       ];
       return (
         <div className="flex flex-col gap-4">
           <div className="so-seg so-listtabs" role="tablist">
             {tabs.map(([id, label, ic, n]) => (
-              <button key={id} role="tab" aria-selected={listTab === id} onClick={() => pick(id)}><LineIcon name={ic} />{label}<span className="cnt">{n}</span></button>
+              <button key={id} role="tab" aria-selected={listTab === id} onClick={() => pick(id)}><LineIcon name={ic} />{label}{n != null && <span className="cnt">{n}</span>}</button>
             ))}
           </div>
           {listTab === 'products' && <ProductListEditor items={frozenProductsList} setItems={setFrozenProductsList} kashrutList={kashrutList} />}
           {listTab === 'hoods' && <NeighborhoodEditor neighborhoodData={neighborhoodData} setNeighborhoodData={setNeighborhoodData} />}
           {listTab === 'butchers' && <ListEditor title="קצבים" items={butchersList} setItems={setButchersList} placeholder="הזיני שם קצב חדש..." />}
           {listTab === 'kashrut' && <ListEditor title="סוגי כשרות פעילים" items={kashrutList} setItems={setKashrutList} placeholder="הזיני סוג כשרות חדש..." showColor={true} />}
+          {listTab === 'packaging' && <PackagingListEditor />}
           {listTab === 'couriers' && <ListEditor title="צי רכב ושליחים" items={couriersList} setItems={setCouriersList} placeholder="הזיני שם שליח חדש..." />}
         </div>
       );
@@ -7663,22 +7679,14 @@ setTimeout(function(){
       items: Array.isArray(data?.items) ? data.items : PACKAGING_DEFAULTS.map(x => ({ ...x })),
       log: Array.isArray(data?.log) ? data.log : [],
     });
+    const packagingGroupsOf = (items) => [...PACKAGING_GROUPS.filter(g => items.some(i => i.group === g)), ...[...new Set(items.map(i => i.group))].filter(g => !PACKAGING_GROUPS.includes(g))];
 
-    const PackagingView = ({ appUser }) => {
-      const [state, setState] = useState(null);   // { items, log }
+    // טעינה + עדכון חי + שמירה בטוחה — משותף לעמוד המלאי ולעריכה בניהול רשימות
+    const usePackagingStore = (tag) => {
+      const [state, setState] = useState(null);
       const [loadErr, setLoadErr] = useState('');
-      const [qtyInput, setQtyInput] = useState({});
       const [busy, setBusy] = useState(false);
-      const [q, setQ] = useState('');
-      const [groupF, setGroupF] = useState('הכל');
-      const [editMode, setEditMode] = useState(false);
-      const [showLog, setShowLog] = useState(false);
-      const [addOpen, setAddOpen] = useState(false);
-      const [newItem, setNewItem] = useState({ group: 'מגשים', name: '', unit: 'קרטונים' });
-      const [pendingDel, setPendingDel] = useState(null);
-      const [notice, setNotice] = useState('');
       const chainRef = useRef(Promise.resolve());
-
       const load = async () => {
         const { data, error } = await db.from('settings').select('data').eq('id', PACKAGING_ROW).maybeSingle();
         if (error) { setLoadErr('לא הצלחנו לטעון את מלאי האריזה — בדקו חיבור ונסו שוב.'); return; }
@@ -7687,7 +7695,7 @@ setTimeout(function(){
       };
       useEffect(() => {
         load();
-        const ch = db.channel('packaging-sync')
+        const ch = db.channel('packaging-sync-' + tag)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${PACKAGING_ROW}` }, (payload) => {
             if (payload.new?.data) setState(packagingBase(payload.new.data));
           }).subscribe();
@@ -7695,8 +7703,7 @@ setTimeout(function(){
         document.addEventListener('visibilitychange', onVis);
         return () => { db.removeChannel(ch); document.removeEventListener('visibilitychange', onVis); };
       }, []);
-
-      // שינוי בטוח: קוראים את המצב העדכני מהשרת, מחילים את השינוי, שומרים. רק אחרי הצלחה — המסך מתעדכן.
+      // קוראים את המצב העדכני מהשרת, מחילים את השינוי, שומרים — ורק אחרי הצלחה המסך מתעדכן
       const mutate = (fn, label) => {
         setBusy(true);
         chainRef.current = chainRef.current.then(async () => {
@@ -7704,7 +7711,7 @@ setTimeout(function(){
           if (error) throw error;
           const next = fn(packagingBase(data?.data));
           if (!next) return false;
-          next.log = next.log.slice(0, 400);
+          next.log = (next.log || []).slice(0, 400);
           const w = await db.from('settings').upsert({ id: PACKAGING_ROW, data: next });
           if (w.error) throw w.error;
           setState(next);
@@ -7713,44 +7720,53 @@ setTimeout(function(){
           .finally(() => setBusy(false));
         return chainRef.current;
       };
+      return { state, loadErr, busy, load, mutate };
+    };
 
+    // ===== עמוד מלאי אריזה: כניסה / משיכה / יומן =====
+    const PackagingView = ({ appUser }) => {
+      const { state, loadErr, busy, load, mutate } = usePackagingStore('view');
+      const [inQty, setInQty] = useState({});
+      const [outQty, setOutQty] = useState({});
+      const [q, setQ] = useState('');
+      const [groupF, setGroupF] = useState('הכל');
+      const [showLog, setShowLog] = useState(false);
+      const [notice, setNotice] = useState('');
       const who = appUser?.username || '—';
-      const move = async (item, dir) => {
-        const n = parseInt(qtyInput[item.id], 10);
-        if (!n || n <= 0) return;
+
+      const move = async (item, dir, raw) => {
+        const n = parseInt(raw, 10);
+        if (!n || n <= 0) return false;
         let msg = '';
         const ok = await mutate(cur => {
           const it = cur.items.find(x => x.id === item.id);
           if (!it) { msg = 'המוצר נמחק בינתיים ממכשיר אחר'; return null; }
           const have = Number(it.qty) || 0;
-          if (dir < 0 && n > have) { msg = `אי אפשר למשוך ${n} — במלאי יש רק ${have} ${it.unit}`; return null; }
+          if (dir < 0 && n > have) { msg = `אי אפשר למשוך ${n} מ"${it.name}" — במלאי יש רק ${have} ${it.unit}`; return null; }
           return {
             items: cur.items.map(x => x.id === item.id ? { ...x, qty: have + dir * n } : x),
             log: [{ at: new Date().toISOString(), user: who, id: it.id, name: it.name, unit: it.unit, action: dir > 0 ? 'כניסה' : 'משיכה', qty: n }, ...cur.log],
           };
         }, 'מלאי אריזה');
-        if (ok) setQtyInput(p => ({ ...p, [item.id]: '' }));
+        if (ok) (dir > 0 ? setInQty : setOutQty)(p => ({ ...p, [item.id]: '' }));
         setNotice(msg);
+        return ok;
       };
-      const updateItem = (id, patch) => mutate(cur => ({ ...cur, items: cur.items.map(x => x.id === id ? { ...x, ...patch } : x) }), 'עדכון מוצר אריזה');
-      const addItem = async () => {
-        const name = newItem.name.trim();
-        if (!name) return;
-        const ok = await mutate(cur => {
-          if (cur.items.some(x => x.name === name && x.group === newItem.group)) return null;
-          return { ...cur, items: [...cur.items, { id: `pk_${Date.now()}`, group: newItem.group.trim() || 'אחר', name, unit: newItem.unit, qty: 0, min: 0 }] };
-        }, 'הוספת מוצר אריזה');
-        if (ok) { setAddOpen(false); setNewItem(p => ({ ...p, name: '' })); }
+      // Enter = ביצוע ומעבר לשורה הבאה, חצים = מעבר בין שורות (כמו במלאי הכללי)
+      const keyDown = (e, col, apply) => {
+        if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        e.preventDefault();
+        const inputs = [...document.querySelectorAll(`input[data-pk-col="${col}"]`)];
+        const next = inputs[inputs.indexOf(e.currentTarget) + (e.key === 'ArrowUp' ? -1 : 1)];
+        const go = () => { if (next) { next.focus(); next.select(); } };
+        if (e.key === 'Enter') { apply().then(ok => { if (ok) go(); }); } else go();
       };
-      const removeItem = (id) => mutate(cur => ({ ...cur, items: cur.items.filter(x => x.id !== id) }), 'מחיקת מוצר אריזה');
 
-      if (loadErr) return (
-        <div className="so-subcard so-lempty big">{loadErr}<button className="so-btn" onClick={load}><LineIcon name="refresh" />נסה שוב</button></div>
-      );
+      if (loadErr) return <div className="so-subcard so-lempty big">{loadErr}<button className="so-btn" onClick={load}><LineIcon name="refresh" />נסה שוב</button></div>;
       if (!state) return <div className="so-lempty big">טוען מלאי אריזה...</div>;
 
       const items = state.items;
-      const groups = [...PACKAGING_GROUPS.filter(g => items.some(i => i.group === g)), ...[...new Set(items.map(i => i.group))].filter(g => !PACKAGING_GROUPS.includes(g))];
+      const groups = packagingGroupsOf(items);
       const qq = q.trim();
       const shown = items.filter(i => (groupF === 'הכל' || i.group === groupF) && (!qq || qq.split(/\s+/).every(t => i.name.includes(t))));
       const lowItems = items.filter(i => (Number(i.min) || 0) > 0 && (Number(i.qty) || 0) <= Number(i.min));
@@ -7759,10 +7775,8 @@ setTimeout(function(){
       return (
         <div className="flex flex-col gap-4">
           <div className="so-actions">
-            <div className="so-hint" style={{ flex: '1 1 14rem', alignSelf: 'center' }}>מגשים, קרטונים, ניילונים ושקיות — כניסה ומשיכה כמו במלאי</div>
+            <div className="so-hint" style={{ flex: '1 1 14rem', alignSelf: 'center' }}>הוספה ועריכה של מוצרי אריזה — בניהול רשימות ← מוצרי אריזה</div>
             <button className="so-btn" aria-pressed={showLog} onClick={() => setShowLog(v => !v)}><LineIcon name="list" />{showLog ? 'חזרה למלאי' : 'יומן פעולות'}</button>
-            <button className="so-btn" aria-pressed={editMode} onClick={() => setEditMode(v => !v)}><LineIcon name="edit" />{editMode ? 'סיום עריכה' : 'עריכת מוצרים'}</button>
-            <button className="so-btn primary" onClick={() => setAddOpen(true)}><LineIcon name="plus" />מוצר אריזה חדש</button>
           </div>
 
           {notice && <div className="so-warnbar" style={{ borderRadius: '.8rem', border: '1px solid #FECACA' }}>{notice}<button className="so-linkbtn" style={{ marginInlineStart: 'auto' }} onClick={() => setNotice('')}>סגירה</button></div>}
@@ -7770,7 +7784,7 @@ setTimeout(function(){
           <div className="so-stats">
             {groups.map(g => {
               const gi = items.filter(i => i.group === g);
-              return <div key={g} className="so-stat"><span><LineIcon name="box" />{g}</span><b>{gi.length}</b><small>מוצרים · {gi.filter(i => (Number(i.qty) || 0) === 0).length} אזלו</small></div>;
+              return <div key={g} className="so-stat"><span><LineIcon name="layers" />{g}</span><b>{gi.length}</b><small>מוצרים · {gi.filter(i => (Number(i.qty) || 0) === 0).length} אזלו</small></div>;
             })}
             <div className="so-stat" style={lowItems.length ? { borderColor: '#FDA4AF', background: '#FFF1F2' } : undefined}><span><LineIcon name="chart" />מתחת למינימום</span><b style={lowItems.length ? { color: 'var(--low)' } : undefined}>{lowItems.length}</b><small>{lowItems.length ? lowItems.slice(0, 3).map(i => i.name).join(' · ') : 'הכל תקין'}</small></div>
           </div>
@@ -7795,7 +7809,7 @@ setTimeout(function(){
             </section>
           ) : (
             <section className="so-kframe" style={{ '--k': '#44403C', '--k-ink': '#292524', '--k-tint': '#F5F5F4' }}>
-              <div className="so-kband"><LineIcon name="box" /><h2>מלאי אריזה</h2><span className="tot"><b>{items.length}</b> מוצרים</span></div>
+              <div className="so-kband"><LineIcon name="layers" /><h2>מלאי אריזה</h2><span className="tot"><b>{items.length}</b> מוצרים</span></div>
               <div className="so-tools">
                 <label className="so-search"><LineIcon name="search" />
                   <input type="search" placeholder="חיפוש מוצר אריזה" value={q} onChange={e => setQ(e.target.value)} aria-label="חיפוש מוצר אריזה" />
@@ -7807,7 +7821,7 @@ setTimeout(function(){
               </div>
               <div className="so-tbl-wrap">
                 <table className="so-tbl">
-                  <thead><tr><th>מוצר</th><th>במלאי</th><th>{editMode ? 'יחידה / מינימום' : 'מינימום'}</th><th>{editMode ? '' : 'עדכון מהיר'}</th></tr></thead>
+                  <thead><tr><th>מוצר</th><th>במלאי</th><th>מינימום</th><th>עדכון מהיר</th></tr></thead>
                   <tbody>
                     {groups.filter(g => shown.some(i => i.group === g)).map(g => (
                       <React.Fragment key={g}>
@@ -7819,32 +7833,24 @@ setTimeout(function(){
                             <tr key={it.id} className={low ? 'low' : out ? 'out' : ''}>
                               <td className="c-name"><div className="so-pname"><div><b>{it.name}</b><small>{it.unit}</small></div></div></td>
                               <td className="c-total"><span className="so-total">{qty}</span>{low ? <span className="so-lowtag">להזמין</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
-                              <td className="c-cold">
-                                {editMode ? (
-                                  <div className="flex items-center gap-2">
-                                    <select className="so-select" value={it.unit} disabled={busy} onChange={e => updateItem(it.id, { unit: e.target.value })} aria-label={`יחידה — ${it.name}`}>
-                                      {[...new Set([...PACKAGING_UNITS, it.unit])].map(u => <option key={u} value={u}>{u}</option>)}
-                                    </select>
-                                    <input type="number" min="0" className="so-input sm" style={{ width: '5rem' }} defaultValue={min || ''} placeholder="מינ׳" disabled={busy}
-                                      onBlur={e => { const v = Math.max(0, parseInt(e.target.value, 10) || 0); if (v !== min) updateItem(it.id, { min: v }); }} aria-label={`מינימום — ${it.name}`} />
-                                  </div>
-                                ) : <span className={`so-num ${min ? '' : 'zero'}`}>{min || '—'}</span>}
-                              </td>
+                              <td className="c-cold"><span className={`so-num ${min ? '' : 'zero'}`}>{min || '—'}</span></td>
                               <td className="c-quick">
-                                {editMode ? (
-                                  <button className="so-iconbtn danger sm" title="מחיקת מוצר" aria-label={`מחיקה — ${it.name}`} onClick={() => setPendingDel(it)}><LineIcon name="trash" /></button>
-                                ) : (
-                                  <div className="so-quick">
-                                    <div className="so-qpair">
-                                      <input type="number" min="1" step="1" inputMode="numeric" placeholder="כמות" value={qtyInput[it.id] || ''}
-                                        onChange={e => setQtyInput(p => ({ ...p, [it.id]: e.target.value }))}
-                                        onKeyDown={e => { if (e.key === 'Enter') move(it, 1); }}
-                                        aria-label={`כמות — ${it.name}`} />
-                                      <button className="so-qin" disabled={busy || !(parseInt(qtyInput[it.id], 10) > 0)} onClick={() => move(it, 1)}>+ כניסה</button>
-                                      <button className="so-qout" disabled={busy || !(parseInt(qtyInput[it.id], 10) > 0)} onClick={() => move(it, -1)}>− משיכה</button>
-                                    </div>
-                                  </div>
-                                )}
+                                <div className="so-quick">
+                                  <label className="so-qbox in">
+                                    <span>כניסה</span>
+                                    <input type="number" min="0" step="1" enterKeyHint="done" placeholder="0" value={inQty[it.id] || ''} disabled={busy && !!inQty[it.id]}
+                                      onChange={e => setInQty(p => ({ ...p, [it.id]: e.target.value }))}
+                                      data-pk-col="in" onKeyDown={e => keyDown(e, 'in', () => move(it, 1, inQty[it.id]))}
+                                      aria-label={`כניסה — ${it.name}`} />
+                                  </label>
+                                  <label className="so-qbox out">
+                                    <span>משיכה</span>
+                                    <input type="number" min="0" step="1" enterKeyHint="done" placeholder="0" value={outQty[it.id] || ''} disabled={busy && !!outQty[it.id]}
+                                      onChange={e => setOutQty(p => ({ ...p, [it.id]: e.target.value }))}
+                                      data-pk-col="out" onKeyDown={e => keyDown(e, 'out', () => move(it, -1, outQty[it.id]))}
+                                      aria-label={`משיכה — ${it.name}`} />
+                                  </label>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -7857,40 +7863,78 @@ setTimeout(function(){
               </div>
             </section>
           )}
+          {!showLog && <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>מקלידים מספר בריבוע "כניסה" או "משיכה" ולוחצים Enter — הפעולה נשמרת ועוברים לשורה הבאה</p>}
+        </div>
+      );
+    };
 
-          {addOpen && (
-            <div className="so-modal-bg" onClick={e => { if (e.target === e.currentTarget) setAddOpen(false); }}>
-              <div className="so-modal" role="dialog" aria-modal="true" aria-label="מוצר אריזה חדש">
-                <div className="so-modal-h"><h2>מוצר אריזה חדש</h2></div>
-                <div className="so-modal-b">
-                  <label className="so-field"><span>קבוצה</span>
-                    <input className="so-input" list="pk-groups" value={newItem.group} onChange={e => setNewItem(p => ({ ...p, group: e.target.value }))} />
-                    <datalist id="pk-groups">{[...new Set([...PACKAGING_GROUPS, ...groups])].map(g => <option key={g} value={g} />)}</datalist>
-                  </label>
-                  <label className="so-field"><span>שם המוצר</span>
-                    <input className="so-input" autoFocus value={newItem.name} placeholder="למשל: מגש כרעיים אפור" onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addItem(); }} />
-                  </label>
-                  <label className="so-field"><span>יחידת ספירה</span>
-                    <select className="so-select" style={{ height: '2.75rem' }} value={newItem.unit} onChange={e => setNewItem(p => ({ ...p, unit: e.target.value }))}>
-                      {PACKAGING_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
-                  </label>
-                </div>
-                <div className="so-modal-f" style={{ gap: '.6rem' }}>
-                  <button className="so-btn" onClick={() => setAddOpen(false)}>ביטול</button>
-                  <button className="so-btn primary" disabled={busy || !newItem.name.trim()} onClick={addItem}><LineIcon name="plus" />הוספה</button>
-                </div>
-              </div>
-            </div>
-          )}
-
+    // ===== ניהול רשימות ← מוצרי אריזה: הוספה, שם, קבוצה, יחידה, מינימום, מחיקה =====
+    const PackagingListEditor = () => {
+      const { state, loadErr, busy, load, mutate } = usePackagingStore('lists');
+      const [newItem, setNewItem] = useState({ group: 'מגשים', name: '', unit: 'קרטונים' });
+      const [pendingDel, setPendingDel] = useState(null);
+      if (loadErr) return <div className="so-subcard so-lempty big">{loadErr}<button className="so-btn" onClick={load}><LineIcon name="refresh" />נסה שוב</button></div>;
+      if (!state) return <div className="so-lempty big">טוען...</div>;
+      const items = state.items;
+      const groups = packagingGroupsOf(items);
+      const updateItem = (id, patch) => mutate(cur => ({ ...cur, items: cur.items.map(x => x.id === id ? { ...x, ...patch } : x) }), 'עדכון מוצר אריזה');
+      const addItem = async () => {
+        const name = newItem.name.trim();
+        if (!name) return;
+        const group = newItem.group.trim() || 'אחר';
+        const ok = await mutate(cur => {
+          if (cur.items.some(x => x.name === name && x.group === group)) return null;
+          return { ...cur, items: [...cur.items, { id: `pk_${Date.now()}`, group, name, unit: newItem.unit, qty: 0, min: 0 }] };
+        }, 'הוספת מוצר אריזה');
+        if (ok) setNewItem(p => ({ ...p, name: '' }));
+      };
+      const removeItem = (id) => mutate(cur => ({ ...cur, items: cur.items.filter(x => x.id !== id) }), 'מחיקת מוצר אריזה');
+      return (
+        <section className="so-subcard">
+          <div className="so-lhead"><h3>מוצרי אריזה</h3><span className="so-tag">{items.length} מוצרים</span><span className="so-hint">הכמויות עצמן מתעדכנות בעמוד "מלאי אריזה"</span></div>
+          <div className="so-addrow">
+            <input className="so-input" style={{ flex: '0 1 10rem' }} list="pk-groups" value={newItem.group} onChange={e => setNewItem(p => ({ ...p, group: e.target.value }))} aria-label="קבוצה" placeholder="קבוצה" />
+            <datalist id="pk-groups">{[...new Set([...PACKAGING_GROUPS, ...groups])].map(g => <option key={g} value={g} />)}</datalist>
+            <input className="so-input" value={newItem.name} placeholder="שם מוצר אריזה חדש..." onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') addItem(); }} aria-label="שם המוצר" />
+            <select className="so-select" style={{ height: '2.75rem' }} value={newItem.unit} onChange={e => setNewItem(p => ({ ...p, unit: e.target.value }))} aria-label="יחידת ספירה">
+              {PACKAGING_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+            <button className="so-btn primary" disabled={busy || !newItem.name.trim()} onClick={addItem}><LineIcon name="plus" />הוסף</button>
+          </div>
+          <div className="so-tbl-wrap">
+            <table className="so-ptbl">
+              <thead><tr><th className="text-right px-4 py-2.5 text-xs">שם מוצר</th><th className="text-right px-4 py-2.5 text-xs">קבוצה</th><th className="text-right px-4 py-2.5 text-xs">יחידה</th><th className="text-right px-4 py-2.5 text-xs">מינימום להזמנה</th><th></th></tr></thead>
+              <tbody>
+                {groups.map(g => (
+                  <React.Fragment key={g}>
+                    <tr className="so-catrow"><td colSpan={5}>{g} <span className="so-catn">{items.filter(i => i.group === g).length} פריטים</span></td></tr>
+                    {items.filter(i => i.group === g).map(it => (
+                      <tr key={it.id} className="so-prow">
+                        <td><input className="so-input sm" defaultValue={it.name} disabled={busy} aria-label={`שם — ${it.name}`}
+                          onBlur={e => { const v = e.target.value.trim(); if (v && v !== it.name) updateItem(it.id, { name: v }); else e.target.value = it.name; }}
+                          onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }} /></td>
+                        <td><input className="so-input sm" style={{ width: '8rem' }} list="pk-groups" defaultValue={it.group} disabled={busy} aria-label={`קבוצה — ${it.name}`}
+                          onBlur={e => { const v = e.target.value.trim(); if (v && v !== it.group) updateItem(it.id, { group: v }); else e.target.value = it.group; }} /></td>
+                        <td><select className="so-select" value={it.unit} disabled={busy} onChange={e => updateItem(it.id, { unit: e.target.value })} aria-label={`יחידה — ${it.name}`}>
+                          {[...new Set([...PACKAGING_UNITS, it.unit])].map(u => <option key={u} value={u}>{u}</option>)}
+                        </select></td>
+                        <td><input type="number" min="0" className="so-input sm" style={{ width: '6rem' }} defaultValue={Number(it.min) || ''} placeholder="ללא" disabled={busy} aria-label={`מינימום — ${it.name}`}
+                          onBlur={e => { const v = Math.max(0, parseInt(e.target.value, 10) || 0); if (v !== (Number(it.min) || 0)) updateItem(it.id, { min: v }); }} /></td>
+                        <td><button className="so-iconbtn danger sm" title="מחיקת מוצר" aria-label={`מחיקה — ${it.name}`} onClick={() => setPendingDel(it)}><LineIcon name="trash" /></button></td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {pendingDel && (
             <ConfirmDelete title="מחיקת מוצר אריזה"
               text={`למחוק את "${pendingDel.name}" ממלאי האריזה?${(Number(pendingDel.qty) || 0) > 0 ? ` יש ממנו כרגע ${pendingDel.qty} ${pendingDel.unit}.` : ''}`}
               onCancel={() => setPendingDel(null)}
               onConfirm={() => { removeItem(pendingDel.id); setPendingDel(null); }} />
           )}
-        </div>
+        </section>
       );
     };
 
