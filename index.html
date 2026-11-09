@@ -756,6 +756,17 @@
       'טחונים': <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="7.3" r="1.3"/><circle cx="12" cy="16.7" r="1.3"/><circle cx="7.6" cy="9.7" r="1.3"/><circle cx="16.4" cy="9.7" r="1.3"/><circle cx="7.6" cy="14.3" r="1.3"/><circle cx="16.4" cy="14.3" r="1.3"/></>,
       "ליפתא/צ'ונט": <path d="M3 11h18M5 11v6a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-6M2 11h2M20 11h2M9 7.5c0-1 1-1.5 1-2.5M13 7.5c0-1 1-1.5 1-2.5"/>,
     };
+    // אותם אייקונים כמחרוזת SVG — לחלונות הדפסה (בון) שאינם React
+    const PRINT_ICONS = {
+      truck: '<path d="M1 5h13v11H1zM14 9h4l3 3.5V16h-7"/><circle cx="5" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/>',
+      box: '<path d="M21 8 12 3 3 8l9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/>',
+      snow: '<path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+      edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+      pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+      phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+      'עוף': '<path d="M13.6 3.2c4-.6 7.5 2.4 7.2 6.4-.3 3.7-4 6.6-7.8 5.9a5 5 0 0 1-1.3-.4l-3.4 3.4a2.1 2.1 0 1 1-2.6 2.4 2.1 2.1 0 1 1 1.1-3.8l3.4-3.4a5.5 5.5 0 0 1-.6-2.2c-.2-4.1 1.6-7.7 4-8.3z"/><path d="M15 7c1.2.2 2.2 1.2 2.3 2.5"/>',
+      'דגים': '<path d="M3 12c2.5-3.6 6-5.5 9.5-5.5 3.8 0 6.8 2.4 8.5 5.5-1.7 3.1-4.7 5.5-8.5 5.5C9 17.5 5.5 15.6 3 12z"/><path d="M3 12 1 8.5M3 12l-2 3.5"/><circle cx="16.5" cy="11" r=".6"/>',
+    };
     const LineIcon = ({ name, className = 'so-ico' }) => <svg className={className} viewBox="0 0 24 24" aria-hidden="true">{LINE_ICONS[name] || LINE_ICONS.box}</svg>;
 
     // כשרויות: צבע חזק + אות מזהה (לא רק צבע) — לשימוש במסכים
@@ -767,6 +778,12 @@
     const kStyle = (k) => KASHRUT_STYLE[k] || { c: '#57534E', ink: '#44403C', tint: '#F5F5F4', l: (k || '?').charAt(0) };
     const kVars = (k) => ({ '--k': kStyle(k).c, '--k-ink': kStyle(k).ink, '--k-tint': kStyle(k).tint });
     const KChip = ({ k }) => <span className="so-kchip" style={kVars(k)}><span className="so-kletter">{kStyle(k).l}</span>{k || '—'}</span>;
+    // סוג אחסון של פריט בהזמנה (קפוא / דגים / טרי) — במקום האימוג'י הישנים
+    const StorageTag = ({ st }) => st === 'frozen'
+      ? <span className="so-tag" style={{ background: '#E0F2FE', color: '#075985' }}><LineIcon name="snow" />קפוא</span>
+      : st === 'fish'
+        ? <span className="so-tag" style={{ background: '#E0F2FE', color: '#075985' }}><LineIcon name="דגים" />דגים</span>
+        : <span className="so-tag">טרי</span>;
 
     // גודל טקסט לכל מכשיר (א / א+ / א++) — רק העדפת תצוגה, נשמר בדפדפן
     const FONT_SIZES = [['18', 'א', '.9rem'], ['21', 'א+', '1.05rem'], ['24', 'א++', '1.2rem']];
@@ -1055,17 +1072,9 @@
       { id: 'f1', category: 'דגים', name: 'בייבי סלמון', storageType: 'frozen', inline: true, showTotalQty: true, options: [], checkboxOptions: ['5 במגש', '6 במגש', '8 במגש', '32/8'] },
     ];
 
-    const CATEGORY_COLORS = {
-      'עוף':        { outer: 'border-yellow-200', headerBg: 'bg-yellow-50',  headerHover: 'hover:bg-yellow-100', headerText: 'text-yellow-900', headerBorder: 'border-yellow-200', divider: 'divide-yellow-100', qtyBg: 'bg-yellow-100', qtyText: 'text-yellow-900', qtyBorder: 'border-yellow-300', subBorder: 'border-yellow-300', subQty: 'text-yellow-700', cardActive: 'bg-yellow-100 border-yellow-500 shadow-sm', cardHover: 'hover:border-yellow-300 hover:bg-yellow-50', cardActiveText: 'text-yellow-900', inputActive: 'border-yellow-400 text-yellow-900', ring: 'focus:ring-yellow-400' },
-      'הודו':       { outer: 'border-green-200',  headerBg: 'bg-green-50',   headerHover: 'hover:bg-green-100',  headerText: 'text-green-900',  headerBorder: 'border-green-200',  divider: 'divide-green-100',  qtyBg: 'bg-green-100',  qtyText: 'text-green-900',  qtyBorder: 'border-green-300',  subBorder: 'border-green-300',  subQty: 'text-green-700',  cardActive: 'bg-green-100 border-green-500 shadow-sm',  cardHover: 'hover:border-green-300 hover:bg-green-50',  cardActiveText: 'text-green-900',  inputActive: 'border-green-400 text-green-900',  ring: 'focus:ring-green-400' },
-      'בשר': { outer: 'border-red-200',    headerBg: 'bg-red-50',     headerHover: 'hover:bg-red-100',    headerText: 'text-red-900',    headerBorder: 'border-red-200',    divider: 'divide-red-100',    qtyBg: 'bg-red-100',    qtyText: 'text-red-900',    qtyBorder: 'border-red-300',    subBorder: 'border-red-300',    subQty: 'text-red-700',    cardActive: 'bg-red-100 border-red-500 shadow-sm',    cardHover: 'hover:border-red-300 hover:bg-red-50',    cardActiveText: 'text-red-900',    inputActive: 'border-red-400 text-red-900',    ring: 'focus:ring-red-400' },
-      'דגים':       { outer: 'border-blue-200',   headerBg: 'bg-blue-50',    headerHover: 'hover:bg-blue-100',   headerText: 'text-blue-900',   headerBorder: 'border-blue-200',   divider: 'divide-blue-100',   qtyBg: 'bg-blue-100',   qtyText: 'text-blue-900',   qtyBorder: 'border-blue-300',   subBorder: 'border-blue-300',   subQty: 'text-blue-700',   cardActive: 'bg-blue-100 border-blue-500 shadow-sm',   cardHover: 'hover:border-blue-300 hover:bg-blue-50',   cardActiveText: 'text-blue-900',   inputActive: 'border-blue-400 text-blue-900',   ring: 'focus:ring-blue-400' },
-      'מתובלים':    { outer: 'border-orange-200', headerBg: 'bg-orange-50',  headerHover: 'hover:bg-orange-100', headerText: 'text-orange-900', headerBorder: 'border-orange-200', divider: 'divide-orange-100', qtyBg: 'bg-orange-100', qtyText: 'text-orange-900', qtyBorder: 'border-orange-300', subBorder: 'border-orange-300', subQty: 'text-orange-700', cardActive: 'bg-orange-100 border-orange-500 shadow-sm', cardHover: 'hover:border-orange-300 hover:bg-orange-50', cardActiveText: 'text-orange-900', inputActive: 'border-orange-400 text-orange-900', ring: 'focus:ring-orange-400' },
-      'קפואים':     { outer: 'border-cyan-200',   headerBg: 'bg-cyan-50',    headerHover: 'hover:bg-cyan-100',   headerText: 'text-cyan-900',   headerBorder: 'border-cyan-200',   divider: 'divide-cyan-100',   qtyBg: 'bg-cyan-100',   qtyText: 'text-cyan-900',   qtyBorder: 'border-cyan-300',   subBorder: 'border-cyan-300',   subQty: 'text-cyan-700',   cardActive: 'bg-cyan-100 border-cyan-500 shadow-sm',   cardHover: 'hover:border-cyan-300 hover:bg-cyan-50',   cardActiveText: 'text-cyan-900',   inputActive: 'border-cyan-400 text-cyan-900',   ring: 'focus:ring-cyan-400' },
-      'טחונים':     { outer: 'border-pink-200',   headerBg: 'bg-pink-50',    headerHover: 'hover:bg-pink-100',   headerText: 'text-pink-900',   headerBorder: 'border-pink-200',   divider: 'divide-pink-100',   qtyBg: 'bg-pink-100',   qtyText: 'text-pink-900',   qtyBorder: 'border-pink-300',   subBorder: 'border-pink-300',   subQty: 'text-pink-700',   cardActive: 'bg-pink-100 border-pink-500 shadow-sm',   cardHover: 'hover:border-pink-300 hover:bg-pink-50',   cardActiveText: 'text-pink-900',   inputActive: 'border-pink-400 text-pink-900',   ring: 'focus:ring-pink-400' },
-    };
-    const DEFAULT_CAT_COLORS = { outer: 'border-gray-200', headerBg: 'bg-gray-50', headerHover: 'hover:bg-gray-100', headerText: 'text-gray-900', headerBorder: 'border-gray-200', divider: 'divide-gray-100', qtyBg: 'bg-purple-100', qtyText: 'text-purple-800', qtyBorder: 'border-purple-200', subBorder: 'border-purple-200', subQty: 'text-purple-600', cardActive: 'bg-purple-100 border-purple-500 shadow-sm', cardHover: 'hover:border-purple-300 hover:bg-purple-50', cardActiveText: 'text-purple-900', inputActive: 'border-purple-400 text-purple-900', ring: 'focus:ring-purple-400' };
-    const getCatColors = (cat) => CATEGORY_COLORS[cat] || DEFAULT_CAT_COLORS;
+    // בעיצוב החדש הקטגוריות מזוהות לפי אייקון ולא לפי צבע — כל הקטגוריות באותם גוונים ניטרליים של המערכת
+    const NEUTRAL_CAT_COLORS = { outer: 'border-stone-200', headerBg: 'bg-stone-50', headerHover: 'hover:bg-stone-100', headerText: 'text-stone-800', headerBorder: 'border-stone-200', divider: 'divide-stone-100', qtyBg: 'bg-stone-800', qtyText: 'text-white', qtyBorder: 'border-stone-800', subBorder: 'border-stone-300', subQty: 'text-stone-900', cardActive: 'bg-stone-100 border-stone-800', cardHover: 'hover:border-stone-400 hover:bg-stone-50', cardActiveText: 'text-stone-900', inputActive: 'border-stone-700 text-stone-900', ring: 'focus:ring-stone-400' };
+    const getCatColors = () => NEUTRAL_CAT_COLORS;
 
     // ===[DASHBOARD]===
     // --- Dashboard View ---
@@ -2919,7 +2928,11 @@ ${htmlRows}
       const printAllBons = (rawOrder) => {
         // כל טקסט מהמשתמש (שם, כתובת, הערות) עובר escape לפני שנכנס ל-HTML של חלון ההדפסה.
         // סוג האחסון נקבע לפני ה-escape, כי הוא מזוהה לפי שם המוצר המקורי
-        const order = escDeep({ ...rawOrder, items: (rawOrder.items || []).map(i => ({ ...i, _st: resolveItemStorage(i) })) });
+        // צבע ואות הכשרות נשלפים לפני ה-escape (שם כשרות עם גרש לא יימצא אחריו)
+        const order = escDeep({ ...rawOrder, items: (rawOrder.items || []).map(i => ({ ...i, _st: resolveItemStorage(i), _kc: i.kashrut ? kStyle(i.kashrut).c : '', _kl: i.kashrut ? kStyle(i.kashrut).l : '' })) });
+        // אייקונים בקו דק — אותם אייקונים כמו במסכים (במקום אימוג'י)
+        const ico = (name, size = 22) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;flex-shrink:0;">${PRINT_ICONS[name] || ''}</svg>`;
+        const kChipHtml = (it, fs = 18) => it?.kashrut ? `<span style="display:inline-flex;align-items:center;gap:6px;padding:2px 12px 2px 3px;border-radius:999px;background:${it._kc};color:#fff;font-weight:800;font-size:${fs}px;white-space:nowrap;"><span style="width:${fs + 6}px;height:${fs + 6}px;border-radius:50%;background:#fff;color:${it._kc};display:inline-grid;place-items:center;font-size:${Math.round(fs * 0.75)}px;font-weight:900;">${it._kl}</span>${it.kashrut}</span>` : '';
         const allRegular = (order.items || []).filter(i => i.qty !== '-');
         const packingItem = (order.items || []).find(i => i.qty === '-');
         const buildGroups = (items) => {
@@ -2952,26 +2965,27 @@ ${htmlRows}
         const whenText = tDate ? [tDate.split('-').reverse().join('/'), tTime && tTime !== '00:00' ? tTime : ''].filter(Boolean).join(' ') : '';
         const addressText = order.type === 'delivery' ? [order.fullAddress, order.neighborhood, order.city && order.city !== 'ירושלים' ? order.city : ''].filter(Boolean).join(', ') : '';
         const flagsText = [
-          order.flags?.mustCoordinate && '🚨 לתאם',
-          order.flags?.notifyReady && '📞 להודיע שמוכן',
-          order.flags?.chargeStatus === 'charge' && '💳 לחייב',
-          order.flags?.chargeStatus === 'noCharge' && '🆓 לא לחייב',
-          order.collect?.type && `💰 לגבות: ${order.collect.type}${order.collect.amount ? ' ' + order.collect.amount + ' ₪' : ''}`,
+          order.flags?.mustCoordinate && 'לתאם',
+          order.flags?.notifyReady && `${ico('phone', 16)} להודיע שמוכן`,
+          order.flags?.chargeStatus === 'charge' && 'לחייב',
+          order.flags?.chargeStatus === 'noCharge' && 'לא לחייב',
+          order.collect?.type && `לגבות: ${order.collect.type}${order.collect.amount ? ' ' + order.collect.amount + ' ₪' : ''}`,
         ].filter(Boolean);
 
         const headerHtml = `
-          <div style="border:1px solid black;border-radius:4px;padding:6px 8px;margin-bottom:8px;background:#f9f9f9;font-size:14px;">
+          <div style="border:1px solid #CFCAC3;border-radius:8px;padding:6px 10px;margin-bottom:8px;background:#F3F1ED;font-size:14px;">
             <div style="display:flex;justify-content:space-between;font-weight:800;">
-              <span>${order.type === 'delivery' ? '🚚 משלוח' : '🏪 איסוף'}${whenText ? ` — ${whenText}` : ''}</span>
+              <span>${order.type === 'delivery' ? ico('truck', 18) + ' משלוח' : ico('box', 18) + ' איסוף'}${whenText ? ` — ${whenText}` : ''}</span>
               <span>הזמנה #${order.id}</span>
             </div>
           </div>
           <div style="border-bottom:2px solid black;padding-bottom:6px;margin-bottom:8px;">
             <div style="font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${customerLine}</div>
-            ${addressText ? `<div style="font-size:16px;font-weight:bold;margin-top:2px;">📍 ${addressText}</div>` : ''}
-            ${flagsText.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">${flagsText.map(f => `<span style="font-size:15px;font-weight:800;padding:1px 8px;border:2px solid black;border-radius:4px;">${f}</span>`).join('')}</div>` : ''}
+            ${addressText ? `<div style="font-size:16px;font-weight:bold;margin-top:2px;">${ico('pin', 18)} ${addressText}</div>` : ''}
+            ${order.type === 'delivery' && order.addressNote ? `<div style="font-size:15px;font-weight:bold;margin-top:2px;color:#9A3412;">${order.addressNote}</div>` : ''}
+            ${flagsText.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">${flagsText.map(f => `<span style="font-size:15px;font-weight:800;padding:1px 10px;border:2px solid #17171A;border-radius:999px;">${f}</span>`).join('')}</div>` : ''}
           </div>
-          ${order.orderNotes ? `<div style="border:2px solid #dc2626;border-radius:4px;padding:6px 8px;margin-bottom:8px;font-size:20px;font-weight:bold;color:#dc2626;white-space:pre-wrap;">📝 ${order.orderNotes}</div>` : ''}`;
+          ${order.orderNotes ? `<div style="border:2px solid #FECACA;background:#FEF2F2;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:20px;font-weight:bold;color:#991B1B;white-space:pre-wrap;">${ico('edit', 20)} ${order.orderNotes}</div>` : ''}`;
 
         const tableHtml = (groups, isFresh, showKashrut = true) => {
           const rows = groups.map((group, gIdx) => {
@@ -2980,56 +2994,56 @@ ${htmlRows}
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
               ? `<div style="margin-top:4px;margin-right:4px;padding-right:8px;border-right:2px solid #aaa;">${group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="display:flex;gap:8px;font-size:22px;color:#555;font-weight:bold;"><span style="min-width:44px;text-align:center;font-weight:800;">${item.qty}</span><span>${opt}</span></div>`; }).join('')}</div>` : '';
             const groupNotes = [...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ');
-            const notes = groupNotes ? `<span style="display:block;font-size:22px;color:#dc2626;font-weight:bold;margin-top:4px;">✂️ ${groupNotes}</span>` : '';
-            const checks = group.items[0]?.checks?.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${group.items[0].checks.map(c => `<span style="font-size:22px;padding:2px 8px;border:1px solid #ccc;border-radius:4px;font-weight:bold;">✓ ${c}</span>`).join('')}</div>` : '';
-            const skuKash = showKashrut && (group.items[0]?.sku || group.items[0]?.kashrut) ? `<div style="display:flex;align-items:center;gap:8px;margin-top:2px;">${group.items[0].sku ? `<span style="font-size:18px;color:#666;font-weight:bold;">מק"ט: ${group.items[0].sku}</span>` : ''}${group.items[0].kashrut ? `<span style="font-size:18px;font-weight:800;padding:2px 12px;border-radius:999px;border:2px solid black;">${group.items[0].kashrut}</span>` : ''}</div>` : '';
+            const notes = groupNotes ? `<span style="display:block;font-size:22px;color:#991B1B;font-weight:bold;margin-top:4px;">${ico('edit', 20)} ${groupNotes}</span>` : '';
+            const checks = group.items[0]?.checks?.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${group.items[0].checks.map(c => `<span style="font-size:22px;padding:2px 10px;border:1px solid #CFCAC3;border-radius:999px;font-weight:bold;">✓ ${c}</span>`).join('')}</div>` : '';
+            const skuKash = showKashrut && (group.items[0]?.sku || group.items[0]?.kashrut) ? `<div style="display:flex;align-items:center;gap:8px;margin-top:2px;">${group.items[0].sku ? `<span style="font-size:18px;color:#666;font-weight:bold;">מק"ט: ${group.items[0].sku}</span>` : ''}${kChipHtml(group.items[0])}</div>` : '';
             return `<tr style="background:${bg};"><td style="padding:12px;border:1px solid black;text-align:center;font-size:36px;font-weight:800;background:#f0f0f0;">${qtyDisplay}</td><td style="padding:12px;border:1px solid black;"><span style="display:block;font-weight:800;font-size:22px;">${group.key}</span>${skuKash}${subItems}${notes}${checks}</td></tr>`;
           }).join('');
-          const packingRow = isFresh && packingItem ? `<tr style="background:#f9f9f9;"><td style="padding:8px;border:1px solid black;text-align:center;font-size:22px;background:#f0f0f0;">📦</td><td style="padding:8px;border:1px solid black;font-weight:bold;font-size:22px;color:#555;">${packingItem.notes}</td></tr>` : '';
+          const packingRow = isFresh && packingItem ? `<tr style="background:#f9f9f9;"><td style="padding:8px;border:1px solid black;text-align:center;font-size:22px;background:#F3F1ED;">${ico('box', 26)}</td><td style="padding:8px;border:1px solid black;font-weight:bold;font-size:22px;color:#555;">${packingItem.notes}</td></tr>` : '';
           return `<table style="width:100%;text-align:right;border-collapse:collapse;border:1px solid black;margin-top:12px;"><thead><tr style="background:black;color:white;font-weight:bold;"><th style="padding:12px;border:1px solid black;text-align:center;width:72px;font-size:22px;">כמות</th><th style="padding:12px;border:1px solid black;font-size:22px;">פריט</th></tr></thead><tbody>${rows}${packingRow}</tbody></table>`;
         };
 
         const frozenChecklistHtml = (groups) => {
           const rows = groups.map((group, gIdx) => {
-            const bg = gIdx % 2 === 0 ? '#eef4ff' : '#dbeafe';
+            const bg = gIdx % 2 === 0 ? '#F0F9FF' : '#E0F2FE';
             const qtyDisplay = group.items.length > 1 ? group.total : group.items[0].qty;
             const subItems = (group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key))
               ? group.items.map(item => { const opt = item.name.match(/\((.+)\)$/)?.[1] || item.name; return `<div style="font-size:0.8em;color:#555;padding-right:10px;">└ ${item.qty}×${opt}</div>`; }).join('') : '';
             const groupNotes = [...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ');
-            const notes = groupNotes ? `<div style="font-size:0.8em;color:#dc2626;font-weight:bold;">✂️ ${groupNotes}</div>` : '';
-            const kashrutBadge = group.items[0]?.kashrut ? `<span style="font-size:0.55em;font-weight:800;padding:1px 6px;border-radius:999px;border:1.5px solid black;white-space:nowrap;">${group.items[0].kashrut}</span>` : '';
-            return `<div class="frozen-row" style="display:flex;align-items:flex-start;gap:4px;padding:5px 4px;border-bottom:1px solid #93c5fd;background:${bg};break-inside:avoid;">
-              <span style="font-size:1.2em;color:#1e40af;flex-shrink:0;">☐</span>
+            const notes = groupNotes ? `<div style="font-size:0.8em;color:#991B1B;font-weight:bold;">${ico('edit', 16)} ${groupNotes}</div>` : '';
+            const kashrutBadge = kChipHtml(group.items[0], 13);
+            return `<div class="frozen-row" style="display:flex;align-items:flex-start;gap:4px;padding:5px 4px;border-bottom:1px solid #BAE6FD;background:${bg};break-inside:avoid;">
+              <span style="font-size:1.2em;color:#075985;flex-shrink:0;">☐</span>
               <span style="font-weight:800;min-width:30px;text-align:center;flex-shrink:0;">${qtyDisplay}</span>
               <div style="flex:1;min-width:0;"><span style="font-weight:bold;">${group.key}</span> ${kashrutBadge}${subItems}${notes}</div>
             </div>`;
           }).join('');
-          return `<div class="frozen-section" style="margin-top:12px;border-top:3px solid #1e40af;padding-top:8px;font-size:22px;">
-            <div style="font-size:14px;font-weight:700;color:#1e40af;margin-bottom:5px;">🧊 קפוא — נא לסמן מה נלקח</div>
-            <div class="frozen-grid" style="border:2px solid #1e40af;border-radius:4px;overflow:hidden;">${rows}</div>
+          return `<div class="frozen-section" style="margin-top:12px;border-top:3px solid #075985;padding-top:8px;font-size:22px;">
+            <div style="font-size:15px;font-weight:800;color:#075985;margin-bottom:5px;">${ico('snow', 18)} קפוא — נא לסמן מה נלקח</div>
+            <div class="frozen-grid" style="border:2px solid #075985;border-radius:4px;overflow:hidden;">${rows}</div>
           </div>`;
         };
 
-        const bonStyle = `font-family:'David Libre','David',serif;width:138mm;padding:10px;box-sizing:border-box;background:white;color:black;`;
+        const bonStyle = `font-family:'Heebo','Assistant',Arial,sans-serif;width:138mm;padding:10px;box-sizing:border-box;background:white;color:black;`;
         const bons = [];
 
         if (freshGroups.length > 0 || frozenGroups.length > 0) {
           const freshSection = freshGroups.length > 0
-            ? `<div style="font-size:20px;font-weight:800;color:#166534;margin-top:4px;">🍗 טרי</div>${tableHtml(freshGroups, true)}`
+            ? `<div style="font-size:20px;font-weight:800;color:#17171A;margin-top:4px;">טרי</div>${tableHtml(freshGroups, true)}`
             : '';
           const frozenSection = frozenGroups.length > 0 ? frozenChecklistHtml(frozenGroups) : '';
-          bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#166534;">🍗 בון עוף</div>${logoHtml}</div>${headerHtml}${freshSection}${frozenSection}</div>`);
+          bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:900;color:#B91C1C;display:flex;align-items:center;gap:8px;">${ico('עוף', 30)} בון עוף</div>${logoHtml}</div>${headerHtml}${freshSection}${frozenSection}</div>`);
         }
 
         if (fishGroups.length > 0) {
-          bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:800;color:#1e3a8a;">🐟 בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false, false)}</div>`);
+          bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:900;color:#B91C1C;display:flex;align-items:center;gap:8px;">${ico('דגים', 30)} בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false, false)}</div>`);
         }
 
         const bodyContent = bons.map((bon, i) => i < bons.length - 1 ? `<div style="page-break-after:always;">${bon}</div>` : bon).join('');
         const printWindow = window.open('', '_blank', 'width=800,height=900');
         printWindow.document.write(`<html dir="rtl"><head><title>בון הזמנה - סופר עוף</title><style>
-@import url('https://fonts.googleapis.com/css2?family=David+Libre:wght@400;700&display=swap');
-body{font-family:'David Libre','David',serif;padding:0;margin:0;background:white;color:black;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800;900&display=swap');
+body{font-family:'Heebo','Assistant',Arial,sans-serif;padding:0;margin:0;background:white;color:black;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 @page{size:A5 portrait;margin:5mm;}
 @media print{html,body{width:138mm;overflow:hidden;}header,footer{display:none!important;}}
 .two-col .frozen-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
@@ -3592,22 +3606,22 @@ setTimeout(function(){
                         }
                       });
                       return (
-                        <ul className="bg-gray-50 rounded-lg border border-gray-100 divide-y divide-gray-100 mb-3">
+                        <ul className="rounded-lg divide-y mb-3" style={{ background: '#fff', border: '1px solid var(--line)', borderColor: 'var(--line)' }}>
                           {groups.map((group, gIdx) => {
                             const tmpl = ORDER_FORM_TEMPLATE.find(t => t.name === group.key);
                             const itemCat = (frozenProductsList || []).find(p => p.name === group.key)?.category || getProductCategory(group.key) || tmpl?.category;
                             const cc = getCatColors(itemCat);
-                            const kc = group.items[0].kashrut ? getKashrutColor(group.items[0].kashrut) : null;
                             return (
                               <li key={gIdx} className="px-2 py-2 text-xs">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className={`font-black px-1.5 py-0.5 rounded min-w-[28px] text-center border shrink-0 ${cc.qtyBg} ${cc.qtyText} ${cc.qtyBorder}`}>
                                     {group.items.length > 1 ? group.total : group.items[0].qty}
                                   </span>
-                                  <span className="font-bold text-gray-800">{group.key}</span>
-                                  {kc && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'15', color: kc }}>{group.items[0].kashrut}</span>}
-                                  {group.items[0].sku && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-500 border border-gray-200">{group.items[0].sku}</span>}
-                                  {resolveItemStorage(group.items[0]) === 'frozen' ? <span className="text-[10px]">🧊</span> : resolveItemStorage(group.items[0]) === 'fish' ? <span className="text-[10px]">🐟</span> : <span className="text-[10px]">🥩</span>}
+                                  {itemCat && <span style={{ color: 'var(--muted)' }}><LineIcon name={itemCat} /></span>}
+                                  <span className="font-bold text-sm" style={{ color: group.items[0].kashrut ? kStyle(group.items[0].kashrut).ink : 'var(--ink)' }}>{group.key}</span>
+                                  {group.items[0].kashrut && <KChip k={group.items[0].kashrut} />}
+                                  {group.items[0].sku && <span className="so-tag" style={{ fontFamily: 'ui-monospace, Consolas, monospace' }}>{group.items[0].sku}</span>}
+                                  <StorageTag st={resolveItemStorage(group.items[0])} />
                                 </div>
                                 {(group.items.length > 1 || (group.items.length === 1 && group.items[0].name !== group.key)) && (
                                   <div className={`mr-6 mt-1.5 space-y-1 border-r-2 pr-2 ${cc.subBorder}`}>
@@ -3623,7 +3637,7 @@ setTimeout(function(){
                                   </div>
                                 )}
                                 {group.items.some(i => i.notes) && (
-                                  <div className="text-red-500 font-medium mr-7 mt-0.5">✂️ {[...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ')}</div>
+                                  <div className="mr-7 mt-0.5" style={{ color: '#991B1B', fontWeight: 700 }}><LineIcon name="edit" /> {[...new Set(group.items.map(i => i.notes).filter(Boolean))].join(' | ')}</div>
                                 )}
                                 {group.items[0]?.checks?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mr-6 mt-1">
@@ -3637,7 +3651,7 @@ setTimeout(function(){
                           })}
                           {packingItem && (
                             <li className="px-2 py-1.5 flex items-center gap-2 text-xs">
-                              <span className="font-black px-1.5 py-0.5 rounded border bg-gray-100 text-gray-500 border-gray-200 text-center shrink-0">📦</span>
+                              <span className="shrink-0" style={{ color: 'var(--muted)' }}><LineIcon name="box" /></span>
                               <span className="text-gray-600 font-medium">{packingItem.notes}</span>
                             </li>
                           )}
@@ -3646,10 +3660,10 @@ setTimeout(function(){
                     })()}
 
                     {dimmed && order.packaging && (order.packaging.cartons || order.packaging.bags || order.packaging.fishBags) && (
-                      <div className="mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex flex-wrap gap-3 text-xs font-bold text-green-800">
-                        {order.packaging.cartons > 0 && <span>📦 {order.packaging.cartons} קרטונים</span>}
-                        {order.packaging.bags > 0 && <span>🛍️ {order.packaging.bags} שקיות</span>}
-                        {order.packaging.fishBags > 0 && <span>🐟 {order.packaging.fishBags} שקיות דגים</span>}
+                      <div className="so-tags mb-3">
+                        {order.packaging.cartons > 0 && <span className="so-tag ok"><LineIcon name="box" />{order.packaging.cartons} קרטונים</span>}
+                        {order.packaging.bags > 0 && <span className="so-tag ok"><LineIcon name="layers" />{order.packaging.bags} שקיות</span>}
+                        {order.packaging.fishBags > 0 && <span className="so-tag ok"><LineIcon name="דגים" />{order.packaging.fishBags} שקיות דגים</span>}
                       </div>
                     )}
 
@@ -4068,7 +4082,7 @@ setTimeout(function(){
                             )}
                             {complexAddError && (
                               <div className="flex items-start gap-2 bg-red-50 border border-red-300 rounded-xl p-3">
-                                <span className="text-red-500 text-base shrink-0">⚠️</span>
+                                <span className="text-red-700 shrink-0"><LineIcon name="x" /></span>
                                 <span className="text-xs text-red-700 font-bold">{complexAddError}</span>
                               </div>
                             )}
@@ -4093,7 +4107,7 @@ setTimeout(function(){
                             return (
                               <div key={cat} className={`border-2 rounded-xl overflow-hidden ${cc.outer}`}>
                                 <div className={`px-3 py-2 font-extrabold text-sm ${cc.headerBg} ${cc.headerText} ${cc.headerBorder} border-b`}>
-                                  {CAT_EMOJI[cat]} {cat}
+                                  <LineIcon name={cat} /> {cat}
                                 </div>
                                 <div className="divide-y divide-gray-100">
                                   {items.map(item => {
@@ -4116,7 +4130,7 @@ setTimeout(function(){
                                         <span className="font-mono text-[11px] text-gray-400 w-12 shrink-0">{item.sku || '—'}</span>
                                         <span className="flex-1 font-bold text-sm truncate" style={{ color: item.kashrut ? kStyle(item.kashrut).ink : 'var(--ink)' }}>{item.name}</span>
                                         {item.kashrut && <span className="shrink-0"><KChip k={item.kashrut} /></span>}
-                                        {resolveItemStorage(item) === 'frozen' ? <span className="text-[11px] shrink-0">🧊</span> : resolveItemStorage(item) === 'fish' ? <span className="text-[11px] shrink-0">🐟</span> : <span className="text-[11px] shrink-0">🥩</span>}
+                                        <span className="shrink-0"><StorageTag st={resolveItemStorage(item)} /></span>
                                         {item.type === 'simple' && !isEditing && <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{item.qty}</span>}
                                         {item.type === 'complex' && !isEditing && (() => { const tot = (item.rows||[]).reduce((s,r)=>s+(parseFloat(r.qty)||0),0)||(parseFloat(item.totalQty)||0); return tot>0 ? <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{tot}</span> : null; })()}
                                         {item.type === 'simple' && isEditing && <input type="number" min="0" step="0.5" value={editItemState.qty ?? item.qty} onChange={e => setEditItemState(prev => ({...prev, qty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none shrink-0" />}
