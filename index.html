@@ -273,7 +273,8 @@
     .so-ostats span { display: inline-flex; align-items: center; gap: .3rem; }
     .so-ostats b { color: var(--ink); font-size: 1.15rem; font-weight: 900; }
     .so-ostats .sep { width: 1px; height: 1.2rem; background: var(--line); }
-    .so-kanban { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; align-items: start; }
+    .so-kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .9rem; align-items: start; }
+    @media (max-width: 1500px) { .so-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .so-col { background: #E8E5E0; border-radius: 1.1rem; padding: .7rem; display: flex; flex-direction: column; gap: .6rem; min-width: 0; transition: box-shadow .15s; }
     .so-col.dragover { box-shadow: 0 0 0 4px #FACC15; background: #FEF9C3; }
     .so-col-h { display: flex; align-items: center; gap: .55rem; padding: .3rem .4rem; }
@@ -3027,16 +3028,21 @@ ${htmlRows}
         const bonStyle = `font-family:'Heebo','Assistant',Arial,sans-serif;width:138mm;padding:10px;box-sizing:border-box;background:white;color:black;`;
         const bons = [];
 
+        // גב הבון — הצד השני של אותו דף A5 (הדפסה דו-צדדית): עמוד ריק לגמרי, כל השטח פנוי למדבקות המשקל
+        const STICKER_BACK = `<div class="sticker-page" style="${bonStyle}height:190mm;"></div>`;
+
         if (freshGroups.length > 0 || frozenGroups.length > 0) {
           const freshSection = freshGroups.length > 0
             ? `<div style="font-size:20px;font-weight:800;color:#17171A;margin-top:4px;">טרי</div>${tableHtml(freshGroups, true)}`
             : '';
           const frozenSection = frozenGroups.length > 0 ? frozenChecklistHtml(frozenGroups) : '';
           bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:900;color:#B91C1C;display:flex;align-items:center;gap:8px;">${ico('עוף', 30)} בון עוף</div>${logoHtml}</div>${headerHtml}${freshSection}${frozenSection}</div>`);
+          bons.push(STICKER_BACK); // תמיד יש גב — גם לבון קפוא בלבד, כדי שהבון הבא יתחיל בדף חדש
         }
 
         if (fishGroups.length > 0) {
           bons.push(`<div class="bon-page" style="${bonStyle}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-size:28px;font-weight:900;color:#B91C1C;display:flex;align-items:center;gap:8px;">${ico('דגים', 30)} בון דגים</div>${logoHtml}</div>${headerHtml}${tableHtml(fishGroups, false, false)}</div>`);
+          bons.push(STICKER_BACK);
         }
 
         const bodyContent = bons.map((bon, i) => i < bons.length - 1 ? `<div style="page-break-after:always;">${bon}</div>` : bon).join('');
@@ -3055,13 +3061,18 @@ setTimeout(function(){
   var A5_H=Math.round(200*3.7795);
   document.querySelectorAll('.bon-page').forEach(function(page){
     var fs=page.querySelector('.frozen-section');
-    if(!fs)return;
-    if(page.scrollHeight>A5_H){fs.classList.add('two-col');}
-    var sizes=[20,18,16,14,12];
-    for(var i=0;i<sizes.length;i++){
-      if(page.scrollHeight<=A5_H)break;
-      fs.style.fontSize=sizes[i]+'px';
+    if(fs){
+      if(page.scrollHeight>A5_H){fs.classList.add('two-col');}
+      var sizes=[20,18,16,14,12];
+      for(var i=0;i<sizes.length;i++){
+        if(page.scrollHeight<=A5_H)break;
+        fs.style.fontSize=sizes[i]+'px';
+      }
     }
+  });
+  // כל צד חייב להיכנס בעמוד A5 אחד (אחרת הדו-צדדי מתבלבל) — מה שעדיין ארוך מדי מוקטן כולו
+  document.querySelectorAll('.bon-page,.sticker-page').forEach(function(page){
+    if(page.scrollHeight>A5_H){ page.style.zoom=(0.96*A5_H/page.scrollHeight).toFixed(3); }
   });
   window.print();
   setTimeout(function(){window.close();},500);
@@ -3490,6 +3501,7 @@ setTimeout(function(){
             const newOrders      = orders.filter(o => o.status === 'new' && !o.assignedButcher);
             const assignedOrders = orders.filter(o => o.status === 'new' && o.assignedButcher);
             const packingOrders  = orders.filter(o => o.status === 'packing');
+            const readyOrders    = orders.filter(o => o.status === 'completed'); // מוכנות — כבר מופיעות גם במערך משלוחים; כאן אפשר עדיין לערוך ולהוסיף
 
             // הזמנה עם כמה כשרויות מקובצת תחת "מעורב" ולא לפי הפריט הראשון
             const kashrutGroupKey = (o) => {
@@ -3588,6 +3600,17 @@ setTimeout(function(){
                     )}
                     {order.status === 'packing' && (
                       <button className="so-obtn ok" onClick={() => requestComplete(order.id)}><LineIcon name="check" />מוכן</button>
+                    )}
+                    {order.status === 'completed' && (
+                      <button className="so-iconbtn" title="החזרה לאריזה" aria-label="החזרה לאריזה" onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'packing' } : o)); collapseOrder(order.id); }}><LineIcon name="undo" /></button>
+                    )}
+                    {order.status === 'completed' && (
+                      <span className="so-tag" style={{ marginInlineStart: 'auto' }}>
+                        {order.type === 'pickup' ? <><LineIcon name="box" />ממתינה לאיסוף</>
+                          : order.delivery?.status === 'failed' ? <span style={{ color: '#991B1B' }}>מסירה נכשלה</span>
+                          : order.route ? <><LineIcon name="truck" />{order.route.name || 'בסבב'}</>
+                          : <><LineIcon name="truck" />ממתינה לשיבוץ</>}
+                      </span>
                     )}
                   </div>
                 )}
@@ -3716,6 +3739,15 @@ setTimeout(function(){
                   {renderKashrutGroups(packingOrders, false, false)}
                   {packingOrders.length > 0 && (
                     <div className="so-colhint">אחרי האריזה — "מוכן"</div>
+                  )}
+                </section>
+
+                {/* עמודה 4 — מוכנות למשלוח / לאיסוף (עד שנמסרו) */}
+                <section className="so-col">
+                  {colHeader('מוכנות', readyOrders.length, 'var(--in)')}
+                  {renderKashrutGroups(readyOrders, false, false)}
+                  {readyOrders.length > 0 && (
+                    <div className="so-colhint">מופיעות גם במערך משלוחים — עדיין אפשר לערוך ולהוסיף</div>
                   )}
                 </section>
               </div>
