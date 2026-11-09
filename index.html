@@ -2900,7 +2900,7 @@ ${htmlRows}
 
     // ===[ORDERS]===
     // --- Orders View ---
-    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap, logoImage }) => {
+    const OrdersView = ({ kashrutList, butchersList, orders, setOrders, stock, neighborhoodData, contactsList, setContactsList = () => {}, frozenProductsList, orderFormSkuMap, setOrderFormSkuMap, logoImage }) => {
       const getSku = (itemId, k) => (orderFormSkuMap || {})[itemId]?.[k] || '';
       const getKashrutColor = (name) => (kashrutList || []).find(k => k.name === name)?.color || '#6366f1';
       // מזהה טרי/קפוא/דג לפי הגדרת המוצר ברשימה (אם חד-משמעית), ורק אם המוצר תומך בשני הסוגים נופלים חזרה לסוג שנשמר על הפריט עצמו
@@ -3063,6 +3063,7 @@ setTimeout(function(){
       // Client state fields
       const [customerName, setCustomerName] = useState('');
       const [customerSuggestions, setCustomerSuggestions] = useState([]);
+      const [linkedContactId, setLinkedContactId] = useState(null); // לקוח שנבחר מאנשי קשר — שינויים בטופס יעודכנו גם אצלו
       const [customerPhone, setCustomerPhone] = useState('');
       const [customerMobile, setCustomerMobile] = useState('');
       const [neighborhood, setNeighborhood] = useState('');
@@ -3284,13 +3285,35 @@ setTimeout(function(){
       const closeModal = () => {
         setIsModalOpen(false);
         setEditingOrder(null);
-        setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]);
+        setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]); setLinkedContactId(null);
         setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt(''); setAddressNote(''); setCity('ירושלים'); setCollectType(''); setCollectAmount('');
         setDeliveryDate(localToday()); setPickupTime(localToday()); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
         setAssignedButcher('');
         setOrderAddedItems([]); setOrderNotes(''); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false); setNameSearch(''); setShowNameDropdown(false);
+      };
+
+      // לקוח שנבחר מאנשי קשר: טלפון / כתובת / שכונה שהשתנו בטופס — מתעדכנים גם באנשי קשר.
+      // שדה שהושאר ריק לא מוחק את מה שיש באנשי קשר; כתובת (רחוב) חדשה מחליפה גם כניסה / קומה / דירה / הערה.
+      const syncContactFromOrder = () => {
+        const c = linkedContactId && contactsList.find(x => x.id === linkedContactId);
+        if (!c) return;
+        const t = v => (v || '').trim();
+        const patch = {};
+        if (t(customerPhone) && t(customerPhone) !== t(c.phone)) patch.phone = t(customerPhone);
+        if (t(customerMobile) && t(customerMobile) !== t(c.mobile)) patch.mobile = t(customerMobile);
+        if (orderType === 'delivery') {
+          const line = t(street);
+          if (line && line !== t(c.address)) {
+            const m = line.match(/^(.*?\D)\s*(\d+[א-ת]?)$/); // "הפסגה 62" / "הפסגה 62א"
+            Object.assign(patch, { address: line, street: m ? m[1].trim() : line, houseNumber: m ? m[2] : '', entrance: t(entrance), floor: t(floor), apt: t(apt), addressNote: t(addressNote) });
+          } else {
+            [['entrance', entrance], ['floor', floor], ['apt', apt], ['addressNote', addressNote]].forEach(([k, v]) => { if (t(v) && t(v) !== t(c[k])) patch[k] = t(v); });
+          }
+          if (t(neighborhood) && t(neighborhood) !== t(c.neighborhood)) patch.neighborhood = t(neighborhood);
+        }
+        if (Object.keys(patch).length) setContactsList(prev => prev.map(x => x.id === c.id ? { ...x, ...patch } : x));
       };
 
       const submittingRef = React.useRef(false);
@@ -3365,6 +3388,7 @@ setTimeout(function(){
           // ייתכן שעדכון חי מהשרת כבר הביא את ההזמנה
           setOrders(prev => prev.some(o => o.id === newOrder.id) ? prev : [newOrder, ...prev]);
         }
+        syncContactFromOrder();
         submittingRef.current = false;
         closeModal();
       };
@@ -3728,6 +3752,7 @@ setTimeout(function(){
                           onChange={e => {
                             const val = e.target.value;
                             setCustomerName(val);
+                            setLinkedContactId(null); // שם אחר = לא בהכרח אותו לקוח
                             if (val.trim().length >= 1 && contactsList.length > 0) {
                               setCustomerSuggestions(contactsList.filter(c => c.name.includes(val.trim())).slice(0, 6));
                             } else {
@@ -3756,6 +3781,7 @@ setTimeout(function(){
                                   setApt(c.apt || '');
                                   setAddressNote(c.addressNote || '');
                                   setNeighborhood(c.neighborhood || '');
+                                  setLinkedContactId(c.id);
                                   setCustomerSuggestions([]);
                                 }}
                               >
@@ -3773,6 +3799,7 @@ setTimeout(function(){
                         <input type="tel" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} placeholder="נייד" className="so-input" />
                       </div>
                     </div>
+                    {linkedContactId && <div className="so-hint" style={{ display: 'flex', alignItems: 'center', gap: '.35rem', color: 'var(--in)' }}><LineIcon name="users" />לקוח מאנשי קשר — שינוי בטלפון או בכתובת יתעדכן גם באנשי קשר</div>}
 
                     {orderType === 'delivery' ? (
                       <div className="sep" style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
@@ -9260,7 +9287,7 @@ setTimeout(function(){
           case 'inventory':
             return <InventoryView stock={stock} setStock={setStock} frozenStock={frozenStock} setFrozenStock={setFrozenStock} kashrutList={kashrutList} frozenProductsList={frozenProductsList} appUser={appUser} />;
           case 'orders':
-            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
+            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} setContactsList={setContactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
           case 'shortages': 
             return <ShortagesView shortages={shortages} />;
           case 'deliveries':
@@ -9284,7 +9311,7 @@ setTimeout(function(){
           case 'users':
             return <UsersManagementView couriersList={couriersList} />;
           default:
-            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
+            return <OrdersView kashrutList={kashrutList} butchersList={butchersList} orders={orders} setOrders={setOrders} stock={stock} neighborhoodData={neighborhoodData} contactsList={contactsList} setContactsList={setContactsList} frozenProductsList={frozenProductsList} orderFormSkuMap={orderFormSkuMap} setOrderFormSkuMap={setOrderFormSkuMap} logoImage={logoImage} />;
         }
       };
 
