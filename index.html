@@ -3294,12 +3294,31 @@ setTimeout(function(){
         setOrderAddedItems([]); setOrderNotes(''); setOrderSkuRow({ sku: '', name: '', category: '', qty: '', notes: '', kashrut: '' }); setShowComplex(false); setComplexState({ totalQty: '', rows: [], checks: [], notes: '' }); setQuickMarkOn(false); setNameSearch(''); setShowNameDropdown(false);
       };
 
+      // לקוח חדש שהוקלד ידנית — נוסף לאנשי קשר.
       // לקוח שנבחר מאנשי קשר: טלפון / כתובת / שכונה שהשתנו בטופס — מתעדכנים גם באנשי קשר.
       // שדה שהושאר ריק לא מוחק את מה שיש באנשי קשר; כתובת (רחוב) חדשה מחליפה גם כניסה / קומה / דירה / הערה.
       const syncContactFromOrder = () => {
-        const c = linkedContactId && contactsList.find(x => x.id === linkedContactId);
-        if (!c) return;
         const t = v => (v || '').trim();
+        const digits = v => (v || '').replace(/\D/g, '');
+        let c = linkedContactId && contactsList.find(x => x.id === linkedContactId);
+        if (!c) {
+          // לקוח שהוקלד ידנית (רק בהזמנה חדשה): אם כבר קיים באנשי קשר באותו שם ואותו טלפון — מעדכנים אותו, אחרת מוסיפים חדש
+          if (editingOrder || !t(customerName)) return;
+          const myPhones = [customerPhone, customerMobile].map(digits).filter(Boolean);
+          c = contactsList.find(x => t(x.name) === t(customerName) && [x.phone, x.mobile].map(digits).some(p => p && myPhones.includes(p)));
+          if (!c) {
+            const line = orderType === 'delivery' ? t(street) : '';
+            const m = line.match(/^(.*?\D)\s*(\d+[א-ת]?)$/);
+            const fresh = {
+              id: Date.now().toString() + Math.random(), name: t(customerName), phone: t(customerPhone), mobile: t(customerMobile),
+              address: line, street: m ? m[1].trim() : line, houseNumber: m ? m[2] : '',
+              entrance: orderType === 'delivery' ? t(entrance) : '', floor: orderType === 'delivery' ? t(floor) : '', apt: orderType === 'delivery' ? t(apt) : '',
+              addressNote: orderType === 'delivery' ? t(addressNote) : '', neighborhood: orderType === 'delivery' ? t(neighborhood) : '', notes: '',
+            };
+            setContactsList(prev => [...prev, fresh]);
+            return;
+          }
+        }
         const patch = {};
         if (t(customerPhone) && t(customerPhone) !== t(c.phone)) patch.phone = t(customerPhone);
         if (t(customerMobile) && t(customerMobile) !== t(c.mobile)) patch.mobile = t(customerMobile);
@@ -3799,7 +3818,9 @@ setTimeout(function(){
                         <input type="tel" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} placeholder="נייד" className="so-input" />
                       </div>
                     </div>
-                    {linkedContactId && <div className="so-hint" style={{ display: 'flex', alignItems: 'center', gap: '.35rem', color: 'var(--in)' }}><LineIcon name="users" />לקוח מאנשי קשר — שינוי בטלפון או בכתובת יתעדכן גם באנשי קשר</div>}
+                    {linkedContactId
+                      ? <div className="so-hint" style={{ display: 'flex', alignItems: 'center', gap: '.35rem', color: 'var(--in)' }}><LineIcon name="users" />לקוח מאנשי קשר — שינוי בטלפון או בכתובת יתעדכן גם באנשי קשר</div>
+                      : (!editingOrder && customerName.trim() && <div className="so-hint" style={{ display: 'flex', alignItems: 'center', gap: '.35rem' }}><LineIcon name="plus" />לקוח חדש — יתווסף לאנשי קשר בשליחת ההזמנה</div>)}
 
                     {orderType === 'delivery' ? (
                       <div className="sep" style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>

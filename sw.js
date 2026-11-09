@@ -1,4 +1,4 @@
-const CACHE = 'super-off-v17';
+const CACHE = 'super-off-v18';
 // נתיבים יחסיים — האתר מוגש תחת /super-off/ ולא בשורש הדומיין
 const ASSETS = ['./', './index.html'];
 
