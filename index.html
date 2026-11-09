@@ -76,14 +76,14 @@
       height: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #c084fc;
+      background: #CFCAC3;
       border-radius: 4px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #a855f7;
+      background: #A8A29E;
     }
 
     /* Print styles strictly tailored for A5 paper */
@@ -320,6 +320,45 @@
     .so-obtn.ok:hover { background: #14532D; }
     .so-odetail { padding: .6rem .9rem .9rem; border-top: 1px solid var(--line-soft); }
     @media (max-width: 1100px) { .so-kanban { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ===== טופס הזמנה (חדשה / עריכה) ===== */
+    .so-ofbox { background: var(--ground); border-radius: 1.1rem; box-shadow: 0 1.5rem 3rem rgba(0,0,0,.3); width: 100%; max-width: 50rem; max-height: 98vh; display: flex; flex-direction: column; overflow: hidden; }
+    .so-ofhead { display: flex; align-items: center; gap: .6rem; padding: .9rem 1.2rem; background: #fff; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+    .so-ofhead h2 { margin: 0; flex: 1; font-size: 1.25rem; font-weight: 900; display: flex; align-items: center; gap: .5rem; }
+    .so-ofhead h2 .so-ico { color: var(--brand); }
+    .so-oform { flex: 1; overflow-y: auto; padding: 1rem 1.2rem 0; display: flex; flex-direction: column; gap: .9rem; }
+    .so-ofsec { background: #fff; border: 1px solid var(--line); border-radius: 1rem; padding: .9rem 1rem; display: flex; flex-direction: column; gap: .65rem; }
+    .so-ofsec-h { margin: 0; font-size: .85rem; font-weight: 800; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
+    .so-ofsec-h.big { font-size: 1.1rem; font-weight: 900; color: var(--ink); }
+    .so-ofrow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .so-ofrow + .so-ofrow.sep, .so-ofsec .sep { border-top: 1px solid var(--line-soft); padding-top: .65rem; }
+    .so-oform .so-input { flex: 1 1 8rem; }
+    .so-oform .so-input.c { text-align: center; }
+    .so-oform .so-input.b { font-weight: 700; }
+    .so-oform .so-input.alt { border-color: #F472B6; background: #FDF2F8; font-weight: 700; }
+    .so-oform .so-select { height: 2.75rem; }
+    .so-oform textarea.so-input { height: auto; padding: .6rem .75rem; resize: none; }
+    .so-oflbl { display: block; font-size: .75rem; font-weight: 800; color: var(--muted); margin-bottom: .25rem; }
+    .so-oftype { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; padding: .3rem; background: #fff; border: 1px solid var(--line); border-radius: .9rem; }
+    .so-oftype label { min-height: 2.9rem; border-radius: .65rem; display: flex; align-items: center; justify-content: center; gap: .45rem; font-weight: 700; cursor: pointer; color: var(--ink); }
+    .so-oftype label.on { background: var(--ink); color: #fff; }
+    .so-ofpill { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.6rem; padding: 0 .9rem; border: 1px solid #CFCAC3; border-radius: 999px; background: #fff; font-weight: 700; font-size: .95rem; cursor: pointer; }
+    .so-ofpill input { width: 1.1rem; height: 1.1rem; accent-color: var(--ink); min-height: 0 !important; }
+    .so-ofpill:has(input:checked) { background: #F1EFEB; border-color: var(--ink); }
+    .so-ofsugg { position: absolute; top: 100%; right: 0; left: 0; z-index: 50; margin-top: .25rem; background: #fff; border: 1px solid var(--line); border-radius: .8rem; box-shadow: 0 .8rem 1.6rem rgba(0,0,0,.14); overflow: hidden; max-height: 14rem; overflow-y: auto; }
+    .so-ofsugg > * { display: flex; align-items: center; gap: .5rem; width: 100%; text-align: right; padding: .6rem .8rem; border: 0; border-bottom: 1px solid var(--line-soft); background: #fff; cursor: pointer; font-size: .95rem; }
+    .so-ofsugg > *:last-child { border-bottom: 0; }
+    .so-ofsugg > *:hover { background: #F7F5F2; }
+    .so-ofsugg small { color: var(--muted); font-size: .8rem; }
+    .so-ofadd { background: #fff; border: 2px solid #CFCAC3; border-radius: 1rem; padding: .8rem; display: flex; flex-direction: column; gap: .6rem; }
+    .so-ofadd:focus-within { border-color: var(--ink); }
+    .so-ofkbox { height: 2.75rem; padding: 0 .7rem; border: 2px solid; border-radius: .65rem; display: flex; align-items: center; font-weight: 800; font-size: .9rem; overflow: hidden; }
+    .so-btn.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .so-btn.dark:hover { background: #2E2B33; }
+    .so-btn.ok { background: var(--in); border-color: var(--in); color: #fff; }
+    .so-btn.ok:hover { background: #14532D; }
+    .so-offoot { position: sticky; bottom: 0; display: flex; gap: .6rem; margin: 0 -1.2rem; padding: .8rem 1.2rem; background: #fff; border-top: 1px solid var(--line); }
+    .so-offoot .so-btn { flex: 1; min-height: 3.1rem; font-size: 1.05rem; }
 
     /* ===== קירורים (לירוי / גב"ש) ===== */
     .so-coldhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: 1rem; }
@@ -1986,6 +2025,9 @@
       );
     };
 
+    // יתרות קירור לירוי / גב"ש — נשמרות בזיכרון בין כניסות לעמוד המלאי
+    const coldBalanceCache = { bs: null, gv: null };
+
     const InventoryView = ({ stock, setStock, frozenStock, setFrozenStock, kashrutList, frozenProductsList, appUser }) => {
       const [activeTab, setActiveTab] = useState('frozen');
       const [exportModal, setExportModal] = useState(false);
@@ -2007,8 +2049,11 @@
         [...PRODUCT_CATEGORIES, 'מ.ל./מ.ל.ה'].forEach(c => { obj[c] = false; });
         return obj;
       });
-      const [bsBalance, setBsBalance] = useState({});
-      const [gvBalance, setGvBalance] = useState({});
+      // מתחילים מהיתרות האחרונות שנטענו (ולא מאפס) — כדי שהסה"כ לא "יקפוץ" בכל חזרה לעמוד; הטעינה מהשרת מעדכנת ברקע
+      const [bsBalance, setBsBalanceRaw] = useState(() => coldBalanceCache.bs || {});
+      const [gvBalance, setGvBalanceRaw] = useState(() => coldBalanceCache.gv || {});
+      const setBsBalance = (map) => { coldBalanceCache.bs = map; setBsBalanceRaw(map); };
+      const setGvBalance = (map) => { coldBalanceCache.gv = map; setGvBalanceRaw(map); };
       const [logEntries, setLogEntries] = useState([]);
       const [logDate, setLogDate] = useState(localToday());
       const [logLoaded, setLogLoaded] = useState(false);
@@ -3619,11 +3664,11 @@ setTimeout(function(){
 
           {/* מודאל הזמנה חדשה */}
           {isModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="bg-white rounded-2xl shadow-xl border border-purple-100 w-full max-w-3xl max-h-[98vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="p-4 bg-purple-50 border-b border-purple-100 flex items-center justify-between shrink-0">
-                  <h3 className="font-bold text-lg flex items-center gap-2 text-purple-800"><Icons.ClipboardList className="w-5 h-5" /> {editingOrder ? `עריכת הזמנה #${editingOrder.id}` : 'טופס הזמנה מלא (כמו בנייר)'}</h3>
-                  <button onClick={closeModal} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700"><Icons.X className="w-5 h-5" /></button>
+            <div className="so-modal-bg animate-in fade-in duration-200" style={{ zIndex: 50 }}>
+              <div className="so-ofbox animate-in zoom-in-95 duration-200">
+                <div className="so-ofhead">
+                  <h2><LineIcon name="cart" />{editingOrder ? `עריכת הזמנה #${editingOrder.id}` : 'הזמנה חדשה'}</h2>
+                  <button type="button" onClick={closeModal} className="so-iconbtn" title="סגירה" aria-label="סגירה"><LineIcon name="x" /></button>
                 </div>
                 
                 <form onSubmit={handleAddOrder}
@@ -3647,30 +3692,31 @@ setTimeout(function(){
                     if (next) next.focus();
                   }}
                   ref={modalFormRef}
-                  className="overflow-y-auto p-5 space-y-6 flex-1 custom-scrollbar bg-gray-50/30">
-                  
+                  className="so-oform custom-scrollbar">
+
                   {formErrorMessage && (
-                    <div className="bg-red-50 border-r-4 border-red-500 p-3.5 rounded-lg text-red-800 text-sm font-bold flex justify-between items-center animate-bounce">
-                      <span>⚠️ {formErrorMessage}</span>
-                      <button type="button" onClick={() => setFormErrorMessage('')} className="text-red-600 hover:text-red-800 text-lg font-bold">✕</button>
+                    <div className="so-warnbar" style={{ borderRadius: '.8rem', border: '1px solid #FECACA', fontWeight: 800 }}>
+                      <span style={{ flex: 1 }}>{formErrorMessage}</span>
+                      <button type="button" onClick={() => setFormErrorMessage('')} className="so-linkbtn" aria-label="סגירת ההודעה"><LineIcon name="x" /></button>
                     </div>
                   )}
 
                   {/* סוג הזמנה */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className={`cursor-pointer border rounded-lg p-2.5 text-center transition-all ${orderType === 'delivery' ? 'bg-purple-50 border-purple-500 text-purple-700 font-bold' : 'bg-white border-gray-200 text-gray-600'}`}>
+                  <div className="so-oftype">
+                    <label className={orderType === 'delivery' ? 'on' : ''}>
                       <input type="radio" name="modalOrderType" value="delivery" className="hidden" checked={orderType === 'delivery'} onChange={() => setOrderType('delivery')} />
-                      משלוח
+                      <LineIcon name="truck" />משלוח
                     </label>
-                    <label className={`cursor-pointer border rounded-lg p-2.5 text-center transition-all ${orderType === 'pickup' ? 'bg-purple-50 border-purple-500 text-purple-700 font-bold' : 'bg-white border-gray-200 text-gray-600'}`}>
+                    <label className={orderType === 'pickup' ? 'on' : ''}>
                       <input type="radio" name="modalOrderType" value="pickup" className="hidden" checked={orderType === 'pickup'} onChange={() => setOrderType('pickup')} />
-                      איסוף בחנות
+                      <LineIcon name="box" />איסוף בחנות
                     </label>
                   </div>
 
                   {/* פרטי לקוח */}
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-3 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <section className="so-ofsec">
+                    <h3 className="so-ofsec-h"><LineIcon name="users" />פרטי לקוח</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <div className="relative">
                         <input
                           type="text"
@@ -3687,11 +3733,12 @@ setTimeout(function(){
                           }}
                           onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)}
                           placeholder="שם הלקוח *"
-                          className="w-full p-2.5 border border-gray-300 rounded-md text-sm outline-none font-bold focus:ring-2 focus:ring-blue-400"
+                          className="so-input b"
+                          style={{ width: '100%' }}
                           autoComplete="off"
                         />
                         {customerSuggestions.length > 0 && (
-                          <div className="absolute top-full right-0 left-0 z-50 bg-white border border-blue-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                          <div className="so-ofsugg">
                             {customerSuggestions.map(c => (
                               <button
                                 key={c.id}
@@ -3704,47 +3751,46 @@ setTimeout(function(){
                                   setNeighborhood(c.neighborhood || '');
                                   setCustomerSuggestions([]);
                                 }}
-                                className="w-full text-right px-3 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0 text-sm"
                               >
-                                <span className="font-bold text-gray-800">{c.name}</span>
-                                {c.phone && <span className="text-gray-400 text-xs me-2"> {c.phone}</span>}
-                                {c.neighborhood && <span className="text-gray-400 text-xs"> · {c.neighborhood}</span>}
+                                <b>{c.name}</b>
+                                {c.phone && <small>{c.phone}</small>}
+                                {c.neighborhood && <small>· {c.neighborhood}</small>}
                               </button>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        <input type="tel" required value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="טלפון *" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none font-bold" />
-                        <input type="tel" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} placeholder="נייד" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none" />
+                      <div className="so-ofrow" style={{ flexWrap: 'nowrap' }}>
+                        <input type="tel" required value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="טלפון *" className="so-input b" />
+                        <input type="tel" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} placeholder="נייד" className="so-input" />
                       </div>
                     </div>
 
                     {orderType === 'delivery' ? (
-                      <div className="space-y-2 pt-2 border-t border-gray-100">
-                        <div className="flex gap-2">
-                          <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="עיר" title="עיר — ברירת מחדל ירושלים" className={`w-1/4 p-2.5 border rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400 ${city.trim() && city.trim() !== 'ירושלים' ? 'border-pink-400 bg-pink-50 font-bold' : 'border-gray-300'}`} />
-                          <input type="text" required={orderType === 'delivery'} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="שכונה *" className="w-1/4 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
-                          <input type="text" value={street} onChange={e => setStreet(e.target.value)} placeholder="רחוב ומספר" className="w-1/2 p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+                      <div className="sep" style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+                        <div className="so-ofrow" style={{ flexWrap: 'nowrap' }}>
+                          <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="עיר" title="עיר — ברירת מחדל ירושלים" className={`so-input ${city.trim() && city.trim() !== 'ירושלים' ? 'alt' : ''}`} style={{ flex: '1 1 0' }} />
+                          <input type="text" required={orderType === 'delivery'} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="שכונה *" className="so-input" style={{ flex: '1 1 0' }} />
+                          <input type="text" value={street} onChange={e => setStreet(e.target.value)} placeholder="רחוב ומספר" className="so-input" style={{ flex: '2 1 0' }} />
                         </div>
-                        <div className="flex gap-2">
-                          <input type="text" value={entrance} onChange={e => setEntrance(e.target.value)} placeholder="כניסה" className="w-1/3 p-2.5 border border-gray-300 rounded-md text-sm text-center" />
-                          <input type="text" value={floor} onChange={e => setFloor(e.target.value)} placeholder="קומה" className="w-1/3 p-2.5 border border-gray-300 rounded-md text-sm text-center" />
-                          <input type="text" value={apt} onChange={e => setApt(e.target.value)} placeholder="דירה" className="w-1/3 p-2.5 border border-gray-300 rounded-md text-sm text-center" />
+                        <div className="so-ofrow" style={{ flexWrap: 'nowrap' }}>
+                          <input type="text" value={entrance} onChange={e => setEntrance(e.target.value)} placeholder="כניסה" className="so-input c" style={{ flex: '1 1 0' }} />
+                          <input type="text" value={floor} onChange={e => setFloor(e.target.value)} placeholder="קומה" className="so-input c" style={{ flex: '1 1 0' }} />
+                          <input type="text" value={apt} onChange={e => setApt(e.target.value)} placeholder="דירה" className="so-input c" style={{ flex: '1 1 0' }} />
                         </div>
-                        <div className="flex items-center gap-2 pt-1">
-                          <span className="text-sm text-gray-500 font-bold whitespace-nowrap">תאריך משלוח:</span>
-                          <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} className="flex-1 p-2.5 border border-gray-300 rounded-md text-sm" />
-                        </div>
+                        <label className="so-ofrow" style={{ flexWrap: 'nowrap' }}>
+                          <span className="so-oflbl" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '.9rem' }}>תאריך משלוח</span>
+                          <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} className="so-input" />
+                        </label>
                       </div>
                     ) : (
-                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
-                        <span className="text-sm text-gray-500 font-bold whitespace-nowrap">מועד איסוף:</span>
+                      <div className="so-ofrow sep">
+                        <span className="so-oflbl" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '.9rem' }}>מועד איסוף</span>
                         <input type="date" value={pickupTime?.split('T')[0] || ''} onChange={e => setPickupTime(e.target.value + (pickupTime?.includes('T') ? 'T' + pickupTime.split('T')[1] : 'T00:00'))}
-                          className="p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400" />
+                          className="so-input" style={{ flex: '1 1 10rem' }} />
                         <select value={pickupTime?.includes('T') ? pickupTime.split('T')[1] : ''}
                           onChange={e => setPickupTime((pickupTime?.split('T')[0] || localToday()) + 'T' + e.target.value)}
-                          className="p-2.5 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white">
+                          className="so-select">
                           <option value="">-- שעה --</option>
                           {Array.from({ length: 48 }, (_, i) => {
                             const h = String(Math.floor(i / 2)).padStart(2, '0');
@@ -3754,39 +3800,38 @@ setTimeout(function(){
                         </select>
                       </div>
                     )}
-                  </div>
+                  </section>
 
                   {/* סימונים למוכר */}
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">סימונים למוכר</label>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-700">
-                      <div className="flex gap-3">
-                        <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="chargeStatus" value="charge" checked={chargeStatus === 'charge'} onChange={e => setChargeStatus(e.target.value)} className="accent-purple-600" /> לחייב</label>
-                        <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="chargeStatus" value="noCharge" checked={chargeStatus === 'noCharge'} onChange={e => setChargeStatus(e.target.value)} className="accent-purple-600" /> לא לחייב</label>
-                      </div>
-                      <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.mustCoordinate} onChange={e => setFlags({...flags, mustCoordinate: e.target.checked})} className="accent-purple-600" /> לתאם חובה</label>
-                      <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flags.notifyReady} onChange={e => setFlags({...flags, notifyReady: e.target.checked})} className="accent-purple-600" /> להודיע שמוכן</label>
+                  <section className="so-ofsec">
+                    <h3 className="so-ofsec-h"><LineIcon name="tag" />סימונים למוכר</h3>
+                    <div className="so-ofrow">
+                      <label className="so-ofpill"><input type="radio" name="chargeStatus" value="charge" checked={chargeStatus === 'charge'} onChange={e => setChargeStatus(e.target.value)} />לחייב</label>
+                      <label className="so-ofpill"><input type="radio" name="chargeStatus" value="noCharge" checked={chargeStatus === 'noCharge'} onChange={e => setChargeStatus(e.target.value)} />לא לחייב</label>
+                      <span style={{ width: '1px', alignSelf: 'stretch', background: 'var(--line)', margin: '0 .2rem' }} />
+                      <label className="so-ofpill"><input type="checkbox" checked={flags.mustCoordinate} onChange={e => setFlags({...flags, mustCoordinate: e.target.checked})} />לתאם חובה</label>
+                      <label className="so-ofpill"><input type="checkbox" checked={flags.notifyReady} onChange={e => setFlags({...flags, notifyReady: e.target.checked})} />להודיע שמוכן</label>
                     </div>
                     {orderType === 'delivery' && (
-                      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100 text-sm">
-                        <span className="font-bold text-gray-600">גבייה במסירה:</span>
-                        <select value={collectType} onChange={e => setCollectType(e.target.value)} className="p-2 border border-gray-300 rounded-md bg-white">
+                      <div className="so-ofrow sep">
+                        <span className="so-oflbl" style={{ margin: 0, fontSize: '.9rem' }}>גבייה במסירה</span>
+                        <select value={collectType} onChange={e => setCollectType(e.target.value)} className="so-select">
                           <option value="">אין (שולם מראש)</option><option value="צ׳ק">צ׳ק</option><option value="מזומן">מזומן</option><option value="אשראי">אשראי</option>
                         </select>
-                        {collectType && <input type="number" min="0" inputMode="decimal" value={collectAmount} onChange={e => setCollectAmount(e.target.value)} placeholder="סכום ₪" className="w-28 p-2 border border-gray-300 rounded-md" />}
+                        {collectType && <input type="number" min="0" inputMode="decimal" value={collectAmount} onChange={e => setCollectAmount(e.target.value)} placeholder="סכום ₪" className="so-input" style={{ flex: '0 0 8rem' }} />}
                       </div>
                     )}
-                  </div>
+                  </section>
 
                   {/* ----------------- הוספת פריט לפי מקט ----------------- */}
-                  <div className="pt-4 border-t border-gray-200 space-y-3">
-                    <h3 className="font-extrabold text-lg text-gray-800">הוספת מוצרים לפי מק"ט</h3>
+                  <section className="so-ofsec">
+                    <h3 className="so-ofsec-h big"><LineIcon name="plus" />הוספת מוצרים לפי מק"ט</h3>
 
                     {/* שורת הוספה */}
-                    <div className="bg-white border-2 border-purple-200 rounded-xl p-3 space-y-2 shadow-sm">
+                    <div className="so-ofadd">
                       <div className="flex gap-2 flex-wrap sm:flex-nowrap items-end">
                         <div className="w-24 shrink-0">
-                          <label className="block text-[10px] font-bold text-gray-400 mb-1">מק"ט</label>
+                          <label className="so-oflbl">מק"ט</label>
                           <input
                             ref={orderSkuRef}
                             type="text" autoComplete="off"
@@ -3794,14 +3839,15 @@ setTimeout(function(){
                             onChange={e => orderSkuLookup(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (orderSkuRow.name) document.getElementById('orderQtyInput')?.focus(); } }}
                             placeholder="סרוק..."
-                            className="w-full p-2.5 border-2 border-purple-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-purple-400 bg-purple-50"
+                            className="so-input b mono"
+                            style={{ width: '100%', background: '#FFFBEB' }}
                           />
                         </div>
                         <div className="flex-1 min-w-[120px] relative">
-                          <label className="block text-[10px] font-bold text-gray-400 mb-1">שם מוצר</label>
+                          <label className="so-oflbl">שם מוצר</label>
                           {orderSkuRow.name ? (
-                            <div className="h-[42px] p-2.5 border-2 rounded-lg text-sm font-bold flex items-center overflow-hidden"
-                              style={{ borderColor: getKashrutColor(orderSkuRow.kashrut) + '80', backgroundColor: getKashrutColor(orderSkuRow.kashrut) + '15', color: getKashrutColor(orderSkuRow.kashrut) }}>
+                            <div className="so-ofkbox"
+                              style={{ ...kVars(orderSkuRow.kashrut), borderColor: 'var(--k)', backgroundColor: 'var(--k-tint)', color: 'var(--k-ink)', fontSize: '1rem' }}>
                               <span className="truncate">{orderSkuRow.name}</span>
                             </div>
                           ) : (
@@ -3814,7 +3860,8 @@ setTimeout(function(){
                                 onChange={e => { setNameSearch(e.target.value); setShowNameDropdown(true); }}
                                 onFocus={() => setShowNameDropdown(true)}
                                 onBlur={() => setTimeout(() => setShowNameDropdown(false), 150)}
-                                className="w-full h-[42px] p-2.5 border-2 border-gray-200 bg-gray-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                                className="so-input"
+                                style={{ width: '100%' }}
                               />
                               {showNameDropdown && nameSearch && (() => {
                                 const results = (frozenProductsList || []).filter(p =>
@@ -3822,17 +3869,15 @@ setTimeout(function(){
                                 ).slice(0, 20);
                                 if (!results.length) return null;
                                 return (
-                                  <div className="absolute z-40 right-0 left-0 top-full mt-1 bg-white border-2 border-purple-200 rounded-xl shadow-xl max-h-52 overflow-y-auto custom-scrollbar">
+                                  <div className="so-ofsugg custom-scrollbar" style={{ zIndex: 40, left: 'auto', width: 'max(100%, min(30rem, 88vw))' }}>
                                     {results.map((p, i) => (
                                       <div key={i}
                                         onMouseDown={() => { orderSkuLookup(p.sku); setNameSearch(''); setShowNameDropdown(false); }}
-                                        className="flex items-center justify-between px-3 py-2 border-b border-gray-50 last:border-0 hover:bg-purple-50 cursor-pointer">
-                                        <span className="font-bold text-gray-800 text-sm">{p.name}</span>
+                                        style={{ justifyContent: 'space-between' }}>
+                                        <b style={{ fontSize: '.95rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</b>
                                         <div className="flex items-center gap-2 shrink-0 mr-2">
-                                          <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
-                                          {p.kashrut && (() => { const kc = getKashrutColor(p.kashrut); return (
-                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold border" style={{ borderColor: kc+'80', backgroundColor: kc+'20', color: kc }}>{p.kashrut}</span>
-                                          ); })()}
+                                          <small className="font-mono">{p.sku}</small>
+                                          {p.kashrut && <KChip k={p.kashrut} />}
                                         </div>
                                       </div>
                                     ))}
@@ -3842,46 +3887,51 @@ setTimeout(function(){
                             </div>
                           )}
                         </div>
-                        <div className="w-24 shrink-0">
-                          <label className="block text-[10px] font-bold text-gray-400 mb-1">כשרות</label>
-                          <div className="h-[42px] p-2.5 border-2 rounded-lg text-xs font-bold flex items-center"
-                            style={orderSkuRow.kashrut ? { borderColor: getKashrutColor(orderSkuRow.kashrut) + '80', backgroundColor: getKashrutColor(orderSkuRow.kashrut) + '15', color: getKashrutColor(orderSkuRow.kashrut) } : { borderColor: '#e5e7eb', backgroundColor: '#f9fafb', color: '#9ca3af' }}>
-                            {orderSkuRow.kashrut || '—'}
-                          </div>
+                        <div className="shrink-0" style={{ minWidth: '6rem' }}>
+                          <label className="so-oflbl">כשרות</label>
+                          {orderSkuRow.kashrut ? (
+                            <div className="so-ofkbox" style={{ ...kVars(orderSkuRow.kashrut), borderColor: 'var(--k)', background: 'var(--k)', color: '#fff', gap: '.45rem', paddingInlineStart: '.35rem', whiteSpace: 'nowrap' }}>
+                              <span className="so-kletter" style={{ background: '#fff', color: 'var(--k)', width: '1.8rem', height: '1.8rem', fontSize: '.9rem' }}>{kStyle(orderSkuRow.kashrut).l}</span>
+                              {orderSkuRow.kashrut}
+                            </div>
+                          ) : (
+                            <div className="so-ofkbox" style={{ borderColor: 'var(--line)', backgroundColor: '#FAF9F7', color: '#A8A29E' }}>—</div>
+                          )}
                         </div>
                         <div className="w-20 shrink-0">
-                          <label className="block text-[10px] font-bold text-gray-400 mb-1">כמות</label>
+                          <label className="so-oflbl">כמות</label>
                           <input id="orderQtyInput" type="number" min="0" step="0.5" placeholder="0"
                             value={orderSkuRow.qty}
                             onChange={e => setOrderSkuRow(prev => ({ ...prev, qty: e.target.value }))}
                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('orderNotesInput')?.focus(); } }}
-                            className="w-full h-[42px] p-2.5 border-2 border-gray-300 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-purple-400 text-center"
+                            className="so-input b c"
+                            style={{ width: '100%', fontSize: '1.1rem' }}
                           />
                         </div>
                         {showComplex && activeComplexTemplate?.quickMark && (
                           <div className="shrink-0">
-                            <label className="block text-[10px] font-bold text-gray-400 mb-1">&nbsp;</label>
-                            <button type="button" onClick={toggleQuickMark}
-                              className={`h-[42px] px-3 rounded-lg border-2 text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${quickMarkOn ? 'bg-yellow-100 border-yellow-500 text-yellow-900' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'}`}>
-                              <span className="text-sm">{quickMarkOn ? '✓' : '○'}</span> {activeComplexTemplate.quickMark.label}
+                            <label className="so-oflbl">&nbsp;</label>
+                            <button type="button" onClick={toggleQuickMark} aria-pressed={quickMarkOn}
+                              className="so-btn" style={quickMarkOn ? { background: '#FEF3C7', borderColor: '#CA8A04', color: '#78350F' } : undefined}>
+                              <span>{quickMarkOn ? '✓' : '○'}</span> {activeComplexTemplate.quickMark.label}
                             </button>
                           </div>
                         )}
                         <div className="flex-1 min-w-[100px]">
-                          <label className="block text-[10px] font-bold text-gray-400 mb-1">הערה</label>
+                          <label className="so-oflbl">הערה</label>
                           <input id="orderNotesInput" type="text" placeholder="הערה..."
                             value={orderSkuRow.notes}
                             onChange={e => setOrderSkuRow(prev => ({ ...prev, notes: e.target.value }))}
                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addOrderItem(); } }}
-                            className="w-full p-2.5 border-2 border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                            className="so-input"
+                            style={{ width: '100%' }}
                           />
                         </div>
                         {!showComplex && (
                           <button type="button" onClick={addOrderItem}
                             disabled={!orderSkuRow.name}
-                            className={`shrink-0 px-4 py-2.5 rounded-xl font-bold transition-colors text-sm self-end
-                              ${orderSkuRow.name ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-                            + הוסף
+                            className="so-btn dark shrink-0 self-end">
+                            <LineIcon name="plus" />הוסף
                           </button>
                         )}
                       </div>
@@ -3944,15 +3994,15 @@ setTimeout(function(){
                               );
                             })()}
                             {template.checkboxOptions && template.checkboxOptions.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 border-t border-dashed border-gray-200 pt-2">
+                              <div className="so-ofrow">
                                 {template.checkboxOptions.map(opt => {
                                   const isChecked = complexState.checks.includes(opt);
                                   return (
-                                    <div key={opt}
+                                    <div key={opt} role="checkbox" aria-checked={isChecked}
                                       onClick={() => setComplexState(prev => ({ ...prev, checks: isChecked ? prev.checks.filter(c => c !== opt) : [...prev.checks, opt] }))}
-                                      className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer select-none transition-all ${isChecked ? `${cc.cardActive} border` : `bg-white border-gray-200 ${cc.cardHover}`}`}>
-                                      <span className={`text-[11px] font-black ${isChecked ? cc.cardActiveText : 'text-gray-300'}`}>{isChecked ? '✓' : '○'}</span>
-                                      <span className={`text-[11px] font-bold ${isChecked ? cc.cardActiveText : 'text-gray-600'}`}>{opt}</span>
+                                      className="so-ofpill select-none" style={isChecked ? { background: 'var(--ink)', borderColor: 'var(--ink)', color: '#fff' } : undefined}>
+                                      <span style={{ fontWeight: 900 }}>{isChecked ? '✓' : '○'}</span>
+                                      <span>{opt}</span>
                                     </div>
                                   );
                                 })}
@@ -3965,8 +4015,8 @@ setTimeout(function(){
                               </div>
                             )}
                             <button type="button" onClick={addOrderItem}
-                              className="w-full py-2.5 font-bold rounded-xl transition-colors text-white bg-green-500 hover:bg-green-600">
-                              + הוסף לרשימה
+                              className="so-btn dark" style={{ width: '100%' }}>
+                              <LineIcon name="plus" />הוסף לרשימה
                             </button>
                           </div>
                         );
@@ -3979,7 +4029,7 @@ setTimeout(function(){
                       orderAddedItems.forEach(item => { const cat = item.category || 'אחר'; if (!byCategory[cat]) byCategory[cat] = []; byCategory[cat].push(item); });
                       return (
                         <div className="space-y-3">
-                          <h4 className="font-extrabold text-gray-700 text-sm">✓ פריטים שנוספו להזמנה</h4>
+                          <h4 className="so-ofsec-h"><LineIcon name="check" />פריטים שנוספו להזמנה <span className="so-tag">{orderAddedItems.length}</span></h4>
                           {Object.entries(byCategory).map(([cat, items]) => {
                             const cc = getCatColors(cat);
                             return (
@@ -3990,7 +4040,6 @@ setTimeout(function(){
                                 <div className="divide-y divide-gray-100">
                                   {items.map(item => {
                                     const isEditing = editingItemId === item.id;
-                                    const ikc = getKashrutColor(item.kashrut || '');
                                     const saveItem = () => {
                                       const savedRows = (editItemState.rows ?? item.rows ?? []).filter(r => parseFloat(r.qty) > 0);
                                       setOrderAddedItems(prev => prev.map(i => i.id === item.id ? { ...i,
@@ -4003,12 +4052,12 @@ setTimeout(function(){
                                       setEditingItemId(null); setEditItemState({});
                                     };
                                     return (
-                                    <div key={item.id} ref={isEditing ? editingItemRef : null} className={`px-3 py-2 text-xs ${isEditing ? 'bg-blue-50/40' : ''}`}>
+                                    <div key={item.id} ref={isEditing ? editingItemRef : null} className="px-3 py-2 text-xs" style={isEditing ? { background: '#FFFBEB' } : { background: '#fff' }}>
                                       {/* שורה קומפקטית */}
                                       <div className="flex items-center gap-2">
                                         <span className="font-mono text-[11px] text-gray-400 w-12 shrink-0">{item.sku || '—'}</span>
-                                        <span className="flex-1 font-bold text-sm truncate" style={{ color: ikc }}>{item.name}</span>
-                                        {item.kashrut && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0" style={{ borderColor: ikc+'80', backgroundColor: ikc+'15', color: ikc }}>{item.kashrut}</span>}
+                                        <span className="flex-1 font-bold text-sm truncate" style={{ color: item.kashrut ? kStyle(item.kashrut).ink : 'var(--ink)' }}>{item.name}</span>
+                                        {item.kashrut && <span className="shrink-0"><KChip k={item.kashrut} /></span>}
                                         {resolveItemStorage(item) === 'frozen' ? <span className="text-[11px] shrink-0">🧊</span> : resolveItemStorage(item) === 'fish' ? <span className="text-[11px] shrink-0">🐟</span> : <span className="text-[11px] shrink-0">🥩</span>}
                                         {item.type === 'simple' && !isEditing && <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{item.qty}</span>}
                                         {item.type === 'complex' && !isEditing && (() => { const tot = (item.rows||[]).reduce((s,r)=>s+(parseFloat(r.qty)||0),0)||(parseFloat(item.totalQty)||0); return tot>0 ? <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{tot}</span> : null; })()}
@@ -4018,11 +4067,11 @@ setTimeout(function(){
                                         {isEditing && <input type="text" value={editItemState.notes ?? item.notes ?? ''} onChange={e => setEditItemState(prev => ({...prev, notes: e.target.value}))} className="flex-1 p-1 border border-blue-200 rounded text-xs outline-none bg-white min-w-0" placeholder="הערה..." />}
                                         <div className="flex gap-1 shrink-0">
                                           {isEditing ? (<>
-                                            <button type="button" onClick={saveItem} className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-green-100 hover:bg-green-200 text-green-700 border border-green-200 transition-colors leading-tight">✓</button>
-                                            <button type="button" onClick={() => { setEditingItemId(null); setEditItemState({}); }} className="py-1 px-1.5 rounded-md text-[11px] font-bold bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200 transition-colors leading-tight">✕</button>
+                                            <button type="button" onClick={saveItem} className="so-iconbtn sm" style={{ background: 'var(--in)', borderColor: 'var(--in)', color: '#fff' }} title="שמירה" aria-label="שמירה"><LineIcon name="check" /></button>
+                                            <button type="button" onClick={() => { setEditingItemId(null); setEditItemState({}); }} className="so-iconbtn sm" title="ביטול" aria-label="ביטול"><LineIcon name="x" /></button>
                                           </>) : (<>
-                                            <button type="button" onClick={() => { setEditingItemId(item.id); setEditItemState({ qty: item.qty, notes: item.notes || '', rows: item.rows ? [...item.rows] : [], checks: item.checks ? [...item.checks] : [], totalQty: item.totalQty || '' }); }} className="py-1 px-1.5 rounded-md text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-200 transition-colors shrink-0 leading-tight" title="עריכה" aria-label="עריכה"><LineIcon name="edit" /></button>
-                                            <button type="button" onClick={() => setOrderAddedItems(prev => prev.filter(i => i.id !== item.id))} className="py-1 px-1.5 rounded-md text-[11px] bg-red-100 hover:bg-red-200 text-red-700 border border-red-200 transition-colors shrink-0 leading-tight" title="מחיקה" aria-label="מחיקה"><LineIcon name="trash" /></button>
+                                            <button type="button" onClick={() => { setEditingItemId(item.id); setEditItemState({ qty: item.qty, notes: item.notes || '', rows: item.rows ? [...item.rows] : [], checks: item.checks ? [...item.checks] : [], totalQty: item.totalQty || '' }); }} className="so-iconbtn sm" title="עריכה" aria-label="עריכה"><LineIcon name="edit" /></button>
+                                            <button type="button" onClick={() => setOrderAddedItems(prev => prev.filter(i => i.id !== item.id))} className="so-iconbtn sm danger" title="מחיקה" aria-label="מחיקה"><LineIcon name="trash" /></button>
                                           </>)}
                                         </div>
                                       </div>
@@ -4056,23 +4105,25 @@ setTimeout(function(){
                         </div>
                       );
                     })()}
-                  </div>
+                  </section>
 
                   {/* הערות / תוספות להזמנה */}
-                  <div className="mt-3 border border-gray-200 rounded-xl p-3 bg-white">
-                    <label className="block text-xs font-bold text-gray-500 mb-1.5">📝 הערות / תוספות להזמנה</label>
+                  <section className="so-ofsec">
+                    <label className="so-ofsec-h" htmlFor="orderGeneralNotes"><LineIcon name="edit" />הערות / תוספות להזמנה</label>
                     <textarea
+                      id="orderGeneralNotes"
                       value={orderNotes}
                       onChange={e => setOrderNotes(e.target.value)}
                       placeholder="הוסף הערות כלליות לקצביה..."
                       rows={3}
-                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+                      className="so-input"
+                      style={{ width: '100%' }}
                     />
-                  </div>
+                  </section>
 
-                  <div className="pt-4 flex gap-3 sticky bottom-0 bg-gray-50/95 p-4 -mx-5 -mb-5 border-t border-gray-200 backdrop-blur-sm">
-                    <Button type="button" variant="outline" className="flex-1" onClick={closeModal}>ביטול</Button>
-                    <Button type="submit" variant="purple" icon={Icons.Send} className="flex-1 py-3 text-base shadow-lg font-bold">שגר הזמנה לקצביה</Button>
+                  <div className="so-offoot">
+                    <button type="button" className="so-btn" onClick={closeModal}>ביטול</button>
+                    <button type="submit" className="so-btn primary"><Icons.Send className="w-5 h-5" />{editingOrder ? 'שמירת השינויים' : 'שגר הזמנה לקצביה'}</button>
                   </div>
                 </form>
               </div>
