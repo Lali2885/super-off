@@ -3028,8 +3028,10 @@ ${htmlRows}
         const bonStyle = `font-family:'Heebo','Assistant',Arial,sans-serif;width:138mm;padding:10px;box-sizing:border-box;background:white;color:black;`;
         const bons = [];
 
-        // גב הבון — הצד השני של אותו דף A5 (הדפסה דו-צדדית): עמוד ריק לגמרי, כל השטח פנוי למדבקות המשקל
-        const STICKER_BACK = `<div class="sticker-page" style="${bonStyle}height:190mm;"></div>`;
+        // גב הבון — הצד השני של אותו דף A5 (הדפסה דו-צדדית): 8 מסגרות ריקות למדבקות המשקל (2 טורים × 4 שורות), בלי כיתוב
+        const STICKER_BOXES = 8;
+        const STICKER_BACK = `<div class="sticker-page" style="${bonStyle}height:190mm;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:44mm;gap:3mm;align-content:start;">${
+          Array.from({ length: STICKER_BOXES }, () => '<div style="border:2px dashed #A8A29E;border-radius:10px;"></div>').join('')}</div>`;
 
         if (freshGroups.length > 0 || frozenGroups.length > 0) {
           const freshSection = freshGroups.length > 0
@@ -3443,6 +3445,19 @@ setTimeout(function(){
       const [packagingData, setPackagingData] = useState({ cartons: '', bags: '', fishBags: '' });
 
       const [butcherModal, setButcherModal] = useState(null); // orderId
+      const [returnModal, setReturnModal] = useState(null); // { id, step: 'choose' | 'butcher' } — החזרת הזמנה לשלב קודם
+
+      // החזרה לשלב קודם: 'new' = חדשות (בלי קצב), 'work' = בעבודה אצל קצב, 'packing' = באריזה
+      const returnOrderTo = (orderId, target, butcherName) => {
+        setOrders(prev => prev.map(o => {
+          if (o.id !== orderId) return o;
+          if (target === 'new') return { ...o, status: 'new', assignedButcher: '' };
+          if (target === 'work') return { ...o, status: 'new', assignedButcher: butcherName ?? o.assignedButcher };
+          return { ...o, status: 'packing' };
+        }));
+        collapseOrder(orderId);
+        setReturnModal(null);
+      };
 
       const assignButcher = (orderId, butcherName) => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, assignedButcher: butcherName } : o));
@@ -3534,6 +3549,13 @@ setTimeout(function(){
               const summaryMap = new Map();
               regularItems.forEach(i => { const k = i.cleanName || i.name; summaryMap.set(k, (summaryMap.get(k) || 0) + (parseFloat(i.qty) || 0)); });
               const itemsSummary = [...summaryMap.entries()].map(([n, q]) => q ? `${q} ${n}` : n).join(' · ');
+              // עמודת "מוכנות": כרטיס מקוצר — שם, טלפון, תאריך, משלוח/איסוף + שכונה, ומצב המשלוח
+              const compact = order.status === 'completed';
+              const readyStatus = !compact ? null
+                : order.type === 'pickup' ? <span className="so-tag ok"><LineIcon name="box" />ממתינה לאיסוף</span>
+                : order.delivery?.status === 'failed' ? <span className="so-tag bad">מסירה נכשלה</span>
+                : order.route ? <span className="so-tag ok"><LineIcon name="truck" />בסבב: {order.route.name || 'שובצה'}</span>
+                : <span className="so-tag warn"><LineIcon name="truck" />ממתינה לשיבוץ</span>;
               return (
               <article key={order.id}
                 draggable={draggable}
@@ -3557,23 +3579,24 @@ setTimeout(function(){
                   </div>
 
                   <div className="so-tags">
-                    {orderKs.map(k => <KChip key={k} k={k} />)}
+                    {!compact && orderKs.map(k => <KChip key={k} k={k} />)}
                     <span className="so-tag"><LineIcon name={order.type === 'delivery' ? 'truck' : 'box'} />{order.type === 'delivery' ? 'משלוח' : 'איסוף'}{order.neighborhood ? ` · ${order.neighborhood}` : ''}</span>
-                    {order.assignedButcher && <span className="so-tag butcher">קצב: {order.assignedButcher}</span>}
-                    {order.flags?.mustCoordinate && <span className="so-tag warn">לתאם</span>}
-                    {order.flags?.notifyReady && <span className="so-tag warn">להודיע שמוכן</span>}
-                    {order.flags?.chargeStatus === 'charge' && <span className="so-tag pay">לחייב</span>}
-                    {order.flags?.chargeStatus === 'noCharge' && <span className="so-tag ok">לא לחייב</span>}
+                    {readyStatus}
+                    {!compact && order.assignedButcher && <span className="so-tag butcher">קצב: {order.assignedButcher}</span>}
+                    {!compact && order.flags?.mustCoordinate && <span className="so-tag warn">לתאם</span>}
+                    {!compact && order.flags?.notifyReady && <span className="so-tag warn">להודיע שמוכן</span>}
+                    {!compact && order.flags?.chargeStatus === 'charge' && <span className="so-tag pay">לחייב</span>}
+                    {!compact && order.flags?.chargeStatus === 'noCharge' && <span className="so-tag ok">לא לחייב</span>}
                   </div>
 
-                  {order.orderNotes && (
+                  {!compact && order.orderNotes && (
                     <div className="so-onote">{order.orderNotes}</div>
                   )}
 
-                  {!isExpanded && itemsSummary && <div className="so-oitems">{itemsSummary}</div>}
+                  {!compact && !isExpanded && itemsSummary && <div className="so-oitems">{itemsSummary}</div>}
 
                   <div className="so-ocats">
-                    {PRODUCT_CATEGORIES.filter(c => cats.has(c)).map(c => (
+                    {!compact && PRODUCT_CATEGORIES.filter(c => cats.has(c)).map(c => (
                       <span key={c} className="so-ocat"><LineIcon name={c} />{c}</span>
                     ))}
                     {!dimmed && <span className="so-chev">{isExpanded ? 'סגור פירוט ▲' : 'פירוט ▼'}</span>}
@@ -3586,11 +3609,8 @@ setTimeout(function(){
                     <button className="so-iconbtn" title="הדפסת בונים" aria-label="הדפסת בונים" onClick={(e) => { e.stopPropagation(); printAllBons(order); }}><LineIcon name="print" /></button>
                     <button className="so-iconbtn" title="עריכה" aria-label="עריכה" onClick={() => openEditModal(order)}><LineIcon name="edit" /></button>
                     <button className="so-iconbtn danger" title="מחיקה" aria-label="מחיקה" onClick={() => deleteOrder(order)}><LineIcon name="trash" /></button>
-                    {order.status === 'packing' && (
-                      <button className="so-iconbtn" title="החזרה לעבודה" aria-label="החזרה לעבודה" onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'new' } : o)); collapseOrder(order.id); }}><LineIcon name="undo" /></button>
-                    )}
-                    {order.status === 'new' && order.assignedButcher && (
-                      <button className="so-iconbtn" title="ביטול שיוך קצב" aria-label="ביטול שיוך קצב" onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, assignedButcher: '' } : o)); collapseOrder(order.id); }}><LineIcon name="undo" /></button>
+                    {(order.status === 'packing' || order.status === 'completed' || (order.status === 'new' && order.assignedButcher)) && (
+                      <button className="so-iconbtn" title="החזרה לשלב קודם" aria-label="החזרה לשלב קודם" onClick={() => setReturnModal({ id: order.id, step: 'choose' })}><LineIcon name="undo" /></button>
                     )}
                     {order.status === 'new' && !order.assignedButcher && (
                       <button className="so-obtn" onClick={() => setButcherModal(order.id)}>לעבודה ←</button>
@@ -3600,17 +3620,6 @@ setTimeout(function(){
                     )}
                     {order.status === 'packing' && (
                       <button className="so-obtn ok" onClick={() => requestComplete(order.id)}><LineIcon name="check" />מוכן</button>
-                    )}
-                    {order.status === 'completed' && (
-                      <button className="so-iconbtn" title="החזרה לאריזה" aria-label="החזרה לאריזה" onClick={() => { setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'packing' } : o)); collapseOrder(order.id); }}><LineIcon name="undo" /></button>
-                    )}
-                    {order.status === 'completed' && (
-                      <span className="so-tag" style={{ marginInlineStart: 'auto' }}>
-                        {order.type === 'pickup' ? <><LineIcon name="box" />ממתינה לאיסוף</>
-                          : order.delivery?.status === 'failed' ? <span style={{ color: '#991B1B' }}>מסירה נכשלה</span>
-                          : order.route ? <><LineIcon name="truck" />{order.route.name || 'בסבב'}</>
-                          : <><LineIcon name="truck" />ממתינה לשיבוץ</>}
-                      </span>
                     )}
                   </div>
                 )}
@@ -4233,6 +4242,49 @@ setTimeout(function(){
               </div>
             </div>
           )}
+
+          {/* מודאל החזרה לשלב קודם */}
+          {returnModal && (() => {
+            const ro = orders.find(o => o.id === returnModal.id);
+            if (!ro) return null;
+            const stage = ro.status === 'completed' ? 3 : ro.status === 'packing' ? 2 : ro.assignedButcher ? 1 : 0;
+            const opt = (label, sub, onClick) => (
+              <button type="button" className="so-bigbtn" style={{ justifyContent: 'space-between', textAlign: 'right' }} onClick={onClick}>
+                <span>{label}</span>{sub && <small style={{ color: 'var(--muted)', fontWeight: 600 }}>{sub}</small>}
+              </button>
+            );
+            return (
+              <div className="so-modal-bg" style={{ zIndex: 50 }} onClick={() => setReturnModal(null)}>
+                <div className="so-modal" onClick={e => e.stopPropagation()}>
+                  <div className="so-modal-h" style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                    <h2 style={{ flex: 1 }}>{returnModal.step === 'butcher' ? 'לאיזה קצב?' : `להחזיר את הזמנה #${ro.id} ל...`}</h2>
+                    <button type="button" className="so-iconbtn" aria-label="סגירה" onClick={() => setReturnModal(null)}><LineIcon name="x" /></button>
+                  </div>
+                  <div className="so-modal-b">
+                    <div className="lead">{ro.customer}</div>
+                    {returnModal.step === 'choose' ? (
+                      <div className="so-choice col">
+                        {stage > 2 && opt('באריזה', 'יוצאת ממערך משלוחים עד שתסומן שוב "מוכן"', () => returnOrderTo(ro.id, 'packing'))}
+                        {stage > 1 && opt('בעבודה (אצל קצב)', ro.assignedButcher ? `קצב: ${ro.assignedButcher}` : 'בחירת קצב', () => ro.assignedButcher ? returnOrderTo(ro.id, 'work') : setReturnModal({ id: ro.id, step: 'butcher' }))}
+                        {stage > 1 && ro.assignedButcher && butchersList.length > 1 && opt('בעבודה — אצל קצב אחר', null, () => setReturnModal({ id: ro.id, step: 'butcher' }))}
+                        {opt('חדשות', 'בלי שיוך לקצב', () => returnOrderTo(ro.id, 'new'))}
+                      </div>
+                    ) : (
+                      <div className="so-choice col">
+                        {butchersList.length === 0 && <div className="so-lempty">אין קצבים מוגדרים — הוספה בניהול רשימות</div>}
+                        {butchersList.map(b => <React.Fragment key={b.id || b.name}>{opt(b.name, b.name === ro.assignedButcher ? 'הקצב הנוכחי' : null, () => returnOrderTo(ro.id, 'work', b.name))}</React.Fragment>)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="so-modal-f">
+                    {returnModal.step === 'butcher'
+                      ? <button type="button" className="so-btn" onClick={() => setReturnModal({ id: ro.id, step: 'choose' })}>חזרה</button>
+                      : <button type="button" className="so-btn" onClick={() => setReturnModal(null)}>ביטול</button>}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* מודאל בחירת קצב */}
           {butcherModal && (
