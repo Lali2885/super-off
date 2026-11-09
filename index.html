@@ -1134,8 +1134,22 @@
     };
 
     // ===[INVENTORY]===
+    // חץ ימינה / שמאלה: מעבר בין ריבועי הכניסה והמשיכה באותה שורה (מימין לשמאל — שמאלה = הריבוע הבא)
+    const rowSideInput = (e, attr) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return null;
+      const row = [...(e.currentTarget.closest('tr')?.querySelectorAll(`input[${attr}]`) || [])];
+      return row[row.indexOf(e.currentTarget) + (e.key === 'ArrowLeft' ? 1 : -1)] || null;
+    };
     // Enter / חץ למטה / חץ למעלה בשדה כמות: מבצע את הפעולה ועובר למוצר הבא או הקודם באותה עמודה
     const stockCellKeyDown = (e, col, apply) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const side = rowSideInput(e, 'data-stock-col');
+        if (!side) return;
+        e.preventDefault();
+        if (apply() === false) return;
+        side.focus(); side.select();
+        return;
+      }
       if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       e.preventDefault();
       if (apply() === false) return;
@@ -1707,8 +1721,9 @@
             <div className="so-tbl-wrap">
               <table className="so-tbl">
                 <thead><tr>
-                  <th>מוצר</th><th>סה״כ כולל</th><th>קירור סופר עוף</th><th>קירור גב״ש</th><th>קירור לירוי</th>
+                  <th>מוצר</th>
                   {hasQuick && <th>עדכון מהיר (קרטונים)</th>}
+                  <th>סה״כ כולל</th><th>קירור סופר עוף</th><th>קירור גב״ש</th><th>קירור לירוי</th>
                 </tr></thead>
                 <tbody>
                   {getCats(shownGroups).map(cat => (
@@ -1722,10 +1737,6 @@
                         return (
                           <tr key={b.key} className={low ? 'low' : out ? 'out' : ''}>
                             <td className="c-name"><div className="so-pname"><LineIcon name={cat} /><div><b>{p.name}</b><small>{p.sku ? 'מק״ט ' + p.sku : 'ללא מק״ט'}</small></div></div></td>
-                            <td className="c-total"><span className="so-total">{b.total}</span>{low ? <span className="so-lowtag">נמוך</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
-                            <td className="c-cold" data-label="סופר עוף"><span className={`so-num ${b.main ? '' : 'zero'}`}>{b.main}</span></td>
-                            <td className="c-cold" data-label="גב״ש"><span className={`so-num ${b.gv ? '' : 'zero'}`}>{b.gv}</span></td>
-                            <td className="c-cold" data-label="לירוי"><span className={`so-num ${b.bs ? '' : 'zero'}`}>{b.bs}</span></td>
                             {hasQuick && (
                               <td className="c-quick"><div className="so-quick">
                                 {showEntry && (
@@ -1748,6 +1759,10 @@
                                 )}
                               </div></td>
                             )}
+                            <td className="c-total"><span className="so-total">{b.total}</span>{low ? <span className="so-lowtag">נמוך</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
+                            <td className="c-cold" data-label="סופר עוף"><span className={`so-num ${b.main ? '' : 'zero'}`}>{b.main}</span></td>
+                            <td className="c-cold" data-label="גב״ש"><span className={`so-num ${b.gv ? '' : 'zero'}`}>{b.gv}</span></td>
+                            <td className="c-cold" data-label="לירוי"><span className={`so-num ${b.bs ? '' : 'zero'}`}>{b.bs}</span></td>
                           </tr>
                         );
                       })}
@@ -5362,10 +5377,11 @@ setTimeout(function(){
                   });
                   if (!catItems.length) return null;
                   const s = CAT_STYLES[cat] || CAT_STYLES['עוף'];
-                  const isCollapsed = collapsedCats[cat];
+                  // ברירת מחדל: סגור — גם לקטגוריות שנוספו ידנית (כמו ליפתא)
+                  const isCollapsed = collapsedCats[cat] !== false;
                   return (
                     <React.Fragment key={cat}>
-                      <tr className="so-catrow clickable" onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}>
+                      <tr className="so-catrow clickable" onClick={() => setCollapsedCats(prev => ({ ...prev, [cat]: !(prev[cat] !== false) }))}>
                         <td colSpan={6}>
                           <div className="flex items-center gap-2">
                             <LineIcon name={cat} />{cat}
@@ -7663,7 +7679,7 @@ setTimeout(function(){
     // מלאי אריזה — נשמר בשורה אחת בטבלת settings (id: packagingStock). שאר המערכת מתעלמת משורה זו.
     // כל שינוי נשמר כ"הפרש" על המצב העדכני בשרת (קריאה → עדכון → שמירה, בתור), כמו המלאי הקפוא — שני מכשירים לא דורסים זה את זה.
     const PACKAGING_GROUPS = ['מגשים', 'קרטונים', 'ניילונים', 'שקיות'];
-    const PACKAGING_UNITS = ['קרטונים', 'חבילות', 'גלילים', 'יחידות'];
+    const PACKAGING_UNITS = ['קרטונים', 'חבילות', 'גלילים', 'שקים', 'יחידות'];
     const PACKAGING_DEFAULTS = [
       ['מגשים', 'מגש כרעיים שחור', 'קרטונים'], ['מגשים', 'מגש כרעיים לבן', 'קרטונים'], ['מגשים', 'מגש כרעיים זהב', 'קרטונים'],
       ['מגשים', 'מגש דג שחור', 'קרטונים'], ['מגשים', 'מגש דג לבן', 'קרטונים'], ['מגשים', 'מגש דג שקוף', 'קרטונים'],
@@ -7752,8 +7768,10 @@ setTimeout(function(){
         setNotice(msg);
         return ok;
       };
-      // Enter = ביצוע ומעבר לשורה הבאה, חצים = מעבר בין שורות (כמו במלאי הכללי)
+      // Enter = ביצוע ומעבר לשורה הבאה, חצים למעלה/למטה = מעבר בין שורות, ימינה/שמאלה = כניסה ↔ משיכה (כמו במלאי הכללי)
       const keyDown = (e, col, apply) => {
+        const side = rowSideInput(e, 'data-pk-col');
+        if (side) { e.preventDefault(); side.focus(); side.select(); return; }
         if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
         e.preventDefault();
         const inputs = [...document.querySelectorAll(`input[data-pk-col="${col}"]`)];
@@ -7821,7 +7839,7 @@ setTimeout(function(){
               </div>
               <div className="so-tbl-wrap">
                 <table className="so-tbl">
-                  <thead><tr><th>מוצר</th><th>במלאי</th><th>מינימום</th><th>עדכון מהיר</th></tr></thead>
+                  <thead><tr><th>מוצר</th><th>עדכון מהיר</th><th>במלאי</th><th>מינימום</th></tr></thead>
                   <tbody>
                     {groups.filter(g => shown.some(i => i.group === g)).map(g => (
                       <React.Fragment key={g}>
@@ -7832,8 +7850,6 @@ setTimeout(function(){
                           return (
                             <tr key={it.id} className={low ? 'low' : out ? 'out' : ''}>
                               <td className="c-name"><div className="so-pname"><div><b>{it.name}</b><small>{it.unit}</small></div></div></td>
-                              <td className="c-total"><span className="so-total">{qty}</span>{low ? <span className="so-lowtag">להזמין</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
-                              <td className="c-cold"><span className={`so-num ${min ? '' : 'zero'}`}>{min || '—'}</span></td>
                               <td className="c-quick">
                                 <div className="so-quick">
                                   <label className="so-qbox in">
@@ -7852,6 +7868,8 @@ setTimeout(function(){
                                   </label>
                                 </div>
                               </td>
+                              <td className="c-total"><span className="so-total">{qty}</span>{low ? <span className="so-lowtag">להזמין</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
+                              <td className="c-cold"><span className={`so-num ${min ? '' : 'zero'}`}>{min || '—'}</span></td>
                             </tr>
                           );
                         })}
