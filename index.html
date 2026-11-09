@@ -3070,6 +3070,7 @@ setTimeout(function(){
       const [entrance, setEntrance] = useState('');
       const [floor, setFloor] = useState('');
       const [apt, setApt] = useState('');
+      const [addressNote, setAddressNote] = useState(''); // הערה לשליח: דלת בפנים, מימין...
       const [deliveryDate, setDeliveryDate] = useState(() => localToday());
       const [pickupTime, setPickupTime] = useState(() => localToday());
       const [kashrut, setKashrut] = useState('');
@@ -3242,6 +3243,7 @@ setTimeout(function(){
         setEntrance(order.entrance || '');
         setFloor(order.floor || '');
         setApt(order.apt || '');
+        setAddressNote(order.addressNote || '');
         if (order.type === 'delivery') {
           setDeliveryDate(order.timeString || '');
           setPickupTime('');
@@ -3283,7 +3285,7 @@ setTimeout(function(){
         setIsModalOpen(false);
         setEditingOrder(null);
         setCustomerName(''); setCustomerPhone(''); setCustomerMobile(''); setCustomerSuggestions([]);
-        setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt(''); setCity('ירושלים'); setCollectType(''); setCollectAmount('');
+        setNeighborhood(''); setStreet(''); setEntrance(''); setFloor(''); setApt(''); setAddressNote(''); setCity('ירושלים'); setCollectType(''); setCollectAmount('');
         setDeliveryDate(localToday()); setPickupTime(localToday()); setKashrut('');
         setFlags({ mustCoordinate: false, notifyReady: false });
         setChargeStatus('');
@@ -3333,6 +3335,7 @@ setTimeout(function(){
           type: orderType,
           fullAddress: orderType === 'delivery' ? `${street} ${entrance ? 'כניסה '+entrance : ''} ${floor ? 'קומה '+floor : ''} ${apt ? 'דירה '+apt : ''}`.trim() : '',
           street, entrance, floor, apt,
+          addressNote: orderType === 'delivery' ? addressNote.trim() : '',
           neighborhood: orderType === 'delivery' ? neighborhood : '',
           timeString: orderType === 'delivery' ? deliveryDate : pickupTime,
           kashrut: allItems.find(i => i.kashrut)?.kashrut || '',
@@ -3748,12 +3751,17 @@ setTimeout(function(){
                                   setCustomerPhone(c.phone || '');
                                   setCustomerMobile(c.mobile || '');
                                   setStreet(c.address || '');
+                                  setEntrance(c.entrance || '');
+                                  setFloor(c.floor || '');
+                                  setApt(c.apt || '');
+                                  setAddressNote(c.addressNote || '');
                                   setNeighborhood(c.neighborhood || '');
                                   setCustomerSuggestions([]);
                                 }}
                               >
                                 <b>{c.name}</b>
-                                {c.phone && <small>{c.phone}</small>}
+                                {(c.phone || c.mobile) && <small>{c.phone || c.mobile}</small>}
+                                {c.address && <small>· {c.address}</small>}
                                 {c.neighborhood && <small>· {c.neighborhood}</small>}
                               </button>
                             ))}
@@ -3778,6 +3786,8 @@ setTimeout(function(){
                           <input type="text" value={floor} onChange={e => setFloor(e.target.value)} placeholder="קומה" className="so-input c" style={{ flex: '1 1 0' }} />
                           <input type="text" value={apt} onChange={e => setApt(e.target.value)} placeholder="דירה" className="so-input c" style={{ flex: '1 1 0' }} />
                         </div>
+                        <input type="text" value={addressNote} onChange={e => setAddressNote(e.target.value)} placeholder="הערה לשליח (דלת בפנים, מימין, במעלית...)" className="so-input" />
+
                         <label className="so-ofrow" style={{ flexWrap: 'nowrap' }}>
                           <span className="so-oflbl" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '.9rem' }}>תאריך משלוח</span>
                           <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} className="so-input" />
@@ -4393,7 +4403,7 @@ setTimeout(function(){
       };
       const printRoute = (route) => {
         const rows = route.stops.map((o, i) => `<tr><td>${i + 1}</td><td><b>${escHtml(o.customer || '')}</b><br>${escHtml(o.phone || '')}${o.mobile ? ' · ' + escHtml(o.mobile) : ''}</td>
-          <td><b>${escHtml(o.street || '')}</b>, ${escHtml(o.neighborhood || '')}${o.city && o.city !== 'ירושלים' ? ', ' + escHtml(o.city) : ''}<br>${escHtml([o.entrance && 'כניסה ' + o.entrance, o.floor && 'קומה ' + o.floor, o.apt && 'דירה ' + o.apt].filter(Boolean).join(' · '))}</td>
+          <td><b>${escHtml(o.street || '')}</b>, ${escHtml(o.neighborhood || '')}${o.city && o.city !== 'ירושלים' ? ', ' + escHtml(o.city) : ''}<br>${escHtml([o.entrance && 'כניסה ' + o.entrance, o.floor && 'קומה ' + o.floor, o.apt && 'דירה ' + o.apt, o.addressNote].filter(Boolean).join(' · '))}</td>
           <td>${[o.packaging?.cartons && o.packaging.cartons + ' קרטונים', o.packaging?.bags && o.packaging.bags + ' שקיות', o.packaging?.fishBags && o.packaging.fishBags + ' שק׳ דגים'].filter(Boolean).join('<br>')}</td>
           <td>${o.flags?.mustCoordinate ? 'לתאם!<br>' : ''}${o.collect?.type ? 'לגבות: ' + escHtml(o.collect.type) + (o.collect.amount ? ' ' + escHtml(String(o.collect.amount)) + ' ₪' : '') : ''}</td><td style="width:60px"></td></tr>`).join('');
         const w = window.open('', '_blank');
@@ -4462,7 +4472,7 @@ setTimeout(function(){
         return <div className="so-pk">{parts.length ? parts.map(x => <span key={x}>{x}</span>) : 'לא הוזנו פרטי אריזה'}</div>;
       };
       const addrLine = (o) => [o.street, o.neighborhood, o.city && o.city !== 'ירושלים' ? o.city : ''].filter(Boolean).join(', ');
-      const addrExtra = (o) => [o.entrance && `כניסה ${o.entrance}`, o.floor && `קומה ${o.floor}`, o.apt && `דירה ${o.apt}`].filter(Boolean).join(' · ');
+      const addrExtra = (o) => [o.entrance && `כניסה ${o.entrance}`, o.floor && `קומה ${o.floor}`, o.apt && `דירה ${o.apt}`, o.addressNote].filter(Boolean).join(' · ');
       const stopClass = (o) => (o.delivery?.status === 'done' || o.status === 'delivered') ? 'done' : o.delivery?.status === 'failed' ? 'fail' : '';
 
       const tabs = courierOnly ? [] : [
@@ -4830,21 +4840,31 @@ setTimeout(function(){
     };
 
     // ===[CONTACTS]===
+    // כתובת איש קשר: street + houseNumber נפרדים; address = "רחוב מספר" (נשמר גם הוא — לתאימות עם טופס ההזמנה והחיפוש)
+    const contactStreetLine = (c) => (c.street != null || c.houseNumber) ? [c.street, c.houseNumber].map(x => (x || '').trim()).filter(Boolean).join(' ') : (c.address || '');
+    const contactAddrExtra = (c) => [c.entrance && `כניסה ${c.entrance}`, c.floor && `קומה ${c.floor}`, c.apt && `דירה ${c.apt}`].filter(Boolean).join(' · ');
+
     // --- Contacts View ---
     const ContactsView = ({ contactsList, setContactsList }) => {
       const [editingContact, setEditingContact] = useState(null); // contact object being edited
       const [importStep, setImportStep] = useState('idle'); // idle | mapping | preview | done
       const [excelRows, setExcelRows] = useState([]);
       const [excelHeaders, setExcelHeaders] = useState([]);
-      const [mapping, setMapping] = useState({ name: '', phone: '', mobile: '', address: '', neighborhood: '', notes: '' });
+      const EMPTY_MAP = { name: '', phone: '', mobile: '', address: '', houseNumber: '', entrance: '', floor: '', apt: '', addressNote: '', neighborhood: '', notes: '' };
+      const [mapping, setMapping] = useState(EMPTY_MAP);
       const [previewContacts, setPreviewContacts] = useState([]);
       const [search, setSearch] = useState('');
 
       const FIELDS = [
         { key: 'name', label: 'שם לקוח *', required: true },
         { key: 'phone', label: 'טלפון', required: false },
-        { key: 'mobile', label: 'נייד', required: false },
-        { key: 'address', label: 'כתובת / רחוב', required: false },
+        { key: 'mobile', label: 'טלפון נוסף', required: false },
+        { key: 'address', label: 'רחוב (או כתובת מלאה)', required: false },
+        { key: 'houseNumber', label: 'מספר בית', required: false },
+        { key: 'entrance', label: 'כניסה', required: false },
+        { key: 'floor', label: 'קומה', required: false },
+        { key: 'apt', label: 'דירה', required: false },
+        { key: 'addressNote', label: 'הערה לכתובת', required: false },
         { key: 'neighborhood', label: 'שכונה / עיר', required: false },
         { key: 'notes', label: 'הערות', required: false },
       ];
@@ -4863,15 +4883,21 @@ setTimeout(function(){
           setExcelRows(rows.slice(1));
 
           // ניסיון זיהוי אוטומטי של עמודות
-          const autoMap = { name: '', phone: '', mobile: '', address: '', neighborhood: '', notes: '' };
+          const autoMap = { ...EMPTY_MAP };
           headers.forEach(h => {
             const lower = h.toLowerCase();
-            if (!autoMap.name && (lower.includes('שם') || lower.includes('name'))) autoMap.name = h;
-            if (!autoMap.phone && (lower.includes('טלפון') || lower.includes('phone') || lower.includes('נייד'))) autoMap.phone = h;
-            if (!autoMap.mobile && (lower.includes('נייד') || lower.includes('mobile') || lower.includes('סלולר'))) autoMap.mobile = h;
-            if (!autoMap.address && (lower.includes('רחוב') || lower.includes('כתובת') || lower.includes('address'))) autoMap.address = h;
-            if (!autoMap.neighborhood && (lower.includes('עיר') || lower.includes('שכונה') || lower.includes('city'))) autoMap.neighborhood = h;
-            if (!autoMap.notes && (lower.includes('הערה') || lower.includes('note'))) autoMap.notes = h;
+            if (lower.includes('מקורי') || lower.includes('מזהה') || lower.includes('לבדיקה')) return; // עמודות עזר
+            if (!autoMap.name && (lower.includes('שם') || lower.includes('name'))) { autoMap.name = h; return; }
+            if (!autoMap.mobile && (lower.includes('נייד') || lower.includes('mobile') || lower.includes('סלולר') || lower.includes('טלפון 2') || lower.includes('נוסף'))) { autoMap.mobile = h; return; }
+            if (!autoMap.phone && (lower.includes('טלפון') || lower.includes('phone'))) { autoMap.phone = h; return; }
+            if (!autoMap.addressNote && lower.includes('הערה') && (lower.includes('כתובת') || lower.includes('שליח'))) { autoMap.addressNote = h; return; }
+            if (!autoMap.houseNumber && lower.includes('מספר בית')) { autoMap.houseNumber = h; return; }
+            if (!autoMap.entrance && lower.includes('כניסה')) { autoMap.entrance = h; return; }
+            if (!autoMap.floor && lower.includes('קומה')) { autoMap.floor = h; return; }
+            if (!autoMap.apt && lower.includes('דירה')) { autoMap.apt = h; return; }
+            if (!autoMap.address && (lower.includes('רחוב') || lower.includes('כתובת') || lower.includes('address'))) { autoMap.address = h; return; }
+            if (!autoMap.neighborhood && (lower.includes('עיר') || lower.includes('שכונה') || lower.includes('city'))) { autoMap.neighborhood = h; return; }
+            if (!autoMap.notes && (lower.includes('הערה') || lower.includes('הערות') || lower.includes('note'))) { autoMap.notes = h; return; }
           });
           setMapping(autoMap);
           setImportStep('mapping');
@@ -4882,16 +4908,19 @@ setTimeout(function(){
       const buildPreview = () => {
         if (!mapping.name) return;
         const colIdx = (col) => col ? excelHeaders.indexOf(col) : -1;
+        const cell = (row, key) => String(row[colIdx(mapping[key])] ?? '').trim();
         const preview = excelRows
-          .map(row => ({
-            id: Date.now().toString() + Math.random(),
-            name: String(row[colIdx(mapping.name)] || '').trim(),
-            phone: String(row[colIdx(mapping.phone)] || '').trim(),
-            mobile: String(row[colIdx(mapping.mobile)] || '').trim(),
-            address: String(row[colIdx(mapping.address)] || '').trim(),
-            neighborhood: String(row[colIdx(mapping.neighborhood)] || '').trim(),
-            notes: String(row[colIdx(mapping.notes)] || '').trim(),
-          }))
+          .map(row => {
+            const c = {
+              id: Date.now().toString() + Math.random(),
+              name: cell(row, 'name'), phone: cell(row, 'phone'), mobile: cell(row, 'mobile'),
+              entrance: cell(row, 'entrance'), floor: cell(row, 'floor'), apt: cell(row, 'apt'), addressNote: cell(row, 'addressNote'),
+              neighborhood: cell(row, 'neighborhood'), notes: cell(row, 'notes'),
+            };
+            if (mapping.houseNumber) { c.street = cell(row, 'address'); c.houseNumber = cell(row, 'houseNumber'); }
+            c.address = mapping.houseNumber ? contactStreetLine(c) : cell(row, 'address');
+            return c;
+          })
           .filter(c => c.name);
 
         // סינון כפולים לפי שם + טלפון
@@ -4907,19 +4936,20 @@ setTimeout(function(){
         setExcelRows([]); setExcelHeaders([]);
       };
 
-      const filteredContacts = contactsList.filter(c =>
-        !search || c.name.includes(search) || c.phone.includes(search) || c.mobile.includes(search)
-      );
+      const filteredContacts = contactsList.filter(c => {
+        const q = search.trim();
+        if (!q) return true;
+        const qd = q.replace(/\D/g, '');
+        return [c.name, c.address, c.neighborhood, c.notes].some(v => (v || '').includes(q))
+          || (qd.length >= 3 && [c.phone, c.mobile].some(v => (v || '').replace(/\D/g, '').includes(qd)));
+      });
 
       return (
         <div className="animate-in fade-in duration-300 space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">אנשי קשר</h1>
-              <p className="text-gray-500 mt-1">ייבוא מאקסל ובחירה מהירה בפתיחת הזמנה</p>
-            </div>
-            <label className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl cursor-pointer shadow-sm transition-colors">
-              📥 ייבוא מאקסל
+          <div className="so-actions">
+            <div className="so-hint" style={{ flex: '1 1 14rem', alignSelf: 'center' }}>בחירת לקוח בטופס הזמנה ממלאת אוטומטית טלפון, כתובת, כניסה, קומה, דירה והערה לשליח</div>
+            <label className="so-btn" style={{ cursor: 'pointer' }}>
+              <LineIcon name="download" />ייבוא מאקסל
               <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} onClick={e => e.target.value = ''} />
             </label>
           </div>
@@ -5022,92 +5052,90 @@ setTimeout(function(){
           )}
 
           {/* חיפוש ורשימה */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-3 border-b border-gray-100 flex items-center gap-3">
-              <input type="text" placeholder="🔍 חיפוש לפי שם או טלפון..."
-                value={search} onChange={e => setSearch(e.target.value)}
-                className="flex-1 p-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-              <span className="text-xs text-gray-400 font-bold shrink-0">{filteredContacts.length} איש קשר</span>
+          <section className="so-subcard">
+            <div className="so-tools plain">
+              <label className="so-search"><LineIcon name="search" />
+                <input type="search" placeholder="חיפוש לפי שם, טלפון, רחוב או שכונה" value={search} onChange={e => setSearch(e.target.value)} aria-label="חיפוש איש קשר" />
+              </label>
+              <span className="so-tag">{filteredContacts.length} אנשי קשר</span>
             </div>
             {filteredContacts.length === 0 ? (
-              <div className="p-10 text-center text-gray-400">
-                <div className="text-3xl mb-2">👥</div>
-                <div className="font-bold text-gray-500">אין אנשי קשר עדיין</div>
-                <div className="text-sm mt-1">ייבא מאקסל כדי להתחיל</div>
-              </div>
+              <div className="so-lempty big"><LineIcon name="users" />{contactsList.length ? 'לא נמצאו אנשי קשר' : 'אין אנשי קשר עדיין — ייבוא מאקסל כדי להתחיל'}</div>
             ) : (
-              <div className="overflow-x-auto max-h-96 custom-scrollbar">
-                <table className="w-full text-right text-sm">
-                  <thead className="bg-gray-50 text-gray-500 text-xs border-b sticky top-0">
-                    <tr>
-                      <th className="p-3 font-bold">שם</th>
-                      <th className="p-3 font-bold">טלפון</th>
-                      <th className="p-3 font-bold">כתובת</th>
-                      <th className="p-3 font-bold">שכונה</th>
-                      <th className="p-3 w-20"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {filteredContacts.map(c => (
-                      <tr key={c.id} className="hover:bg-gray-50">
-                        <td className="p-3 font-bold text-gray-900">{c.name}</td>
-                        <td className="p-3 text-gray-600">{c.phone}{c.mobile && c.mobile !== c.phone ? ` / ${c.mobile}` : ''}</td>
-                        <td className="p-3 text-gray-600">{c.address}</td>
-                        <td className="p-3 text-gray-600">{c.neighborhood}</td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            <button onClick={() => setEditingContact({ ...c })}
-                              className="text-gray-400 hover:text-blue-500 transition-colors">
-                              <Icons.Edit className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setContactsList(prev => prev.filter(x => x.id !== c.id))}
-                              className="text-gray-300 hover:text-red-500 transition-colors">
-                              <Icons.Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+              <div className="so-tbl-wrap custom-scrollbar" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+                <table className="so-ptbl">
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}><tr>
+                    <th className="text-right px-4 py-2.5 text-xs">שם</th>
+                    <th className="text-right px-4 py-2.5 text-xs">טלפון</th>
+                    <th className="text-right px-4 py-2.5 text-xs">כתובת</th>
+                    <th className="text-right px-4 py-2.5 text-xs">שכונה / עיר</th>
+                    <th></th>
+                  </tr></thead>
+                  <tbody>
+                    {filteredContacts.map(c => {
+                      const extra = contactAddrExtra(c);
+                      return (
+                        <tr key={c.id} className="so-prow">
+                          <td><b>{c.name}</b>{c.notes && <small className="so-csku">{c.notes}</small>}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{c.phone || c.mobile}{c.phone && c.mobile && c.mobile !== c.phone && <small className="so-csku">{c.mobile}</small>}</td>
+                          <td>
+                            <b style={{ fontWeight: 700 }}>{contactStreetLine(c)}</b>
+                            {extra && <small className="so-csku">{extra}</small>}
+                            {c.addressNote && <small className="so-csku" style={{ color: '#9A3412' }}>{c.addressNote}</small>}
+                          </td>
+                          <td>{c.neighborhood}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <div className="flex gap-1">
+                              <button className="so-iconbtn sm" title="עריכה" aria-label={`עריכה — ${c.name}`} onClick={() => setEditingContact({ ...c })}><LineIcon name="edit" /></button>
+                              <button className="so-iconbtn sm danger" title="מחיקה" aria-label={`מחיקה — ${c.name}`} onClick={() => setContactsList(prev => prev.filter(x => x.id !== c.id))}><LineIcon name="trash" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
-          </div>
+          </section>
         </div>
       );
     };
 
     // --- Edit Contact Modal ---
     const EditContactModal = ({ contact, onSave, onClose }) => {
-      const [form, setForm] = useState({ ...contact });
+      // איש קשר ישן (בלי רחוב נפרד) — כל הכתובת נכנסת לשדה הרחוב
+      const [form, setForm] = useState(() => ({ ...contact, street: contact.street ?? contact.address ?? '', houseNumber: contact.houseNumber || '' }));
       const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
-
+      const save = () => {
+        if (!(form.name || '').trim()) return;
+        onSave({ ...form, address: contactStreetLine(form) });
+      };
+      const field = (key, label, opts = {}) => (
+        <label className="so-field" style={opts.flex ? { flex: opts.flex, minWidth: 0 } : undefined}>
+          <span>{label}</span>
+          <input type={opts.type || 'text'} className={`so-input${opts.c ? ' c' : ''}`} value={form[key] || ''} onChange={e => set(key, e.target.value)} />
+        </label>
+      );
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 w-full max-w-md animate-in zoom-in-95 duration-200">
-            <div className="p-4 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
-              <h3 className="font-bold text-blue-900 flex items-center gap-2"><Icons.Edit className="w-5 h-5" /> עריכת איש קשר</h3>
-              <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:bg-gray-200"><Icons.X className="w-5 h-5" /></button>
+        <div className="so-modal-bg" style={{ zIndex: 50 }}>
+          <div className="so-modal" style={{ width: 'min(34rem, 100%)' }}>
+            <div className="so-modal-h" style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+              <h2 style={{ flex: 1 }}>עריכת איש קשר</h2>
+              <button type="button" onClick={onClose} className="so-iconbtn" aria-label="סגירה"><LineIcon name="x" /></button>
             </div>
-            <div className="p-5 space-y-3">
-              {[
-                { key: 'name',         label: 'שם לקוח *', type: 'text' },
-                { key: 'phone',        label: 'טלפון',      type: 'tel' },
-                { key: 'mobile',       label: 'נייד',       type: 'tel' },
-                { key: 'address',      label: 'כתובת / רחוב', type: 'text' },
-                { key: 'neighborhood', label: 'שכונה / עיר',  type: 'text' },
-                { key: 'notes',        label: 'הערות',      type: 'text' },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">{f.label}</label>
-                  <input type={f.type} value={form[f.key] || ''} onChange={e => set(f.key, e.target.value)}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-                </div>
-              ))}
+            <div className="so-modal-b" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              {field('name', 'שם לקוח *')}
+              <div className="flex gap-2">{field('phone', 'טלפון', { type: 'tel', flex: 1 })}{field('mobile', 'טלפון נוסף', { type: 'tel', flex: 1 })}</div>
+              <div className="flex gap-2">{field('street', 'רחוב', { flex: 3 })}{field('houseNumber', 'מספר בית', { flex: 1, c: true })}</div>
+              <div className="flex gap-2">{field('entrance', 'כניסה', { flex: 1, c: true })}{field('floor', 'קומה', { flex: 1, c: true })}{field('apt', 'דירה', { flex: 1, c: true })}</div>
+              {field('addressNote', 'הערה לכתובת (לשליח)')}
+              {field('neighborhood', 'שכונה / עיר')}
+              {field('notes', 'הערות')}
             </div>
-            <div className="p-4 border-t border-gray-100 flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={onClose}>ביטול</Button>
-              <Button variant="primary" icon={Icons.Save} className="flex-1" onClick={() => onSave(form)}>שמור שינויים</Button>
+            <div className="so-modal-f" style={{ gap: '.6rem' }}>
+              <button type="button" className="so-btn" onClick={onClose}>ביטול</button>
+              <button type="button" className="so-btn primary" disabled={!(form.name || '').trim()} onClick={save}><LineIcon name="check" />שמירה</button>
             </div>
           </div>
         </div>
@@ -8080,7 +8108,7 @@ setTimeout(function(){
                       {open && (
                         <div className="so-odetail">
                           {order.type === 'delivery' && order.street && (
-                            <div className="so-addrnote"><LineIcon name="pin" />{order.street}{order.entrance ? ` כניסה ${order.entrance}` : ''}{order.floor ? ` קומה ${order.floor}` : ''}{order.apt ? ` דירה ${order.apt}` : ''}</div>
+                            <div className="so-addrnote"><LineIcon name="pin" />{order.street}{order.entrance ? ` כניסה ${order.entrance}` : ''}{order.floor ? ` קומה ${order.floor}` : ''}{order.apt ? ` דירה ${order.apt}` : ''}{order.addressNote ? ` · ${order.addressNote}` : ''}</div>
                           )}
                           <ul className="so-itemlist">
                             {(order.items || []).map((item, idx) => (
