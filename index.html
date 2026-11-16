@@ -2,7 +2,8 @@
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>סופר עוף</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
@@ -33,22 +34,22 @@
   </script>
 
   <!-- React & ReactDOM (Production) -->
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
   
   <!-- Babel compiler for JSX on-the-fly -->
-  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js" integrity="sha384-KCD0A3BqTNZfWlXJcL7fKzDri97vicyNr4NUIr0vX6K9PZ0X5hOTeEbFh99jPEST" crossorigin="anonymous"></script>
 
   <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
 
   <!-- SheetJS for Excel export -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js" integrity="sha384-gx12pQMMYnabkTgbCHqqrT65RwDnXI/f/dU2H9JUmT0KUeiMF5bf+yroQBmX0Nuk" crossorigin="anonymous"></script>
   <!-- jsPDF for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3" crossorigin="anonymous"></script>
   <!-- html2canvas for Hebrew PDF rendering -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -217,6 +218,7 @@
     .so-tools { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; padding: .9rem 1.2rem; background: var(--k-tint); border-bottom: 1px solid var(--line); }
     .so-search { display: flex; align-items: center; gap: .5rem; height: 2.9rem; padding: 0 .9rem; border-radius: .7rem; background: #fff; border: 1px solid #CFCAC3; flex: 1 1 14rem; color: var(--muted); }
     .so-search input { border: 0; outline: none; background: transparent; flex: 1; min-width: 0; font-size: 1rem; color: var(--ink); min-height: 0 !important; }
+    .so-search:focus-within { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.35); }
     .so-cats { display: flex; flex-wrap: wrap; gap: .4rem; }
     .so-cat { display: inline-flex; align-items: center; gap: .4rem; height: 2.6rem; padding: 0 .85rem; border-radius: 999px; border: 1px solid #CFCAC3; background: #fff; font-weight: 700; font-size: .9rem; color: var(--ink); }
     .so-cat .n { color: var(--muted); font-weight: 600; font-size: .8rem; }
@@ -678,6 +680,13 @@
     const localToday = () => new Date().toLocaleDateString('sv-SE');
     // escape לטקסט שנכנס ל-HTML שנבנה ידנית (חלונות הדפסה)
     const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    // ניקוי HTML לפני innerHTML (דפי PDF/מדבקות): DOMParser לא מריץ כלום; מסירים סקריפטים, on* ו-javascript:
+    const safeHtml = (html) => {
+      const doc = new DOMParser().parseFromString(String(html), 'text/html');
+      doc.querySelectorAll('script,iframe,object,embed,base,meta').forEach(n => n.remove());
+      doc.querySelectorAll('*').forEach(el => [...el.attributes].forEach(a => { if (/^on/i.test(a.name) || /^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name); }));
+      return doc.head.innerHTML + doc.body.innerHTML;
+    };
     const escDeep = (v) => typeof v === 'string' ? escHtml(v)
       : Array.isArray(v) ? v.map(escDeep)
       : (v && typeof v === 'object') ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, escDeep(x)]))
@@ -2424,7 +2433,7 @@ ${htmlRows}
 
           const container = document.createElement('div');
           container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-          container.innerHTML = html;
+          container.innerHTML = safeHtml(html);
           document.body.appendChild(container);
           const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
           document.body.removeChild(container);
@@ -2474,7 +2483,7 @@ ${htmlRows}
           </div>`;
           const stickerEl = document.createElement('div');
           stickerEl.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-          stickerEl.innerHTML = stickerHtml;
+          stickerEl.innerHTML = safeHtml(stickerHtml);
           document.body.appendChild(stickerEl);
           const stickerCanvas = await window.html2canvas(stickerEl, { scale: 2, useCORS: true });
           document.body.removeChild(stickerEl);
@@ -2619,7 +2628,7 @@ ${htmlRows}
         const renderToDoc = async (html, doc, pageIdx) => {
           const el = document.createElement('div');
           el.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-          el.innerHTML = html;
+          el.innerHTML = safeHtml(html);
           document.body.appendChild(el);
           const canvas = await window.html2canvas(el, { scale: 2, useCORS: true });
           document.body.removeChild(el);
@@ -4174,10 +4183,10 @@ setTimeout(function(){
                                         <span className="shrink-0"><StorageTag st={resolveItemStorage(item)} /></span>
                                         {item.type === 'simple' && !isEditing && <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{item.qty}</span>}
                                         {item.type === 'complex' && !isEditing && (() => { const tot = (item.rows||[]).reduce((s,r)=>s+(parseFloat(r.qty)||0),0)||(parseFloat(item.totalQty)||0); return tot>0 ? <span className={`w-10 text-center font-extrabold text-sm shrink-0 ${cc.headerText}`}>{tot}</span> : null; })()}
-                                        {item.type === 'simple' && isEditing && <input type="number" min="0" step="0.5" value={editItemState.qty ?? item.qty} onChange={e => setEditItemState(prev => ({...prev, qty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none shrink-0" />}
-                                        {item.type === 'complex' && isEditing && (item.template || ORDER_FORM_TEMPLATE.find(t => t.name === item.name))?.showTotalQty && <input type="number" min="0" step="0.5" placeholder="0" value={editItemState.totalQty ?? ''} onChange={e => setEditItemState(prev => ({...prev, totalQty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none shrink-0" />}
+                                        {item.type === 'simple' && isEditing && <input type="number" min="0" step="0.5" value={editItemState.qty ?? item.qty} onChange={e => setEditItemState(prev => ({...prev, qty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none focus:ring-2 focus:ring-blue-400 shrink-0" />}
+                                        {item.type === 'complex' && isEditing && (item.template || ORDER_FORM_TEMPLATE.find(t => t.name === item.name))?.showTotalQty && <input type="number" min="0" step="0.5" placeholder="0" value={editItemState.totalQty ?? ''} onChange={e => setEditItemState(prev => ({...prev, totalQty: e.target.value}))} className="w-16 p-1 border-2 border-blue-300 rounded text-sm font-extrabold text-center outline-none focus:ring-2 focus:ring-blue-400 shrink-0" />}
                                         {!isEditing && item.notes && <span className="text-gray-400 text-[11px] truncate max-w-[100px]">{item.notes}</span>}
-                                        {isEditing && <input type="text" value={editItemState.notes ?? item.notes ?? ''} onChange={e => setEditItemState(prev => ({...prev, notes: e.target.value}))} className="flex-1 p-1 border border-blue-200 rounded text-xs outline-none bg-white min-w-0" placeholder="הערה..." />}
+                                        {isEditing && <input type="text" value={editItemState.notes ?? item.notes ?? ''} onChange={e => setEditItemState(prev => ({...prev, notes: e.target.value}))} className="flex-1 p-1 border border-blue-200 rounded text-xs outline-none focus:ring-2 focus:ring-blue-400 bg-white min-w-0" placeholder="הערה..." />}
                                         <div className="flex gap-1 shrink-0">
                                           {isEditing ? (<>
                                             <button type="button" onClick={saveItem} className="so-iconbtn sm" style={{ background: 'var(--in)', borderColor: 'var(--in)', color: '#fff' }} title="שמירה" aria-label="שמירה"><LineIcon name="check" /></button>
@@ -4203,7 +4212,7 @@ setTimeout(function(){
                                         const eChecks = editItemState.checks || [];
                                         return (
                                           <div className={`border-t-2 border-dashed pt-2 mt-2 space-y-2 ${cc.headerBorder}`}>
-                                            {tmpl.options.length > 0 && !(tmpl.quickMark && eChecks.includes(tmpl.quickMark.check)) && <div className="grid grid-cols-2 gap-1.5">{tmpl.options.map(opt => { const qty = (eRows.find(r=>r.option===opt)||{}).qty||''; const isActive=parseFloat(qty)>0; return (<div key={opt} onClick={e=>{if(e.target.tagName!=='INPUT')e.currentTarget.querySelector('input').focus();}} className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border cursor-pointer ${isActive?cc.cardActive:'bg-white border-gray-200'}`}><span className={`text-xs font-bold flex-1 ${isActive?cc.cardActiveText:'text-gray-600'}`}>{opt}</span><input type="number" min="0" step="0.5" placeholder="כמות" value={qty} onChange={e=>{const v=e.target.value;setEditItemState(prev=>{const rows=prev.rows||[];const exists=rows.some(r=>r.option===opt);return{...prev,rows:exists?rows.map(r=>r.option===opt?{...r,qty:v}:r):[...rows,{option:opt,qty:v}]};});}} className={`w-14 p-1 text-xs border rounded text-center font-bold outline-none ${isActive?'border-current bg-white':'border-gray-200 bg-gray-50'}`}/></div>);})}</div>}
+                                            {tmpl.options.length > 0 && !(tmpl.quickMark && eChecks.includes(tmpl.quickMark.check)) && <div className="grid grid-cols-2 gap-1.5">{tmpl.options.map(opt => { const qty = (eRows.find(r=>r.option===opt)||{}).qty||''; const isActive=parseFloat(qty)>0; return (<div key={opt} onClick={e=>{if(e.target.tagName!=='INPUT')e.currentTarget.querySelector('input').focus();}} className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border cursor-pointer ${isActive?cc.cardActive:'bg-white border-gray-200'}`}><span className={`text-xs font-bold flex-1 ${isActive?cc.cardActiveText:'text-gray-600'}`}>{opt}</span><input type="number" min="0" step="0.5" placeholder="כמות" value={qty} onChange={e=>{const v=e.target.value;setEditItemState(prev=>{const rows=prev.rows||[];const exists=rows.some(r=>r.option===opt);return{...prev,rows:exists?rows.map(r=>r.option===opt?{...r,qty:v}:r):[...rows,{option:opt,qty:v}]};});}} className={`w-14 p-1 text-xs border rounded text-center font-bold outline-none focus:ring-2 focus:ring-blue-400 ${isActive?'border-current bg-white':'border-gray-200 bg-gray-50'}`}/></div>);})}</div>}
                                             {tmpl.checkboxOptions&&tmpl.checkboxOptions.length>0&&<div className="flex flex-wrap gap-1">{tmpl.checkboxOptions.map(opt=>{const isChecked=eChecks.includes(opt);return(<div key={opt} onClick={()=>setEditItemState(prev=>{const checks=prev.checks||[];return{...prev,checks:isChecked?checks.filter(c=>c!==opt):[...checks,opt]};})} className={`flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer select-none text-[11px] font-bold ${isChecked?cc.cardActive+' '+cc.cardActiveText:'bg-white border-gray-200 text-gray-600'}`}>{isChecked?'✓':'○'} {opt}</div>);})}</div>}
                                           </div>
                                         );
@@ -6271,7 +6280,7 @@ setTimeout(function(){
         if (pallets.length > 1) {
           html += `<div style="text-align:left;font-size:14px;font-weight:bold;margin-top:4px;">סה"כ כללי: ${totalC} קרטונים</div>`;
         }
-        container.innerHTML = html;
+        container.innerHTML = safeHtml(html);
         document.body.appendChild(container);
         window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
           document.body.removeChild(container);
@@ -6384,7 +6393,7 @@ setTimeout(function(){
           <td style="padding:6px 10px;">${pW.toFixed(2)} ק"ג</td>
           <td></td>
         </tr></tfoot></table></div>`;
-        container.innerHTML = html;
+        container.innerHTML = safeHtml(html);
         document.body.appendChild(container);
         window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
           document.body.removeChild(container);
@@ -6429,10 +6438,10 @@ setTimeout(function(){
         numberContainer.innerHTML = `<svg width="794" height="1123" xmlns="http://www.w3.org/2000/svg">
           <text x="397" y="620" text-anchor="middle" dominant-baseline="middle"
             font-size="900" font-weight="bold" font-family="Arial"
-            textLength="740" lengthAdjust="spacingAndGlyphs">${pallet.number||''}</text>
+            textLength="740" lengthAdjust="spacingAndGlyphs">${escHtml(pallet.number||'')}</text>
         </svg>`;
 
-        labelContainer.innerHTML = labelHtml;
+        labelContainer.innerHTML = safeHtml(labelHtml);
         document.body.appendChild(labelContainer);
         window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas1 => {
           document.body.removeChild(labelContainer);
@@ -6520,9 +6529,9 @@ setTimeout(function(){
         numberContainer.innerHTML = `<svg width="794" height="1123" xmlns="http://www.w3.org/2000/svg">
           <text x="397" y="561" text-anchor="middle" dominant-baseline="middle"
             font-size="900" font-weight="bold" font-family="Arial"
-            textLength="740" lengthAdjust="spacingAndGlyphs">${dateStr}</text>
+            textLength="740" lengthAdjust="spacingAndGlyphs">${escHtml(dateStr)}</text>
         </svg>`;
-        labelContainer.innerHTML = labelHtml;
+        labelContainer.innerHTML = safeHtml(labelHtml);
         document.body.appendChild(labelContainer);
         window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas1 => {
           document.body.removeChild(labelContainer);
@@ -6588,7 +6597,7 @@ setTimeout(function(){
         </div>`;
         const container = document.createElement('div');
         container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-        container.innerHTML = html;
+        container.innerHTML = safeHtml(html);
         document.body.appendChild(container);
         const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
         document.body.removeChild(container);
@@ -7370,7 +7379,7 @@ setTimeout(function(){
           <td style="padding:6px 10px;">${pW.toFixed(2)} ק"ג</td>
           <td></td>
         </tr></tfoot></table></div>`;
-        container.innerHTML = html;
+        container.innerHTML = safeHtml(html);
         document.body.appendChild(container);
         window.html2canvas(container, { scale: 2, useCORS: true }).then(canvas => {
           document.body.removeChild(container);
@@ -7415,10 +7424,10 @@ setTimeout(function(){
         numberContainer.innerHTML = `<svg width="794" height="1123" xmlns="http://www.w3.org/2000/svg">
           <text x="397" y="620" text-anchor="middle" dominant-baseline="middle"
             font-size="900" font-weight="bold" font-family="Arial"
-            textLength="740" lengthAdjust="spacingAndGlyphs">${pallet.number||''}</text>
+            textLength="740" lengthAdjust="spacingAndGlyphs">${escHtml(pallet.number||'')}</text>
         </svg>`;
 
-        labelContainer.innerHTML = labelHtml;
+        labelContainer.innerHTML = safeHtml(labelHtml);
         document.body.appendChild(labelContainer);
         window.html2canvas(labelContainer, { scale: 2, useCORS: true }).then(canvas1 => {
           document.body.removeChild(labelContainer);
@@ -7508,7 +7517,7 @@ setTimeout(function(){
         </div>`;
         const container = document.createElement('div');
         container.style.cssText = 'position:fixed;top:-9999px;right:-9999px;';
-        container.innerHTML = html;
+        container.innerHTML = safeHtml(html);
         document.body.appendChild(container);
         const canvas = await window.html2canvas(container, { scale: 2, useCORS: true });
         document.body.removeChild(container);
@@ -8778,6 +8787,7 @@ setTimeout(function(){
         try {
           if (!editingUser && !form.password) { setFormError('סיסמה נדרשת'); setSaving(false); return; }
           if (!form.username.trim()) { setFormError('שם משתמש נדרש'); setSaving(false); return; }
+          if (form.password && form.password.length < 8) { setFormError('הסיסמה צריכה להיות באורך 8 תווים לפחות'); setSaving(false); return; }
           // דרך פונקציה בשרת (מנהל בלבד) — מעדכנת גם את חשבון הכניסה המאובטח
           const { error: err } = await db.rpc('admin_save_user', {
             p_id: editingUser ? editingUser.id : null,

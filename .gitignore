@@ -1,0 +1,5 @@
+.env*
+.vercel/
+.claude/
+launch-report*
+node_modules/
