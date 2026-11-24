@@ -229,13 +229,15 @@
     .so-tbl th { text-align: right; font-size: .8rem; font-weight: 800; color: var(--muted); padding: .7rem .8rem; border-bottom: 2px solid var(--line); white-space: nowrap; }
     .so-tbl td { padding: .55rem .8rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
     .so-tbl tr.low td { background: var(--low-bg); }
-    .so-tbl tr.out .so-total { color: #A8A29E; }
+    .so-tbl tr.out:not(.m) .so-total { color: #A8A29E; }
+    .so-tbl tr.low:not(.m) .so-total { color: var(--low); }
+    .so-mtag { display: none; }
+    .so-tbl tr.low td.c-main .so-num { color: var(--low); font-weight: 900; }
     .so-pname { display: flex; align-items: center; gap: .6rem; }
     .so-pname .so-ico { color: var(--muted); width: 1.4em; height: 1.4em; }
     .so-pname b { font-size: 1.05rem; font-weight: 700; display: block; }
     .so-pname small { font-size: .75rem; color: var(--muted); }
     .so-total { font-size: 1.6rem; font-weight: 900; }
-    .so-tbl tr.low .so-total { color: var(--low); }
     .so-lowtag, .so-outtag { display: inline-block; margin-inline-start: .4rem; font-size: .7rem; font-weight: 800; border-radius: 999px; padding: .05rem .5rem; vertical-align: middle; }
     .so-lowtag { color: var(--low); background: #FFE4E6; }
     .so-outtag { color: #57534E; background: #EEEBE6; }
@@ -636,6 +638,8 @@
       .so-tbl td.c-name { grid-column: 1; grid-row: 1; }
       .so-tbl td.c-total { grid-column: 2; grid-row: 1; text-align: left; }
       .so-tbl td.c-cold { display: none; }
+      .so-mtag { display: block; margin-top: .2rem; }
+      .so-mtag > span { margin-inline-start: 0; }
       .so-tbl td.c-quick { grid-column: 1 / -1; }
       .so-tbl tr.so-catrow { display: block; padding: 0; }
       .so-tbl tr.so-catrow td { display: block; padding: .5rem .9rem; }
@@ -1790,11 +1794,12 @@
                       <tr className="so-catrow"><td colSpan={hasQuick ? 6 : 5}><LineIcon name={cat} />{cat} · {shownGroups[cat].length} מוצרים</td></tr>
                       {[...shownGroups[cat]].sort(bySku).map(p => {
                         const b = balanceOf(p, activeKashrut);
-                        const low = b.total > 0 && b.total < LOW_CARTONS, out = b.total === 0;
+                        const low = b.main > 0 && b.main < LOW_CARTONS, out = b.main <= 0; // לפי קירור סופר עוף
+                        const tag = low ? <span className="so-lowtag">נמוך</span> : out ? <span className="so-outtag">אזל</span> : null;
                         const eC = Math.floor(getETrays(b.key) / TRAYS_PER_CARTON);
                         const wC = Math.floor(getWTrays(b.key) / TRAYS_PER_CARTON);
                         return (
-                          <tr key={b.key} className={low ? 'low' : out ? 'out' : ''}>
+                          <tr key={b.key} className={low ? 'low m' : out ? 'out m' : 'm'}>
                             <td className="c-name"><div className="so-pname"><LineIcon name={cat} /><div><b>{p.name}</b><small>{p.sku ? 'מק״ט ' + p.sku : 'ללא מק״ט'}</small></div></div></td>
                             {hasQuick && (
                               <td className="c-quick"><div className="so-quick">
@@ -1818,8 +1823,8 @@
                                 )}
                               </div></td>
                             )}
-                            <td className="c-total"><span className="so-total">{b.total}</span>{low ? <span className="so-lowtag">נמוך</span> : out ? <span className="so-outtag">אזל</span> : null}</td>
-                            <td className="c-cold" data-label="סופר עוף"><span className={`so-num ${b.main ? '' : 'zero'}`}>{b.main}</span></td>
+                            <td className="c-total"><span className="so-total">{b.total}</span>{tag && <span className="so-mtag">{low ? <span className="so-lowtag">נמוך בסופר עוף</span> : <span className="so-outtag">אזל בסופר עוף</span>}</span>}</td>
+                            <td className="c-cold c-main" data-label="סופר עוף"><span className={`so-num ${b.main ? '' : 'zero'}`}>{b.main}</span>{tag}</td>
                             <td className="c-cold" data-label="גב״ש"><span className={`so-num ${b.gv ? '' : 'zero'}`}>{b.gv}</span></td>
                             <td className="c-cold" data-label="לירוי"><span className={`so-num ${b.bs ? '' : 'zero'}`}>{b.bs}</span></td>
                           </tr>
@@ -2522,15 +2527,18 @@ ${htmlRows}
           return res;
         };
 
+        // רק מוצרים שיש מהם מלאי בקירור סופר עוף
+        const inStock = (name, kashrut) => (Number(frozenStock[`${name}|${kashrut}`]) || 0) > 0;
+
         // Build sorted product list for a kashrut filtered by category list
         const buildList = (kashrutName, filterCats, includeStickers = false) => {
           const prods = frozenProductsList
-            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === kashrutName && filterCats.includes(p.category || getProductCategory(p.name)))
+            .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === kashrutName && filterCats.includes(p.category || getProductCategory(p.name)) && inStock(p.name, kashrutName))
             .sort((a, b) => { const d = catOrder(a) - catOrder(b); return d !== 0 ? d : sortBySku(a, b); })
             .map(p => ({ name: p.name, sku: p.sku || '' }));
           if (!includeStickers) return prods;
           const stickers = Object.keys(frozenStock)
-            .filter(k => k.startsWith('STICKER|'))
+            .filter(k => k.startsWith('STICKER|') && (Number(frozenStock[k]) || 0) > 0)
             .map(k => { const [, name, kashrut, mark] = k.split('|'); return { name, kashrut, mark, isSticker: true }; })
             .filter(s => s.kashrut === kashrutName)
             .sort((a, b) => a.name.localeCompare(b.name));
@@ -2544,8 +2552,8 @@ ${htmlRows}
             chunk(buildList(k.name, filterCats, includeStickers))
               .forEach(items => blocks.push({ label: k.name, color: k.color || '#1e293b', items }));
           }
-          // כשיש סינון — לא מדפיסים עמודות ריקות
-          return isFiltered ? blocks.filter(b => b.items.length > 0) : blocks;
+          // לא מדפיסים עמודות ריקות (כשרות בלי מלאי)
+          return blocks.filter(b => b.items.length > 0);
         };
 
         // סינון לפי בחירה בחלון הייצוא; בלי בחירה — הכול
@@ -2577,7 +2585,7 @@ ${htmlRows}
           ? pickedCats.includes('דגים')
           : (!pickedKashrut.length || pickedKashrut.some(k => k.name === 'כללי'));
         const fishList = !fishOn ? [] : frozenProductsList
-          .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי')
+          .filter(p => p.storageTypes?.includes('frozen') && p.kashrut === 'כללי' && inStock(p.name, 'כללי'))
           .sort(sortBySku)
           .map(p => ({ name: p.name, sku: p.sku || '' }));
         const fishChunks = chunk(fishList);
